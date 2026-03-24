@@ -39,28 +39,40 @@ auto-dialer state management.
 
 ```
 sarah-retell-project/
-├── AGENT.md                    # Master DOE
+├── AGENT.md                    # Master DOE — read first, always
 ├── CLAUDE.md                   # THIS FILE
+├── security.md                 # Security controls — read before writing ANY code
 ├── implementation.md           # 8-phase build plan with prompts
 ├── closing-strategies.md       # 6 strategies + persona detection
 ├── skills.md                   # Technical patterns reference
 ├── skills.sh                   # Environment validation
+├── .env.example                # Template for all secrets (NEVER commit .env)
 ├── knowledge-base/             # 6 PDF knowledge base documents
-├── backend/
-│   ├── main.py                 # FastAPI app (webhooks + dashboard API)
-│   ├── retell_config.py        # Retell SDK setup (LLM, Agent, Phone)
-│   ├── tools.py                # Tool execution handlers
-│   ├── dialer.py               # Auto-dialer scheduler logic
-│   ├── supabase_client.py      # Supabase connection + queries
-│   └── .env.example            # Environment variable template
-├── dashboard/
-│   ├── src/App.jsx             # React dashboard (3 tabs)
-│   ├── src/components/         # LiveView, Pipeline, StrategyAnalytics
-│   └── package.json
-└── n8n/
-    ├── auto-dialer.json        # Scheduled dialer workflow
-    ├── post-call-handler.json  # Post-call automation
-    └── lead-import.json        # CSV/JSON lead import
+├── directives/                 # Per-phase SOPs (read before acting)
+│   ├── 00_foundation.md
+│   ├── 01_retell_llm.md
+│   ├── 02_system_prompt.md
+│   ├── 03_voice_agent.md
+│   ├── 04_webhook_backend.md
+│   ├── 05_auto_dialer.md
+│   ├── 06_post_call.md
+│   └── 07_dashboard.md
+├── execution/
+│   ├── backend/                # FastAPI webhook server
+│   │   ├── main.py
+│   │   ├── retell_config.py
+│   │   ├── tools.py
+│   │   ├── dialer.py
+│   │   ├── supabase_client.py
+│   │   └── requirements.txt
+│   ├── dashboard/              # React app (3 tabs)
+│   │   ├── src/App.jsx
+│   │   ├── src/components/
+│   │   └── package.json
+│   └── n8n/                    # Workflow JSON exports
+│       ├── auto-dialer.json
+│       ├── post-call-handler.json
+│       └── lead-import.json
 ```
 
 ---
@@ -109,7 +121,7 @@ Follow `implementation.md` strictly:
 bash skills.sh
 
 # Run webhook server
-cd backend && uvicorn main:app --reload --port 8000
+cd execution/backend && uvicorn main:app --reload --port 8000
 
 # Test Retell connection
 python -c "from retell import Retell; import os; c = Retell(api_key=os.environ['RETELL_API_KEY']); print(c.agent.list())"
@@ -125,5 +137,5 @@ curl -X POST http://localhost:8000/dialer/start \
   -d '{"schedule_id": "SCHEDULE_UUID"}'
 
 # Run dashboard dev server
-cd dashboard && npm run dev
+cd execution/dashboard && npm run dev
 ```

@@ -194,9 +194,38 @@ echo ""
 
 # ── 9. Project Files ──
 echo "9. Project Files"
-for f in AGENT.md CLAUDE.md implementation.md closing-strategies.md skills.md skills.sh; do
+for f in AGENT.md CLAUDE.md implementation.md closing-strategies.md skills.md skills.sh security.md; do
     [ -f "$f" ] || [ -f "../$f" ] && pass "$f" || fail "$f MISSING"
 done
+echo ""
+
+# ── 10. Directives ──
+echo "10. Directives"
+DIR="directives"
+[ ! -d "$DIR" ] && DIR="../directives"
+if [ -d "$DIR" ]; then
+    for d in 00_foundation.md 01_retell_llm.md 02_system_prompt.md 03_voice_agent.md 04_webhook_backend.md 05_auto_dialer.md 06_post_call.md 07_dashboard.md; do
+        [ -f "$DIR/$d" ] && pass "$d" || fail "$d MISSING"
+    done
+else
+    warn "directives/ directory not found"
+fi
+echo ""
+
+# ── 11. Execution Layer ──
+echo "11. Execution Layer"
+EXEC="execution"
+[ ! -d "$EXEC" ] && EXEC="../execution"
+if [ -d "$EXEC" ]; then
+    [ -d "$EXEC/backend" ] && pass "execution/backend/" || fail "execution/backend/ MISSING"
+    [ -d "$EXEC/dashboard" ] && pass "execution/dashboard/" || fail "execution/dashboard/ MISSING"
+    [ -d "$EXEC/n8n" ] && pass "execution/n8n/" || fail "execution/n8n/ MISSING"
+    [ -f "$EXEC/backend/main.py" ] && pass "backend/main.py" || fail "backend/main.py MISSING"
+    [ -f "$EXEC/backend/requirements.txt" ] && pass "backend/requirements.txt" || fail "backend/requirements.txt MISSING"
+    [ -f "$EXEC/dashboard/package.json" ] && pass "dashboard/package.json" || fail "dashboard/package.json MISSING"
+else
+    warn "execution/ directory not found"
+fi
 echo ""
 
 # ── Summary ──
