@@ -1,7 +1,7 @@
-# Requirements: Sarah — Cloudboosta AI Cold-Calling Sales Agent
+# Requirements: Sarah -- Cloudboosta AI Cold-Calling Sales Agent
 
 **Defined:** 2026-03-25
-**Core Value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls — no human intervention required during the call, no pre-contact needed.
+**Core Value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls -- no human intervention required during the call, no pre-contact needed.
 
 ## v1 Requirements
 
@@ -46,7 +46,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 ### Automation
 
 - [ ] **AUTO-01**: Auto-dialer n8n workflow polling queue every 2 minutes, checking dial window + no active call + queue not empty
-- [ ] **AUTO-02**: Post-call handler n8n workflow routing outcomes: COMMITTED → payment email, FOLLOW_UP → reschedule, DECLINED → log
+- [ ] **AUTO-02**: Post-call handler n8n workflow routing outcomes: COMMITTED -> payment email, FOLLOW_UP -> reschedule, DECLINED -> log
 - [ ] **AUTO-03**: Lead import n8n workflow accepting CSV with E.164 phone validation and deduplication
 - [ ] **AUTO-04**: Payment email via Resend API with bank transfer details (Revolut + GTBank) on COMMITTED outcome
 - [ ] **AUTO-05**: Retry logic: max 2 retries per lead with 60-minute backoff delay, requeue to 'queued' status
@@ -63,7 +63,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Testing
 
-- [ ] **TEST-01**: Self-test checklist covering all integration points (Retell → backend → Supabase → n8n → email)
+- [ ] **TEST-01**: Self-test checklist covering all integration points (Retell -> backend -> Supabase -> n8n -> email)
 - [ ] **TEST-02**: Wave 0: 10 real calls completed with outcomes logged in call_logs
 - [ ] **TEST-03**: All 10 call transcripts reviewable on dashboard Pipeline tab
 - [ ] **TEST-04**: Strategy and persona data collected and visible on Strategy Analytics tab
@@ -74,18 +74,18 @@ Deferred to post-Wave 0. Tracked but not in current roadmap.
 
 ### Analytics
 
-- **ANLYT-01**: Strategy performance heatmap (strategy × persona matrix) — needs 50+ calls for statistical significance
-- **ANLYT-02**: Conversion trend chart over time — needs multi-week data
-- **ANLYT-03**: Strategy auto-optimization (auto-select best strategy per persona) — needs 200+ calls
+- **ANLYT-01**: Strategy performance heatmap (strategy x persona matrix) -- needs 50+ calls for statistical significance
+- **ANLYT-02**: Conversion trend chart over time -- needs multi-week data
+- **ANLYT-03**: Strategy auto-optimization (auto-select best strategy per persona) -- needs 200+ calls
 
 ### Compliance
 
-- **COMPL-01**: PII redaction for EU leads (GDPR) — evaluate before calling EU numbers ($0.01/min)
-- **COMPL-02**: Recording URL persistence to Supabase Storage — currently URLs expire
+- **COMPL-01**: PII redaction for EU leads (GDPR) -- evaluate before calling EU numbers ($0.01/min)
+- **COMPL-02**: Recording URL persistence to Supabase Storage -- currently URLs expire
 
 ### Platform
 
-- **PLATF-01**: Retell Conversation Flow API evaluation — may improve structured conversation quality
+- **PLATF-01**: Retell Conversation Flow API evaluation -- may improve structured conversation quality
 - **PLATF-02**: GPT-5 Nano evaluation for cost reduction at scale (100+ calls/day)
 
 ## Out of Scope
@@ -94,16 +94,16 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Audio processing / STT / TTS / VAD code | Retell handles all voice — custom audio duplicates platform and adds maintenance debt |
-| Pre-contact (WhatsApp/email before call) | Pure cold calling model — pre-contact adds pipeline complexity and delays |
-| Multi-agent concurrent calling | Single US number, max 1 concurrent call — concurrency adds telephony complexity and billing risk |
-| Real-time WebSocket dashboard | Over-engineering for single operator — polling every 5-30s is simpler and sufficient |
-| Full Supabase Auth with RBAC | Single operator — multi-role auth is unnecessary development effort |
-| Mobile app | Web dashboard is already responsive — mobile browser access sufficient |
-| OpenClaw email integration | Explicitly excluded by project requirements — Resend is simpler |
+| Audio processing / STT / TTS / VAD code | Retell handles all voice -- custom audio duplicates platform and adds maintenance debt |
+| Pre-contact (WhatsApp/email before call) | Pure cold calling model -- pre-contact adds pipeline complexity and delays |
+| Multi-agent concurrent calling | Single US number, max 1 concurrent call -- concurrency adds telephony complexity and billing risk |
+| Real-time WebSocket dashboard | Over-engineering for single operator -- polling every 5-30s is simpler and sufficient |
+| Full Supabase Auth with RBAC | Single operator -- multi-role auth is unnecessary development effort |
+| Mobile app | Web dashboard is already responsive -- mobile browser access sufficient |
+| OpenClaw email integration | Explicitly excluded by project requirements -- Resend is simpler |
 | Custom conversation flow builder | System prompt with tools is simpler for 8-stage sales flow |
-| Inbound call handling | Scope is outbound cold calling only — Retell auto-handles callbacks |
-| Strategy auto-optimization | Insufficient data until 200+ calls (Wave 2) — premature optimization leads to bad strategy selection |
+| Inbound call handling | Scope is outbound cold calling only -- Retell auto-handles callbacks |
+| Strategy auto-optimization | Insufficient data until 200+ calls (Wave 2) -- premature optimization leads to bad strategy selection |
 
 ## Traceability
 
@@ -111,13 +111,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(populated by roadmapper)* | | |
+| VOICE-01 | Phase 2: Retell LLM Configuration | Pending |
+| VOICE-02 | Phase 2: Retell LLM Configuration | Pending |
+| VOICE-03 | Phase 3: Voice Agent Creation | Pending |
+| VOICE-04 | Phase 1: Foundation + SDK Migration | Pending |
+| VOICE-05 | Phase 2: Retell LLM Configuration | Pending |
+| TOOL-01 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-02 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-03 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-04 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-05 | Phase 4: Tool Execution Backend | Pending |
+| BACK-01 | Phase 4: Tool Execution Backend | Pending |
+| BACK-02 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-03 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-04 | Phase 8: Dashboard | Pending |
+| BACK-05 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-06 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-07 | Phase 5: Webhook Backend + Security | Pending |
+| DATA-01 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-02 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-03 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-04 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-05 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-06 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-07 | Phase 1: Foundation + SDK Migration | Pending |
+| AUTO-01 | Phase 6: Auto-Dialer + Retry Logic | Pending |
+| AUTO-02 | Phase 7: Post-Call Workflows | Pending |
+| AUTO-03 | Phase 7: Post-Call Workflows | Pending |
+| AUTO-04 | Phase 7: Post-Call Workflows | Pending |
+| AUTO-05 | Phase 6: Auto-Dialer + Retry Logic | Pending |
+| AUTO-06 | Phase 6: Auto-Dialer + Retry Logic | Pending |
+| DASH-01 | Phase 8: Dashboard | Pending |
+| DASH-02 | Phase 8: Dashboard | Pending |
+| DASH-03 | Phase 8: Dashboard | Pending |
+| DASH-04 | Phase 8: Dashboard | Pending |
+| DASH-05 | Phase 8: Dashboard | Pending |
+| DASH-06 | Phase 8: Dashboard | Pending |
+| TEST-01 | Phase 9: Testing + Wave 0 | Pending |
+| TEST-02 | Phase 9: Testing + Wave 0 | Pending |
+| TEST-03 | Phase 9: Testing + Wave 0 | Pending |
+| TEST-04 | Phase 9: Testing + Wave 0 | Pending |
 
 **Coverage:**
-- v1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34 ⚠️
+- v1 requirements: 40 total
+- Mapped to phases: 40/40
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 after roadmap creation (traceability populated)*
