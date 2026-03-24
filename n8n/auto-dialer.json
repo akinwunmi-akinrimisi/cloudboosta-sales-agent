@@ -1,0 +1,9 @@
+{
+  "_comment": "n8n workflow: Scheduled Auto-Dialer — Placeholder for Phase 5.1",
+  "name": "Scheduled Auto-Dialer",
+  "nodes": [],
+  "connections": {},
+  "active": false,
+  "settings": {},
+  "tags": ["sarah", "auto-dialer"]
+}

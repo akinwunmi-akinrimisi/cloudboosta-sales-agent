@@ -1,0 +1,11 @@
+retell-sdk==4.12.0
+fastapi==0.115.0
+uvicorn==0.32.0
+supabase==2.10.0
+httpx==0.27.0
+python-dotenv==1.0.1
+resend==2.5.0
+slowapi==0.1.9
+pydantic==2.9.0
+pytz==2024.1
+python-dateutil==2.9.0

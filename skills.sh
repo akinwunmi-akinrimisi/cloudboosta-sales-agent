@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+# skills.sh — Environment Validation (v2)
+# Sarah Retell AI Project — Cold Calling Mode
+# Run: bash skills.sh
+
+set -euo pipefail
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
+PASS=0; FAIL=0; WARN=0
+
+pass() { echo -e "  ${GREEN}✓${NC} $1"; ((PASS++)); }
+fail() { echo -e "  ${RED}✗${NC} $1"; ((FAIL++)); }
+warn() { echo -e "  ${YELLOW}⚠${NC} $1"; ((WARN++)); }
+
+echo "═══════════════════════════════════════════════════"
+echo "  Sarah Retell AI — Environment Validation (v2)"
+echo "  Cold calling mode | No OpenClaw"
+echo "═══════════════════════════════════════════════════"
+echo ""
+
+# ── 1. Python + Dependencies ──
+echo "1. Python + Dependencies"
+if command -v python3 &>/dev/null; then
+    pass "Python: $(python3 --version 2>&1)"
+else
+    fail "Python3 not found"
+fi
+
+for pkg in retell dotenv fastapi uvicorn supabase httpx resend; do
+    if python3 -c "import $pkg" 2>/dev/null; then
+        pass "Package: $pkg"
+    else
+        fail "Missing: $pkg — run: pip install retell-sdk python-dotenv fastapi uvicorn supabase httpx resend"
+    fi
+done
+echo ""
+
+# ── 2. Skills ──
+echo "2. Claude Code Skills"
+
+# GSD
+GSD_PATHS=("$HOME/.claude/skills/gsd" "$HOME/.config/claude/skills/gsd" "/home/user/.claude/skills/gsd")
+GSD_FOUND=false
+for p in "${GSD_PATHS[@]}"; do
+    if [ -d "$p" ] || [ -f "$p/SKILL.md" ]; then
+        GSD_FOUND=true
+        pass "GSD skill found at $p"
+        break
+    fi
+done
+if [ "$GSD_FOUND" = false ]; then
+    warn "GSD skill not found — install per implementation.md Phase 0.1"
+fi
+
+# Agency Agents
+AA_PATHS=("$HOME/.claude/skills/agency-agents" "/tmp/agency-agents" "$HOME/agency-agents")
+AA_FOUND=false
+for p in "${AA_PATHS[@]}"; do
+    if [ -d "$p" ]; then
+        AA_FOUND=true
+        pass "Agency Agents found at $p"
+        break
+    fi
+done
+if [ "$AA_FOUND" = false ]; then
+    warn "Agency Agents not found — run: git clone https://github.com/msitarzewski/agency-agents.git"
+fi
+echo ""
+
+# ── 3. Environment Variables ──
+echo "3. Environment Variables"
+if [ -f ".env" ]; then
+    set -a; source .env; set +a
+    pass ".env loaded"
+elif [ -f "backend/.env" ]; then
+    set -a; source backend/.env; set +a
+    pass ".env loaded (backend/)"
+else
+    warn "No .env file — checking shell env"
+fi
+
+check_env() {
+    local var=$1 required=${2:-true}
+    if [ -n "${!var:-}" ]; then
+        local val="${!var}"; pass "$var = ${val:0:6}...${val: -4}"
+    elif [ "$required" = "true" ]; then
+        fail "$var NOT SET (required)"
+    else
+        warn "$var not set (optional)"
+    fi
+}
+
+check_env RETELL_API_KEY
+check_env SUPABASE_URL
+check_env SUPABASE_SERVICE_KEY
+check_env TWILIO_ACCOUNT_SID
+check_env TWILIO_AUTH_TOKEN
+check_env TWILIO_NUMBER false
+check_env RESEND_API_KEY false
+check_env RETELL_AGENT_ID false
+check_env RETELL_LLM_ID false
+check_env WEBHOOK_BASE_URL false
+echo ""
+
+# ── 4. Retell AI API ──
+echo "4. Retell AI"
+if [ -n "${RETELL_API_KEY:-}" ]; then
+    RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "Authorization: Bearer $RETELL_API_KEY" \
+        "https://api.retellai.com/v2/list-agents" 2>/dev/null || echo "000")
+    if [ "$RESP" = "200" ]; then
+        pass "API reachable (HTTP 200)"
+        COUNT=$(curl -s -H "Authorization: Bearer $RETELL_API_KEY" \
+            "https://api.retellai.com/v2/list-agents" 2>/dev/null | \
+            python3 -c "import sys,json;print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
+        pass "Agents: $COUNT"
+    elif [ "$RESP" = "401" ]; then
+        fail "API 401 — bad API key"
+    else
+        fail "API HTTP $RESP"
+    fi
+else
+    fail "RETELL_API_KEY not set"
+fi
+echo ""
+
+# ── 5. Supabase ──
+echo "5. Supabase"
+if [ -n "${SUPABASE_URL:-}" ] && [ -n "${SUPABASE_SERVICE_KEY:-}" ]; then
+    SB=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "apikey: $SUPABASE_SERVICE_KEY" \
+        -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+        "$SUPABASE_URL/rest/v1/" 2>/dev/null || echo "000")
+    if [ "$SB" = "200" ]; then
+        pass "Supabase reachable"
+    else
+        fail "Supabase HTTP $SB"
+    fi
+    for table in leads call_logs pipeline_logs dial_schedules; do
+        T=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            "$SUPABASE_URL/rest/v1/$table?select=count&limit=0" 2>/dev/null || echo "000")
+        if [ "$T" = "200" ] || [ "$T" = "206" ]; then
+            pass "Table: $table"
+        else
+            warn "Table: $table not found (create in Phase 1.4)"
+        fi
+    done
+else
+    fail "SUPABASE_URL or SUPABASE_SERVICE_KEY not set"
+fi
+echo ""
+
+# ── 6. n8n ──
+echo "6. n8n"
+N8N="${N8N_BASE_URL:-https://n8n.srv1297445.hstgr.cloud}"
+N8N_R=$(curl -s -o /dev/null -w "%{http_code}" "$N8N/healthz" 2>/dev/null || echo "000")
+if [ "$N8N_R" = "200" ]; then
+    pass "n8n reachable at $N8N"
+else
+    warn "n8n HTTP $N8N_R — may need VPN"
+fi
+echo ""
+
+# ── 7. Twilio Number ──
+echo "7. Twilio Number"
+EXPECTED="+11615700419"
+if [ "${TWILIO_NUMBER:-}" = "$EXPECTED" ]; then
+    pass "Twilio number: $EXPECTED (ready for Retell migration)"
+elif [ -n "${TWILIO_NUMBER:-}" ]; then
+    pass "Twilio number: ${TWILIO_NUMBER} (different from expected $EXPECTED)"
+else
+    warn "TWILIO_NUMBER not set"
+fi
+echo ""
+
+# ── 8. Knowledge Base ──
+echo "8. Knowledge Base"
+KB="knowledge-base"
+[ ! -d "$KB" ] && KB="../knowledge-base"
+if [ -d "$KB" ]; then
+    for pdf in programmes.pdf faqs.pdf payment-details.pdf conversation-sequence.pdf objection-handling.pdf coming-soon.pdf; do
+        if [ -f "$KB/$pdf" ]; then
+            pass "$pdf ($(du -h "$KB/$pdf" | cut -f1))"
+        else
+            fail "$pdf MISSING"
+        fi
+    done
+else
+    warn "knowledge-base/ directory not found"
+fi
+echo ""
+
+# ── 9. Project Files ──
+echo "9. Project Files"
+for f in AGENT.md CLAUDE.md implementation.md closing-strategies.md skills.md skills.sh; do
+    [ -f "$f" ] || [ -f "../$f" ] && pass "$f" || fail "$f MISSING"
+done
+echo ""
+
+# ── Summary ──
+echo "═══════════════════════════════════════════════════"
+echo -e "  ${GREEN}$PASS passed${NC}  ${RED}$FAIL failed${NC}  ${YELLOW}$WARN warnings${NC}"
+if [ "$FAIL" -eq 0 ]; then
+    echo -e "  ${GREEN}Environment ready!${NC}"
+elif [ "$FAIL" -le 3 ]; then
+    echo -e "  ${YELLOW}Almost ready — fix failures above${NC}"
+else
+    echo -e "  ${RED}Fix failures before proceeding${NC}"
+fi
