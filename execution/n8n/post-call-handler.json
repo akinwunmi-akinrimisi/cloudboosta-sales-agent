@@ -1,9 +1,362 @@
 {
-  "_comment": "n8n workflow: Post-Call Handler — Placeholder for Phase 5.2",
-  "name": "Post-Call Handler",
-  "nodes": [],
-  "connections": {},
+  "name": "Sarah Post-Call Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "post-call",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.outcome }}",
+                    "rightValue": "COMMITTED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "0"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.outcome }}",
+                    "rightValue": "FOLLOW_UP",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "1"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.outcome }}",
+                    "rightValue": "DECLINED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "outputKey": "2"
+            }
+          ]
+        },
+        "fallbackOutput": "none",
+        "options": {}
+      },
+      "name": "Route by Outcome",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-email-committed",
+              "leftValue": "={{ $json.body.lead_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Email? (Committed)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build currency-specific payment email HTML body\nconst payload = $('Webhook Trigger').item.json.body;\nconst currency = payload.currency || 'GBP';\nconst leadName = payload.lead_name || 'there';\nconst programme = payload.programme_recommended || 'Cloudboosta Programme';\nconst reference = `CB-${leadName.replace(/\\s+/g, '')}-${programme.replace(/\\s+/g, '')}`;\n\nconst bankDetails = {\n  GBP: `\n    <p><strong>Bank:</strong> Revolut</p>\n    <p><strong>Account Number:</strong> 89383123</p>\n    <p><strong>Sort Code:</strong> 23-01-20</p>\n    <p><strong>IBAN:</strong> GB63 REVO 2301 2089 3831 23</p>\n    <p><strong>BIC/SWIFT:</strong> REVOGB21</p>\n    <p><strong>Intermediary Bank:</strong> CHASGB2L</p>`,\n  EUR: `\n    <p><strong>Bank:</strong> Revolut</p>\n    <p><strong>IBAN:</strong> GB63 REVO 2301 2089 3831 23</p>\n    <p><strong>BIC/SWIFT:</strong> REVOGB21</p>\n    <p><strong>Intermediary Bank:</strong> CHASDEFX</p>`,\n  USD: `\n    <p><strong>Bank:</strong> Revolut</p>\n    <p><strong>IBAN:</strong> GB63 REVO 2301 2089 3831 23</p>\n    <p><strong>BIC/SWIFT:</strong> REVOGB21</p>\n    <p><strong>Intermediary Bank:</strong> CHASGB2L</p>`,\n  NGN: `\n    <p><strong>Bank:</strong> Guaranty Trust Bank (GTBank)</p>\n    <p><strong>Account Number:</strong> 0631796979</p>`\n};\n\nconst subject = 'Your Cloudboosta Enrolment Details';\n\nconst html = `\n<p>Hi ${leadName},</p>\n<p>Congratulations on taking this step! Here are your payment details for <strong>${programme}</strong>:</p>\n<h3>Bank Transfer Details (${currency})</h3>\n${bankDetails[currency] || bankDetails['GBP']}\n<p><strong>Payment Reference:</strong> ${reference}</p>\n<h3>Next Steps</h3>\n<ul>\n  <li>Send proof of payment to <a href=\"mailto:support@cloudboosta.co.uk\">support@cloudboosta.co.uk</a></li>\n  <li>Receive login credentials within 24 hours</li>\n  <li>Join the WhatsApp group</li>\n  <li>Programme starts: <strong>April 25, 2026</strong></li>\n</ul>\n<p>Questions? WhatsApp us: +44 7592 233052 / +44 7565 707254</p>\n<p>Looking forward to seeing you in the programme!</p>\n<p>Sarah<br>Cloudboosta Team</p>`;\n\nreturn [{ json: { html, subject, reference } }];"
+      },
+      "name": "Build Payment Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mailersend.com/v1/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.MAILERLITE_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: { email: 'akinwunmi.akinrimisi@cloudboosta.co.uk', name: 'Sarah from Cloudboosta' }, to: [{ email: $('Webhook Trigger').item.json.body.lead_email, name: $('Webhook Trigger').item.json.body.lead_name }], subject: $('Build Payment Email').item.json.subject, html: $('Build Payment Email').item.json.html }) }}",
+        "options": {
+          "never_error": true
+        }
+      },
+      "name": "Send Payment Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "matchingColumns": ["id"],
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Webhook Trigger').item.json.body.lead_id }}",
+            "status": "payment_sent"
+          }
+        }
+      },
+      "name": "Update to Payment Sent",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1250, 0],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CRED_ID",
+          "name": "Supabase Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-email-followup",
+              "leftValue": "={{ $json.body.lead_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Email? (Follow-Up)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mailersend.com/v1/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.MAILERLITE_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: { email: 'akinwunmi.akinrimisi@cloudboosta.co.uk', name: 'Sarah from Cloudboosta' }, to: [{ email: $('Webhook Trigger').item.json.body.lead_email, name: $('Webhook Trigger').item.json.body.lead_name }], subject: \"We'll be in touch soon - Cloudboosta\", html: \"Hi \" + $('Webhook Trigger').item.json.body.lead_name + \",<br><br>Just confirming we'll call you back\" + ($('Webhook Trigger').item.json.body.follow_up_date ? \" on \" + $('Webhook Trigger').item.json.body.follow_up_date : \" soon\") + \". Looking forward to chatting again.<br><br>Best,<br>Sarah<br>Cloudboosta Team\" }) }}",
+        "options": {
+          "never_error": true
+        }
+      },
+      "name": "Send Follow-Up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-email-declined",
+              "leftValue": "={{ $json.body.lead_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Email? (Declined)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 800]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mailersend.com/v1/email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.MAILERLITE_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: { email: 'akinwunmi.akinrimisi@cloudboosta.co.uk', name: 'Sarah from Cloudboosta' }, to: [{ email: $('Webhook Trigger').item.json.body.lead_email, name: $('Webhook Trigger').item.json.body.lead_name }], subject: 'Thank you for your time - Cloudboosta', html: 'Hi ' + $('Webhook Trigger').item.json.body.lead_name + ',<br><br>Thank you for taking the time to speak with us. We understand now might not be the right time, and the door is always open.<br><br>Future cohorts are available, and you\\'ll be first to know when new programmes launch.<br><br>Wishing you all the best,<br>Sarah<br>Cloudboosta Team' }) }}",
+        "options": {
+          "never_error": true
+        }
+      },
+      "name": "Send Close Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 800]
+    },
+    {
+      "parameters": {},
+      "name": "No-Op Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [750, 1100]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          { "node": "Route by Outcome", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Route by Outcome": {
+      "main": [
+        [
+          { "node": "Has Email? (Committed)", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Has Email? (Follow-Up)", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Has Email? (Declined)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has Email? (Committed)": {
+      "main": [
+        [
+          { "node": "Build Payment Email", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "No-Op Skip", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Build Payment Email": {
+      "main": [
+        [
+          { "node": "Send Payment Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Payment Email": {
+      "main": [
+        [
+          { "node": "Update to Payment Sent", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has Email? (Follow-Up)": {
+      "main": [
+        [
+          { "node": "Send Follow-Up Email", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "No-Op Skip", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has Email? (Declined)": {
+      "main": [
+        [
+          { "node": "Send Close Email", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "No-Op Skip", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
   "active": false,
-  "settings": {},
-  "tags": ["sarah", "post-call"]
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "sarah" },
+    { "name": "post-call" }
+  ]
 }
