@@ -17,7 +17,8 @@ import time as time_mod
 from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+import httpx
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -31,7 +32,7 @@ load_dotenv()
 
 from retell_config import retell_client
 from supabase_client import supabase
-from tools import execute_tool
+from tools import execute_tool, COUNTRY_CURRENCY_MAP, DEFAULT_CURRENCY
 from dialer import (
     should_dial_now,
     get_next_lead,
@@ -61,6 +62,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 DASHBOARD_SECRET_KEY = os.environ.get("DASHBOARD_SECRET_KEY", "")
 WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
 DASHBOARD_ORIGIN = os.environ.get("DASHBOARD_ORIGIN", "http://localhost:5173")
+N8N_WEBHOOK_BASE = os.environ.get("N8N_WEBHOOK_BASE", "")
 
 # ---------------------------------------------------------------------------
 # Bearer token authentication
@@ -253,6 +255,42 @@ DISCONNECT_TO_STATUS: dict[str, str | None] = {
 # Statuses eligible for automatic retry requeue (Phase 6 AUTO-05)
 RETRY_ELIGIBLE_STATUSES = {"no_answer", "voicemail", "busy"}
 
+# Outcomes that trigger the n8n post-call workflow (Phase 7 AUTO-02/AUTO-04)
+# Only connected calls where Sarah had a conversation and logged an outcome.
+OUTCOMES_REQUIRING_WORKFLOW = {"committed", "follow_up", "declined"}
+
+
+# ---------------------------------------------------------------------------
+# Post-call n8n trigger (fire-and-forget)
+# ---------------------------------------------------------------------------
+async def trigger_post_call_workflow(payload: dict):
+    """Fire-and-forget POST to n8n post-call webhook.
+
+    Runs as a BackgroundTasks callback AFTER the 200 response is sent to Retell.
+    Failure is non-critical -- logged as warning, never raised.
+    """
+    if not N8N_WEBHOOK_BASE:
+        logger.warning("trigger_post_call_workflow: N8N_WEBHOOK_BASE not set -- skipping")
+        return
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.post(
+                f"{N8N_WEBHOOK_BASE}/post-call",
+                json=payload,
+            )
+            logger.info(
+                "Post-call workflow triggered: outcome=%s lead=%s status=%d",
+                payload.get("outcome"), payload.get("lead_id"), resp.status_code,
+            )
+    except Exception as exc:
+        logger.warning("n8n post-call trigger failed (non-critical): %s", exc)
+
+
+@app.on_event("startup")
+async def startup_warnings():
+    if not N8N_WEBHOOK_BASE:
+        logger.warning("N8N_WEBHOOK_BASE not set -- post-call workflows will not trigger")
+
 
 # ---------------------------------------------------------------------------
 # Retry requeue helper
@@ -327,7 +365,7 @@ async def retell_tool(request: Request):
 # ---- Webhook lifecycle events ----
 @app.post("/retell/webhook")
 @limiter.limit("100/minute")
-async def retell_webhook(request: Request):
+async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
     body = await verify_retell_signature(request)
     payload = WebhookPayload(**json.loads(body))
 
@@ -404,7 +442,7 @@ async def retell_webhook(request: Request):
                     # Connected call -- check if tool already set outcome
                     call_row = (
                         supabase.table("call_logs")
-                        .select("outcome")
+                        .select("outcome, programme_recommended, follow_up_date")
                         .eq("retell_call_id", call_id)
                         .limit(1)
                         .execute()
@@ -430,6 +468,67 @@ async def retell_webhook(request: Request):
                                 "call_ended: lead %s -> declined (no tool outcome, reason=%s)",
                                 lead_id, disconnection_reason,
                             )
+
+                    # --- Post-call workflow trigger (Phase 7) ---
+                    # Determine the outcome for connected calls.
+                    # If tool set an outcome, use it (uppercase from tools.py).
+                    # If no tool outcome, the lead was set to "declined" above.
+                    tool_outcome = (
+                        call_row.data[0].get("outcome") if call_row.data else None
+                    )
+                    # Map tool outcomes (uppercase) to lead statuses (lowercase)
+                    # COMMITTED -> committed, FOLLOW_UP -> follow_up, DECLINED -> declined
+                    resolved_status = (
+                        tool_outcome.lower().replace(" ", "_") if tool_outcome
+                        else "declined"
+                    )
+
+                    if resolved_status in OUTCOMES_REQUIRING_WORKFLOW:
+                        # Query lead details for the email payload
+                        lead_info = (
+                            supabase.table("leads")
+                            .select("email, name, country")
+                            .eq("id", lead_id)
+                            .single()
+                            .execute()
+                        )
+                        lead_email = lead_info.data.get("email") if lead_info.data else None
+                        lead_name = lead_info.data.get("name", "") if lead_info.data else ""
+                        lead_country = lead_info.data.get("country", "") if lead_info.data else ""
+
+                        # Resolve currency from lead's country
+                        currency = COUNTRY_CURRENCY_MAP.get(lead_country, DEFAULT_CURRENCY)
+
+                        # Get programme and follow_up_date from call_logs (set by tool)
+                        programme_recommended = (
+                            call_row.data[0].get("programme_recommended", "")
+                            if call_row.data else ""
+                        )
+                        follow_up_date = (
+                            call_row.data[0].get("follow_up_date")
+                            if call_row.data else None
+                        )
+
+                        # Use the uppercase outcome for n8n Switch node matching
+                        n8n_outcome = tool_outcome if tool_outcome else "DECLINED"
+
+                        workflow_payload = {
+                            "outcome": n8n_outcome,
+                            "lead_id": lead_id,
+                            "programme_recommended": programme_recommended,
+                            "currency": currency,
+                            "lead_email": lead_email,
+                            "lead_name": lead_name,
+                            "follow_up_date": follow_up_date,
+                        }
+                        background_tasks.add_task(
+                            trigger_post_call_workflow, workflow_payload
+                        )
+                        logger.info(
+                            "call_ended: queued post-call workflow for lead %s (outcome=%s)",
+                            lead_id, n8n_outcome,
+                        )
+
         except Exception as exc:
             logger.error("call_ended DB error for call %s: %s", call_id, exc, exc_info=True)
 
