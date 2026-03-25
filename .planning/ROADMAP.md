@@ -126,7 +126,7 @@ Plans:
   2. FOLLOW_UP outcomes send a reminder email and schedule a retry call at appropriate time
   3. DECLINED outcomes send a graceful close email and log final disposition
   4. CSV lead import workflow accepts files with E.164 phone validation and deduplication against existing leads
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md -- Post-call handler: extend call_ended with BackgroundTasks n8n trigger + n8n 3-way outcome routing workflow with MailerSend emails
