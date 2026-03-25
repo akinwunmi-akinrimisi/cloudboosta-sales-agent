@@ -9,7 +9,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Voice Platform
 
-- [ ] **VOICE-01**: Retell LLM configured with Sarah's system prompt (under 8K tokens) including qualification gates and 6 closing strategies
+- [x] **VOICE-01**: Retell LLM configured with Sarah's system prompt (under 8K tokens) including qualification gates and 6 closing strategies
 - [ ] **VOICE-02**: 3 custom tool definitions (lookup_programme, get_objection_response, log_call_outcome) registered on Retell LLM with webhook URLs
 - [ ] **VOICE-03**: Voice agent created with British female voice, backchannel enabled (frequency 0.8)
 - [x] **VOICE-04**: Phone number +1 (740) 494-3597 assigned to agent using weighted agents format (not deprecated fields)
@@ -111,7 +111,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VOICE-01 | Phase 2: Retell LLM Configuration | Pending |
+| VOICE-01 | Phase 2: Retell LLM Configuration | Complete |
 | VOICE-02 | Phase 2: Retell LLM Configuration | Pending |
 | VOICE-03 | Phase 3: Voice Agent Creation | Pending |
 | VOICE-04 | Phase 1: Foundation + SDK Migration | Complete |
