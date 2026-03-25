@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Voice Agent Creation** - British female voice agent with backchannel, assigned to migrated phone number
 - [x] **Phase 4: Tool Execution Backend** - FastAPI tool call router with 3 handlers, fallback responses, and speak-during-execution (completed 2026-03-25)
 - [x] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting (completed 2026-03-25)
-- [ ] **Phase 6: Auto-Dialer + Retry Logic** - n8n scheduled dialer with dial windows, retry backoff, and do-not-contact enforcement
+- [x] **Phase 6: Auto-Dialer + Retry Logic** - n8n scheduled dialer with dial windows, retry backoff, and do-not-contact enforcement (completed 2026-03-25)
 - [ ] **Phase 7: Post-Call Workflows** - n8n post-call outcome routing, payment email via Resend, and CSV lead import
 - [ ] **Phase 8: Dashboard** - React SPA with Live View, Pipeline kanban, Strategy Analytics, and bearer token auth
 - [ ] **Phase 9: Testing + Wave 0** - Self-test checklist, 10 real calls, transcript review, strategy data collection
@@ -111,11 +111,11 @@ Plans:
   2. Dialer checks for no active call and non-empty queue before each call attempt
   3. Failed calls (no_answer, voicemail) retry up to 2 times with 60-minute backoff delay
   4. Leads with status 'do_not_contact' or 'declined' are never called (hard block in dialer)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 06-01-PLAN.md -- Schema migration (next_retry_at column, calling->failed state machine fix, pick_next_lead RPC update) + retry requeue logic in call_ended handler
-- [ ] 06-02-PLAN.md -- n8n auto-dialer workflow JSON with schedule trigger, dial window check, active call guard, RPC queue pick, call initiation, and error recovery
+- [x] 06-01-PLAN.md -- Schema migration (next_retry_at column, calling->failed state machine fix, pick_next_lead RPC update) + retry requeue logic in call_ended handler
+- [x] 06-02-PLAN.md -- n8n auto-dialer workflow JSON with schedule trigger, dial window check, active call guard, RPC queue pick, call initiation, and error recovery
 
 ### Phase 7: Post-Call Workflows
 **Goal**: Every call outcome is automatically routed to the correct action -- payment email, reschedule, or log-and-close
@@ -179,7 +179,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 3. Voice Agent Creation | 2/2 | Complete    | 2026-03-25 |
 | 4. Tool Execution Backend | 0/3 | Complete    | 2026-03-25 |
 | 5. Webhook Backend + Security | 1/2 | Complete    | 2026-03-25 |
-| 6. Auto-Dialer + Retry Logic | 0/2 | Not started | - |
+| 6. Auto-Dialer + Retry Logic | 2/2 | Complete    | 2026-03-25 |
 | 7. Post-Call Workflows | 0/2 | Not started | - |
 | 8. Dashboard | 0/4 | Not started | - |
 | 9. Testing + Wave 0 | 0/2 | Not started | - |

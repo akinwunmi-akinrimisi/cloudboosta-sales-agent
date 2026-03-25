@@ -45,7 +45,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Automation
 
-- [ ] **AUTO-01**: Auto-dialer n8n workflow polling queue every 2 minutes, checking dial window + no active call + queue not empty
+- [x] **AUTO-01**: Auto-dialer n8n workflow polling queue every 2 minutes, checking dial window + no active call + queue not empty
 - [ ] **AUTO-02**: Post-call handler n8n workflow routing outcomes: COMMITTED -> payment email, FOLLOW_UP -> reschedule, DECLINED -> log
 - [ ] **AUTO-03**: Lead import n8n workflow accepting CSV with E.164 phone validation and deduplication
 - [ ] **AUTO-04**: Payment email via Resend API with bank transfer details (Revolut + GTBank) on COMMITTED outcome
@@ -135,7 +135,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-05 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-06 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-07 | Phase 1: Foundation + SDK Migration | Complete |
-| AUTO-01 | Phase 6: Auto-Dialer + Retry Logic | Pending |
+| AUTO-01 | Phase 6: Auto-Dialer + Retry Logic | Complete |
 | AUTO-02 | Phase 7: Post-Call Workflows | Pending |
 | AUTO-03 | Phase 7: Post-Call Workflows | Pending |
 | AUTO-04 | Phase 7: Post-Call Workflows | Pending |
