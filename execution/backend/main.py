@@ -540,7 +540,7 @@ async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
                 user_sentiment = call_analysis.get("user_sentiment")
 
                 supabase.table("call_logs").update({
-                    "call_summary": call_summary,
+                    "summary": call_summary,
                     "sentiment": user_sentiment,
                 }).eq("retell_call_id", call_id).execute()
                 logger.info("call_analyzed: updated analysis for call %s", call_id)
@@ -625,26 +625,96 @@ async def dialer_stop(request: Request):
 @app.get("/api/dashboard/live")
 @limiter.limit("60/minute")
 async def dashboard_live(request: Request, _token: str = Depends(verify_bearer_token)):
-    """Current active call + recent calls for the live view."""
-    # TODO: Implement with real Supabase queries (Phase 6)
-    return {"active_call": None, "recent_calls": [], "today_stats": {}}
+    """Current active call + recent calls + today's stats for the live view."""
+    # Active call: lead currently being called or in a call
+    active_result = (
+        supabase.table("leads")
+        .select("id, name, phone, status, programme_recommended, last_strategy_used, last_call_at")
+        .in_("status", ["calling", "in_call"])
+        .limit(1)
+        .execute()
+    )
+    active_call = active_result.data[0] if active_result.data else None
+
+    # Recent calls from today's view (last 10)
+    recent_result = (
+        supabase.table("todays_calls")
+        .select("*")
+        .order("started_at", desc=True)
+        .limit(10)
+        .execute()
+    )
+    recent_calls = recent_result.data or []
+
+    # Today's stats: compute from all today's calls
+    stats_result = (
+        supabase.table("todays_calls")
+        .select("outcome")
+        .execute()
+    )
+    all_today = stats_result.data or []
+    total = len(all_today)
+    connected = sum(1 for r in all_today if r.get("outcome") is not None)
+    committed = sum(1 for r in all_today if r.get("outcome") == "committed")
+    conversion_rate = round(committed / connected * 100, 1) if connected > 0 else 0
+
+    today_stats = {
+        "total_calls": total,
+        "connected": connected,
+        "committed": committed,
+        "conversion_rate": conversion_rate,
+    }
+
+    return {"active_call": active_call, "recent_calls": recent_calls, "today_stats": today_stats}
 
 
 @app.get("/api/dashboard/pipeline")
 @limiter.limit("60/minute")
 async def dashboard_pipeline(request: Request, _token: str = Depends(verify_bearer_token)):
-    """Lead counts by status for the pipeline view."""
-    result = supabase.table("leads").select("status").execute()
-    counts: dict[str, int] = {}
-    for row in result.data:
-        s = row["status"]
-        counts[s] = counts.get(s, 0) + 1
-    return {"pipeline": counts}
+    """All leads with summary fields for the pipeline kanban view."""
+    result = (
+        supabase.table("leads")
+        .select("id, name, phone, status, updated_at, retry_count, programme_recommended, last_call_at, outcome, priority")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return {"leads": result.data or []}
 
 
 @app.get("/api/dashboard/strategy")
 @limiter.limit("60/minute")
 async def dashboard_strategy(request: Request, _token: str = Depends(verify_bearer_token)):
-    """Strategy performance data for the analytics view."""
-    # TODO: Query strategy_performance view (Phase 6)
-    return {"strategies": []}
+    """Strategy performance data from the strategy_performance view."""
+    result = (
+        supabase.table("strategy_performance")
+        .select("*")
+        .execute()
+    )
+    return {"strategies": result.data or []}
+
+
+@app.get("/api/dashboard/lead/{lead_id}")
+@limiter.limit("60/minute")
+async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
+    """Full lead details and call history for the lead detail panel."""
+    # Fetch lead
+    lead_result = (
+        supabase.table("leads")
+        .select("*")
+        .eq("id", lead_id)
+        .single()
+        .execute()
+    )
+    if not lead_result.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # Fetch call history for this lead
+    calls_result = (
+        supabase.table("call_logs")
+        .select("*")
+        .eq("lead_id", lead_id)
+        .order("started_at", desc=True)
+        .execute()
+    )
+
+    return {"lead": lead_result.data, "calls": calls_result.data or []}
