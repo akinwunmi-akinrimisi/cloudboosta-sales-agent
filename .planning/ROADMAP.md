@@ -79,12 +79,12 @@ Plans:
   3. get_objection_response returns appropriate multi-layer responses for all 11 objection types
   4. log_call_outcome writes outcome, strategy, and persona to Supabase call_logs
   5. All 3 tools return hardcoded fallback responses within 10 seconds when Supabase fails, and speak_during_execution phrases are configured
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 04-01: FastAPI project setup and tool call router
-- [ ] 04-02: lookup_programme and get_objection_response tool handlers
-- [ ] 04-03: log_call_outcome handler and fallback/speak-during-execution configuration
+- [ ] 04-01-PLAN.md -- Fix ToolCallPayload for Retell's {name, call, args} format, Retell SDK signature verification, initiate_call metadata, tool-specific fallbacks
+- [ ] 04-02-PLAN.md -- Implement lookup_programme (country-to-currency, profile-to-pathway maps, Supabase pricing query) and get_objection_response (exact key match, A.D.Q. fallback)
+- [ ] 04-03-PLAN.md -- Implement log_call_outcome (call_logs INSERT + leads status UPDATE), verify speak_during_execution, final tools.py audit
 
 ### Phase 5: Webhook Backend + Security
 **Goal**: The backend handles all Retell call lifecycle events, initiates calls safely, and rejects unauthorized requests
