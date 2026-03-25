@@ -63,10 +63,11 @@ Plans:
   1. Voice agent is created on Retell with British female voice and backchannel enabled (frequency 0.8)
   2. Agent is linked to the Retell LLM from Phase 2
   3. A test outbound call can be initiated via the Retell API and Sarah speaks her opening line
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: Voice agent creation and phone number assignment
+- [ ] 03-01-PLAN.md -- System prompt update (name exchange flow, timezone fix), agent creation script, verification scripts
+- [ ] 03-02-PLAN.md -- Execute Retell API operations (LLM update, agent creation, phone assignment) and live test call
 
 ### Phase 4: Tool Execution Backend
 **Goal**: Sarah's 3 tools execute correctly during live calls with fast responses and graceful failure handling
@@ -175,7 +176,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 |-------|----------------|--------|-----------|
 | 1. Foundation + SDK Migration | 3/3 | Complete    | 2026-03-25 |
 | 2. Retell LLM Configuration | 2/2 | Complete    | 2026-03-25 |
-| 3. Voice Agent Creation | 0/1 | Not started | - |
+| 3. Voice Agent Creation | 0/2 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |
 | 5. Webhook Backend + Security | 0/2 | Not started | - |
 | 6. Auto-Dialer + Retry Logic | 0/2 | Not started | - |
