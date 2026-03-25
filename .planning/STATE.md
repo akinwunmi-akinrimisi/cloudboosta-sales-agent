@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-25T18:32:12.288Z"
-last_activity: 2026-03-25 -- Completed plan 07-01 (post-call handler workflow)
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-25T22:08:27.636Z"
+last_activity: 2026-03-25 -- Completed plan 08-01 (Dashboard API + shared infrastructure)
 progress:
   total_phases: 9
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
-  percent: 94
+  total_plans: 20
+  completed_plans: 17
+  percent: 85
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls -- no human intervention required during the call, no pre-contact needed.
-**Current focus:** Phase 7 complete -- Post-Call Workflows (2/2 plans done). Phase 8 next.
+**Current focus:** Phase 8 in progress -- Dashboard (1/4 plans done). API endpoints + shared infrastructure complete.
 
 ## Current Position
 
-Phase: 7 of 9 (Post-Call Workflows) -- COMPLETE
-Plan: 2 of 2 in current phase (2 complete)
-Status: Phase 7 complete. Phase 8 (Dashboard) ready for planning.
-Last activity: 2026-03-25 -- Completed plan 07-01 (post-call handler workflow)
+Phase: 8 of 9 (Dashboard) -- IN PROGRESS
+Plan: 1 of 4 in current phase (1 complete)
+Status: Plan 08-01 complete. Plans 02-04 (tab implementations) ready.
+Last activity: 2026-03-25 -- Completed plan 08-01 (Dashboard API + shared infrastructure)
 
-Progress: [█████████░] 94%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: 5.1min
-- Total execution time: 82 min
+- Total plans completed: 17
+- Average duration: 5.2min
+- Total execution time: 89 min
 
 **By Phase:**
 
@@ -59,9 +59,10 @@ Progress: [█████████░] 94%
 | 06 | P02 | 10min | 2 | 1 |
 | 07 | P02 | 2min | 1 | 1 |
 | 07 | P01 | 6min | 2 | 4 |
+| 08 | P01 | 7min | 2 | 8 |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (4min), 06-02 (10min), 07-02 (2min), 07-01 (6min)
+- Last 5 plans: 06-02 (10min), 07-02 (2min), 07-01 (6min), 08-01 (7min)
 - Trend: stable (consistent execution speed)
 
 *Updated after each plan completion*
@@ -123,6 +124,10 @@ Recent decisions affecting current work:
 - [Phase 07]: Post-call trigger fires only for connected calls with tool outcomes (not no_answer/voicemail/busy retries)
 - [Phase 07]: resend==2.5.1 removed from requirements.txt -- all email sending via n8n/MailerSend
 - [Phase 07]: n8n post-call-handler workflow imported inactive -- activation deferred to Phase 9
+- [Phase 08]: React 19.2.4, Vite 6.4.1, Recharts 3.8.1 installed (latest stable within specified ranges)
+- [Phase 08]: apiFetch auto-clears token and reloads on 401 -- forces re-auth without manual error handling
+- [Phase 08]: Fixed call_summary column name to summary in call_analyzed handler (matches 001_tables.sql schema)
+- [Phase 08]: Vite dev server port changed from 3000 to 5173 to match DASHBOARD_ORIGIN default
 
 ### Pending Todos
 
@@ -137,6 +142,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T18:32:12.274Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-dashboard/08-CONTEXT.md
+Last session: 2026-03-25T22:08:27.618Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None

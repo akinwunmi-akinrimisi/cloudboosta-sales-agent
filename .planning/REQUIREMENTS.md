@@ -28,7 +28,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [x] **BACK-01**: FastAPI server with tool call router dispatching to 3 tool handlers at POST /retell/tool
 - [x] **BACK-02**: Webhook lifecycle endpoint handling call_started, call_ended, call_analyzed events at POST /retell/webhook
 - [x] **BACK-03**: Call initiation endpoint at POST /retell/initiate-call validating lead status, daily call count, and no active call
-- [ ] **BACK-04**: Dashboard API endpoints returning live view, pipeline, and analytics data
+- [x] **BACK-04**: Dashboard API endpoints returning live view, pipeline, and analytics data
 - [x] **BACK-05**: HMAC-SHA256 webhook signature verification on all Retell endpoints using x-retell-signature header
 - [x] **BACK-06**: CORS configuration allowing dashboard origin only
 - [x] **BACK-07**: Rate limiting via slowapi enforcing 1 call per 2 minutes and max 200 calls per day
@@ -59,7 +59,7 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [ ] **DASH-03**: Pipeline tab: click any lead to view full transcript, call recording, and call details
 - [ ] **DASH-04**: Strategy Analytics tab with conversion rate by strategy bar chart and totals table
 - [ ] **DASH-05**: Bearer token authentication using DASHBOARD_SECRET_KEY (single operator)
-- [ ] **DASH-06**: Responsive web layout using React 19 + Vite 6 + Tailwind 3.4 + Recharts 3
+- [x] **DASH-06**: Responsive web layout using React 19 + Vite 6 + Tailwind 3.4 + Recharts 3
 
 ### Testing
 
@@ -124,7 +124,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BACK-01 | Phase 4: Tool Execution Backend | Complete |
 | BACK-02 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-03 | Phase 5: Webhook Backend + Security | Complete |
-| BACK-04 | Phase 8: Dashboard | Pending |
+| BACK-04 | Phase 8: Dashboard | Complete |
 | BACK-05 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-06 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-07 | Phase 5: Webhook Backend + Security | Complete |
@@ -146,7 +146,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-03 | Phase 8: Dashboard | Pending |
 | DASH-04 | Phase 8: Dashboard | Pending |
 | DASH-05 | Phase 8: Dashboard | Pending |
-| DASH-06 | Phase 8: Dashboard | Pending |
+| DASH-06 | Phase 8: Dashboard | Complete |
 | TEST-01 | Phase 9: Testing + Wave 0 | Pending |
 | TEST-02 | Phase 9: Testing + Wave 0 | Pending |
 | TEST-03 | Phase 9: Testing + Wave 0 | Pending |
