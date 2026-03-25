@@ -96,11 +96,11 @@ Plans:
   3. All Retell endpoints verify HMAC-SHA256 signature from x-retell-signature header and reject invalid requests with 401
   4. CORS allows only the dashboard origin; all other origins are rejected
   5. Rate limiting enforces 1 call per 2 minutes and 200 calls per day
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: Webhook lifecycle endpoint and call initiation endpoint
-- [ ] 05-02: HMAC signature verification, CORS, and rate limiting
+- [ ] 05-01-PLAN.md -- Webhook lifecycle handlers (call_started, call_ended, call_analyzed) and active-call guard on initiate-call
+- [ ] 05-02-PLAN.md -- slowapi rate limiting, CORS env var restriction, bearer token auth on initiate-call and dashboard endpoints
 
 ### Phase 6: Auto-Dialer + Retry Logic
 **Goal**: Sarah calls leads autonomously on schedule with proper retry handling and compliance enforcement
