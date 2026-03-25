@@ -12,13 +12,87 @@ from supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Mapping constants (per CONTEXT.md locked decisions)
+# ---------------------------------------------------------------------------
+
+COUNTRY_CURRENCY_MAP = {
+    "UK": "GBP", "GB": "GBP", "United Kingdom": "GBP",
+    "England": "GBP", "Scotland": "GBP", "Wales": "GBP",
+    "US": "USD", "USA": "USD", "United States": "USD", "Canada": "USD",
+    "Nigeria": "NGN", "NG": "NGN",
+    "Germany": "EUR", "France": "EUR", "Ireland": "EUR",
+    "Netherlands": "EUR", "Spain": "EUR", "Italy": "EUR",
+    "Portugal": "EUR", "Belgium": "EUR", "Austria": "EUR",
+}
+DEFAULT_CURRENCY = "GBP"
+
+PROFILE_PATHWAY_MAP = {
+    "A": {"bundle_slug": "zero-to-cloud-devops", "pathway_name": "Zero to Cloud DevOps", "duration": "16 weeks"},
+    "B": {"bundle_slug": "zero-to-cloud-devops", "pathway_name": "Zero to Cloud DevOps", "duration": "16 weeks"},
+    "C": {"bundle_slug": "devops-pro", "pathway_name": "DevOps Pro", "duration": "16 weeks"},
+    "X": {"bundle_slug": "zero-to-cloud-devops", "pathway_name": "Zero to Cloud DevOps", "duration": "16 weeks"},
+}
+
+PERSONA_TESTIMONIALS = {
+    "career_changer": {"name": "Ebunlomo", "story": "Was a nurse in the UK, now a DevOps Engineer"},
+    "beginner_fearful": {"name": "Adeola", "story": "Was a full-time mum, now a DevOps Engineer"},
+    "upskiller": {"name": "Olugbenga", "story": "Had a Data Science Masters, now a Data Engineer in UK"},
+    "experienced_dev": {"name": "Oluwatosin", "story": "Became 2x AWS certified DevOps Engineer"},
+    "price_sensitive": {"name": "Dorcas", "story": "Came from agriculture, landed first Cloud role"},
+    "time_constrained": {"name": "Olumide", "story": "Career transitioner, landed dream Cloud DevOps job"},
+}
+DEFAULT_TESTIMONIAL = {"name": "Ebunlomo", "story": "Was a nurse in the UK, now a DevOps Engineer"}
+
 
 async def lookup_programme(args: dict) -> dict:
-    """Look up programme details based on experience level and interest."""
-    experience = args.get("experience_level", "beginner")
-    interest = args.get("interest_area", "cloud")
-    # TODO: Query programmes table in Supabase (Phase 4.2)
-    return {"result": f"Programme lookup for {experience}/{interest} — not yet implemented"}
+    """Look up programme details and pricing based on lead profile and country."""
+    profile = args.get("profile", "X")
+    country = args.get("country", "")
+    logger.info("lookup_programme called: profile=%s country=%s", profile, country)
+
+    # Map profile to pathway/bundle
+    pathway = PROFILE_PATHWAY_MAP.get(profile, PROFILE_PATHWAY_MAP["X"])
+
+    # Map country to currency
+    currency = COUNTRY_CURRENCY_MAP.get(country, DEFAULT_CURRENCY)
+
+    # Query Supabase pricing table
+    result = supabase.table("pricing").select("*").eq(
+        "bundle_slug", pathway["bundle_slug"]
+    ).eq("currency", currency).execute()
+
+    if not result.data:
+        raise ValueError(
+            f"No pricing found for bundle_slug={pathway['bundle_slug']} currency={currency}"
+        )
+
+    p = result.data[0]
+
+    # Use default testimonial (tool_definitions.py does not pass persona)
+    testimonial = DEFAULT_TESTIMONIAL
+
+    return {
+        "programme": pathway["pathway_name"],
+        "duration": pathway["duration"],
+        "price_standard": str(p["standard_price"]),
+        "price_early_bird": str(p["early_bird_price"]),
+        "savings": str(float(p["standard_price"]) - float(p["early_bird_price"])),
+        "currency": currency,
+        "early_bird_deadline": str(p.get("early_bird_deadline", "")),
+        "cohort_start": str(p.get("cohort_start_date", "")),
+        "instalment_option": (
+            f"2 instalments at {currency} {p.get('instalment_2_total', 'N/A')}"
+            f" or 3 at {currency} {p.get('instalment_3_total', 'N/A')}"
+        ),
+        "testimonial_name": testimonial["name"],
+        "testimonial_story": testimonial["story"],
+        "selling_points": [
+            "Live Saturday classes with experienced instructors",
+            "Career support and job placement assistance",
+            "Hands-on projects for your portfolio",
+        ],
+    }
 
 
 async def get_objection_response(args: dict) -> dict:
