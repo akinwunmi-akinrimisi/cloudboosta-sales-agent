@@ -14,7 +14,7 @@ import logging
 import os
 import re
 import time as time_mod
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -250,6 +250,55 @@ DISCONNECT_TO_STATUS: dict[str, str | None] = {
     "error_llm_websocket_corrupt_payload": "failed",
 }
 
+# Statuses eligible for automatic retry requeue (Phase 6 AUTO-05)
+RETRY_ELIGIBLE_STATUSES = {"no_answer", "voicemail", "busy"}
+
+
+# ---------------------------------------------------------------------------
+# Retry requeue helper
+# ---------------------------------------------------------------------------
+async def handle_retry_requeue(lead_id: str, mapped_status: str):
+    """Requeue lead with 60-min backoff if retries remain, else set declined.
+
+    State machine requires two-step transitions:
+      calling -> no_answer (already done by caller)
+      no_answer -> queued (this function, if retries remain)
+      no_answer -> declined (this function, if retries exhausted)
+    """
+    lead_row = (
+        supabase.table("leads")
+        .select("retry_count, max_retries")
+        .eq("id", lead_id)
+        .single()
+        .execute()
+    )
+    if not lead_row.data:
+        logger.warning("handle_retry_requeue: lead %s not found", lead_id)
+        return
+
+    retry_count = lead_row.data["retry_count"]
+    max_retries = lead_row.data["max_retries"]
+
+    if retry_count < max_retries:
+        next_retry = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+        supabase.table("leads").update({
+            "retry_count": retry_count + 1,
+            "next_retry_at": next_retry,
+            "status": "queued",
+        }).eq("id", lead_id).eq("status", mapped_status).execute()
+        logger.info(
+            "Retry requeue: lead %s -> queued (retry %d/%d, next at %s)",
+            lead_id, retry_count + 1, max_retries, next_retry,
+        )
+    else:
+        supabase.table("leads").update({
+            "status": "declined",
+        }).eq("id", lead_id).eq("status", mapped_status).execute()
+        logger.info(
+            "Retries exhausted: lead %s -> declined (%d/%d used)",
+            lead_id, retry_count, max_retries,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
@@ -348,6 +397,9 @@ async def retell_webhook(request: Request):
                         "call_ended: lead %s -> %s (reason=%s)",
                         lead_id, mapped_status, disconnection_reason,
                     )
+                    # Retry requeue for eligible disconnect statuses
+                    if mapped_status in RETRY_ELIGIBLE_STATUSES:
+                        await handle_retry_requeue(lead_id, mapped_status)
                 else:
                     # Connected call -- check if tool already set outcome
                     call_row = (
