@@ -128,15 +128,52 @@ async def get_objection_response(args: dict) -> dict:
 async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
     """Log the call outcome to Supabase. Called at end of every call."""
     outcome = args.get("outcome", "DECLINED")
-    programme = args.get("programme_recommended", "")
     summary = args.get("summary", "")
     strategy = args.get("closing_strategy_used", "")
     persona = args.get("lead_persona", "")
-    follow_up = args.get("follow_up_date")
+    programme = args.get("programme_recommended", "")
+    follow_up_date = args.get("follow_up_date")
     objections = args.get("objections_raised", "")
+    motivation = args.get("motivation_strength", "")
+    capacity = args.get("capacity_assessment", "")
 
-    logger.info("Call outcome logged: %s (strategy: %s, persona: %s)", outcome, strategy, persona)
-    # TODO: Insert into call_logs + update lead status (Phase 4.1)
+    logger.info(
+        "log_call_outcome called: outcome=%s strategy=%s persona=%s call_id=%s lead_id=%s",
+        outcome, strategy, persona, call_id, lead_id,
+    )
+
+    # 1. Insert into call_logs FIRST (before lead update, so the row exists
+    #    when the pipeline_logs trigger fires on the leads status change).
+    supabase.table("call_logs").insert({
+        "retell_call_id": call_id,
+        "lead_id": lead_id,
+        "outcome": outcome,
+        "closing_strategy_used": strategy,
+        "detected_persona": persona,
+        "summary": summary,
+    }).execute()
+
+    # 2. Update lead status based on outcome (skip NO_ANSWER -- handled by webhook)
+    if lead_id and outcome != "NO_ANSWER":
+        status_map = {
+            "COMMITTED": "committed",
+            "FOLLOW_UP": "follow_up",
+            "DECLINED": "declined",
+            "NOT_QUALIFIED": "not_qualified",
+        }
+        new_status = status_map.get(outcome)
+        if new_status:
+            update_data: dict[str, Any] = {
+                "status": new_status,
+                "last_strategy_used": strategy,
+                "detected_persona": persona,
+                "programme_recommended": programme,
+                "outcome": outcome,
+            }
+            if outcome == "FOLLOW_UP" and follow_up_date:
+                update_data["follow_up_at"] = follow_up_date
+            supabase.table("leads").update(update_data).eq("id", lead_id).execute()
+
     return {"result": f"Outcome '{outcome}' logged successfully"}
 
 
