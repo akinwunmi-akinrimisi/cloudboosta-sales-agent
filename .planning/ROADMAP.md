@@ -12,7 +12,7 @@ Sarah goes from zero to 10 real cold calls in 8 phases. Phase 1 addresses the ha
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation + SDK Migration** - Supabase schema, retell-sdk 5.x upgrade, and phone number weighted agents migration (DEADLINE: March 31)
+- [x] **Phase 1: Foundation + SDK Migration** - Supabase schema, retell-sdk 5.x upgrade, and phone number weighted agents migration (DEADLINE: March 31)
 - [ ] **Phase 2: Retell LLM Configuration** - System prompt with qualification gates, 6 closing strategies, 3 tool definitions, and dynamic variables
 - [ ] **Phase 3: Voice Agent Creation** - British female voice agent with backchannel, assigned to migrated phone number
 - [ ] **Phase 4: Tool Execution Backend** - FastAPI tool call router with 3 handlers, fallback responses, and speak-during-execution
@@ -34,11 +34,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. pick_next_lead() RPC atomically selects and locks the highest-priority queued lead
   4. Phone number +1 (740) 494-3597 is configured on Retell using weighted agents array (not deprecated inbound_agent_id/outbound_agent_id)
   5. retell-sdk 5.8.0 is installed and basic API calls (list agents, get phone number) succeed
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md -- Supabase tables (4 core + 3 reference), indexes, RLS policies, trigger functions
-- [ ] 01-02-PLAN.md -- SQL views, pick_next_lead() RPC, seed data (programmes, pricing, objections, test leads), test script
+- [x] 01-02-PLAN.md -- SQL views, pick_next_lead() RPC, seed data (programmes, pricing, objections, test leads), test script
 - [x] 01-03-PLAN.md -- retell-sdk 5.x upgrade, main.py SDK migration, phone number weighted agents migration script
 
 ### Phase 2: Retell LLM Configuration
@@ -173,7 +173,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + SDK Migration | 2/3 | In Progress|  |
+| 1. Foundation + SDK Migration | 3/3 | Complete | 2026-03-25 |
 | 2. Retell LLM Configuration | 0/2 | Not started | - |
 | 3. Voice Agent Creation | 0/1 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |

@@ -39,8 +39,8 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [x] **DATA-02**: call_logs table storing retell_call_id, outcome, strategy, persona, transcript, recording URL, duration, cost
 - [x] **DATA-03**: pipeline_logs table tracking every lead status transition with timestamp and trigger
 - [x] **DATA-04**: dial_schedules table for time window configuration (start_time, end_time, days_of_week, timezone)
-- [ ] **DATA-05**: SQL views: pipeline_snapshot, strategy_performance, todays_calls for dashboard queries
-- [ ] **DATA-06**: Atomic pick_next_lead() RPC function using FOR UPDATE SKIP LOCKED to prevent race conditions
+- [x] **DATA-05**: SQL views: pipeline_snapshot, strategy_performance, todays_calls for dashboard queries
+- [x] **DATA-06**: Atomic pick_next_lead() RPC function using FOR UPDATE SKIP LOCKED to prevent race conditions
 - [x] **DATA-07**: Row Level Security policies on all tables with service key for backend, anon key for dashboard reads
 
 ### Automation
@@ -132,8 +132,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-03 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-04 | Phase 1: Foundation + SDK Migration | Complete |
-| DATA-05 | Phase 1: Foundation + SDK Migration | Pending |
-| DATA-06 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-05 | Phase 1: Foundation + SDK Migration | Complete |
+| DATA-06 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-07 | Phase 1: Foundation + SDK Migration | Complete |
 | AUTO-01 | Phase 6: Auto-Dialer + Retry Logic | Pending |
 | AUTO-02 | Phase 7: Post-Call Workflows | Pending |
