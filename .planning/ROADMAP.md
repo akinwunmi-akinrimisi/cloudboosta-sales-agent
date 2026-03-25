@@ -142,13 +142,13 @@ Plans:
   3. Clicking any lead on Pipeline tab opens full transcript, call recording, and call details
   4. Strategy Analytics tab shows conversion rate by strategy as a bar chart with totals table
   5. Dashboard requires bearer token authentication and rejects unauthenticated requests
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 08-01: React project setup with Vite 6, Tailwind 3.4, bearer token auth, and dashboard API endpoints
-- [ ] 08-02: Live View tab (active call, recent calls, daily stats)
-- [ ] 08-03: Pipeline tab with kanban and transcript viewer
-- [ ] 08-04: Strategy Analytics tab with charts
+- [ ] 08-01-PLAN.md -- Backend API endpoints (live, pipeline, strategy, lead detail) + dashboard project upgrade (React 19, Vite 6, Recharts 3) + shared infrastructure (api.js, useInterval, constants, EmptyState, OutcomeBadge)
+- [ ] 08-02-PLAN.md -- Auth gate (Login screen, bearer token localStorage) + Live View tab (ActiveCallCard with pulse, 4 StatCards, RecentCallsTable with expandable rows)
+- [ ] 08-03-PLAN.md -- Pipeline kanban (6 columns, LeadCard, status grouping) + LeadSidePanel (call history, transcript viewer, recording player)
+- [ ] 08-04-PLAN.md -- Strategy Analytics tab (Recharts 3 horizontal bar chart, totals table, empty states)
 
 ### Phase 9: Testing + Wave 0
 **Goal**: The entire pipeline is validated end-to-end and Sarah completes 10 real cold calls with full data capture
@@ -181,5 +181,5 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 5. Webhook Backend + Security | 1/2 | Complete    | 2026-03-25 |
 | 6. Auto-Dialer + Retry Logic | 2/2 | Complete    | 2026-03-25 |
 | 7. Post-Call Workflows | 2/2 | Complete    | 2026-03-25 |
-| 8. Dashboard | 0/4 | Not started | - |
+| 8. Dashboard | 0/4 | Planning complete | - |
 | 9. Testing + Wave 0 | 0/2 | Not started | - |
