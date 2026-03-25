@@ -1,9 +1,438 @@
 {
-  "_comment": "n8n workflow: Scheduled Auto-Dialer — Placeholder for Phase 5.1",
-  "name": "Scheduled Auto-Dialer",
-  "nodes": [],
-  "connections": {},
+  "name": "Sarah Auto-Dialer",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/2 * * * *"
+            }
+          ]
+        }
+      },
+      "name": "Every 2 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "dial_schedules",
+        "returnAll": false,
+        "limit": 10,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "is_active",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "name": "Get Active Schedules",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [250, 0],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CRED_ID",
+          "name": "Supabase Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get schedule data from previous node\nconst schedules = $input.all();\nconst { DateTime } = require('luxon');\n\nfor (const item of schedules) {\n  const s = item.json;\n  const tz = s.timezone || 'Europe/London';\n  const now = DateTime.now().setZone(tz);\n  const currentTime = now.toFormat('HH:mm');\n  const currentDow = now.weekday; // 1=Mon, 7=Sun (matches PostgreSQL dow)\n\n  const startTime = s.start_time; // e.g. '10:00'\n  const endTime = s.end_time;     // e.g. '19:00'\n  const daysOfWeek = s.days_of_week; // e.g. [1,2,3,4,5,6,7]\n\n  if (\n    currentTime >= startTime &&\n    currentTime <= endTime &&\n    daysOfWeek.includes(currentDow)\n  ) {\n    return [{ json: { inWindow: true, timezone: tz, currentTime } }];\n  }\n}\n\n// Outside all dial windows -- return empty to stop workflow\nreturn [];"
+      },
+      "name": "Check Dial Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "returnAll": false,
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "in",
+              "keyValue": "calling,in_call"
+            }
+          ]
+        }
+      },
+      "name": "Check Active Call",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [750, 0],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CRED_ID",
+          "name": "Supabase Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-active-call",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Active Call?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [950, 0]
+    },
+    {
+      "parameters": {},
+      "name": "No-Op Active",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1150, -150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/pick_next_lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "name": "Pick Next Lead (RPC)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1150, 150]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-lead-exists",
+              "leftValue": "={{ $json.body.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1350, 150]
+    },
+    {
+      "parameters": {},
+      "name": "No-Op Empty",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1550, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_BASE_URL }}/retell/initiate-call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.DASHBOARD_SECRET_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_id: $json.body[0].id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "allowUnauthorizedCerts": false,
+          "never_error": true
+        }
+      },
+      "name": "Initiate Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1550, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-success-lower",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "check-success-upper",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 300,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Call Response Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {},
+      "name": "No-Op Success",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1950, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-server-error",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 500,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Is Server Error?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1950, 450]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "matchingColumns": ["id"],
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Pick Next Lead (RPC)').item.json.body[0].id }}",
+            "status": "failed"
+          }
+        }
+      },
+      "name": "Set Failed",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2150, 350],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CRED_ID",
+          "name": "Supabase Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "matchingColumns": ["id"],
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Pick Next Lead (RPC)').item.json.body[0].id }}",
+            "status": "queued"
+          }
+        }
+      },
+      "name": "Revert to Queued",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2150, 550],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CRED_ID",
+          "name": "Supabase Service Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 2 Minutes": {
+      "main": [
+        [
+          { "node": "Get Active Schedules", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get Active Schedules": {
+      "main": [
+        [
+          { "node": "Check Dial Window", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Dial Window": {
+      "main": [
+        [
+          { "node": "Check Active Call", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Active Call": {
+      "main": [
+        [
+          { "node": "Has Active Call?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has Active Call?": {
+      "main": [
+        [
+          { "node": "No-Op Active", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Pick Next Lead (RPC)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pick Next Lead (RPC)": {
+      "main": [
+        [
+          { "node": "Has Lead?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Has Lead?": {
+      "main": [
+        [
+          { "node": "Initiate Call", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "No-Op Empty", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Initiate Call": {
+      "main": [
+        [
+          { "node": "Call Response Check", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Call Response Check": {
+      "main": [
+        [
+          { "node": "No-Op Success", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Is Server Error?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Is Server Error?": {
+      "main": [
+        [
+          { "node": "Set Failed", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Revert to Queued", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
   "active": false,
-  "settings": {},
-  "tags": ["sarah", "auto-dialer"]
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "sarah" },
+    { "name": "auto-dialer" }
+  ]
 }
