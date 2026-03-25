@@ -1,0 +1,192 @@
+"""Shared Retell LLM tool definitions for Sarah.
+
+Single source of truth for custom tool schemas used by create_llm.py
+and update_llm.py. Keeping definitions here ensures they stay in sync.
+"""
+
+
+def build_tool_definitions(webhook_url: str) -> list[dict]:
+    """Return the 3 custom tool definitions for Sarah's Retell LLM.
+
+    Args:
+        webhook_url: Full URL for the tool call webhook
+                     (e.g. https://your-endpoint.com/retell/tool).
+    """
+    return [
+        # --- Tool 1: lookup_programme ---
+        {
+            "type": "custom",
+            "name": "lookup_programme",
+            "description": (
+                "Look up the recommended programme, pricing in the lead's local "
+                "currency, and a matching testimonial. Call this AFTER Gate 1 "
+                "qualification and AFTER confirming the pathway with the lead. "
+                "Example: 'Based on what you've told me, the Advanced DevOps "
+                "pathway sounds like the right fit. Let me pull up the details "
+                "for you.'"
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": True,
+            "execution_message_description": "Let me look that up for you.",
+            "speak_after_execution": True,
+            "timeout_ms": 10000,
+            "parameters": {
+                "type": "object",
+                "required": ["profile", "country"],
+                "properties": {
+                    "profile": {
+                        "type": "string",
+                        "description": (
+                            "Lead's qualification profile from Gate 1. "
+                            "A = no tech background (recommend Zero to Cloud "
+                            "DevOps 16wk), B = some tech or IT adjacent, "
+                            "C = junior cloud/devops experience, X = not a "
+                            "clear fit (recommend Cloud Computing 8wk as default)."
+                        ),
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": (
+                            "Lead's country for currency selection. Determines "
+                            "which currency pricing is returned in. Examples: "
+                            "UK, US, Nigeria, Germany, Canada."
+                        ),
+                    },
+                },
+            },
+        },
+        # --- Tool 2: get_objection_response ---
+        {
+            "type": "custom",
+            "name": "get_objection_response",
+            "description": (
+                "Get response scripts for handling a specific objection. Call "
+                "this EVERY TIME the lead raises an objection. Never try to "
+                "handle objections from memory. The tool returns multi-layer "
+                "response options and cultural nuances for the lead's country."
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": True,
+            "execution_message_description": "That's a fair point.",
+            "speak_after_execution": True,
+            "timeout_ms": 10000,
+            "parameters": {
+                "type": "object",
+                "required": ["objection_type"],
+                "properties": {
+                    "objection_type": {
+                        "type": "string",
+                        "description": (
+                            "The objection category. Common types: "
+                            "price_too_expensive, need_to_check_finances, "
+                            "found_cheaper_alternative, no_time_too_busy, "
+                            "bad_timing, family_commitments, fear_of_failure, "
+                            "not_technical_enough, too_old_career_change, "
+                            "saturated_market, ai_replacing_jobs, "
+                            "no_job_guarantee, prefer_in_person, "
+                            "need_to_ask_spouse, self_study_preference, "
+                            "already_have_skills, never_heard_of_cloudboosta, "
+                            "not_interested, call_me_back_later, "
+                            "send_me_email, want_to_research_more. "
+                            "Pick the closest match."
+                        ),
+                    },
+                },
+            },
+        },
+        # --- Tool 3: log_call_outcome ---
+        {
+            "type": "custom",
+            "name": "log_call_outcome",
+            "description": (
+                "Log the call outcome at the end of EVERY call. This MUST be "
+                "called before ending any call, regardless of outcome. Records "
+                "qualification gate results, strategy used, and a summary for "
+                "the continuous improvement loop."
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": False,
+            "speak_after_execution": False,
+            "timeout_ms": 10000,
+            "parameters": {
+                "type": "object",
+                "required": ["outcome", "summary"],
+                "properties": {
+                    "outcome": {
+                        "type": "string",
+                        "description": (
+                            "Call outcome. COMMITTED = agreed to enrol and "
+                            "payment details will be sent. FOLLOW_UP = interested "
+                            "but needs time, specific follow-up date must be set. "
+                            "DECLINED = said no clearly. NOT_QUALIFIED = not a fit "
+                            "for any programme. NO_ANSWER = voicemail or didn't "
+                            "connect."
+                        ),
+                    },
+                    "programme_recommended": {
+                        "type": "string",
+                        "description": (
+                            "Programme or bundle recommended during the call. "
+                            "E.g. 'Zero to Cloud DevOps (16wk)', "
+                            "'Cloud Computing (8wk)', 'Advanced DevOps (8wk)'."
+                        ),
+                    },
+                    "closing_strategy_used": {
+                        "type": "string",
+                        "description": (
+                            "Primary closing strategy used. One of: "
+                            "doctor_frame, pain_close, inverse_close, "
+                            "nepq_sequence, diffusion, direct_close."
+                        ),
+                    },
+                    "lead_persona": {
+                        "type": "string",
+                        "description": (
+                            "Detected lead persona. One of: career_changer, "
+                            "upskiller, beginner_fearful, experienced_dev, "
+                            "price_sensitive, time_constrained."
+                        ),
+                    },
+                    "motivation_strength": {
+                        "type": "string",
+                        "description": (
+                            "Gate 2 result. One of: strong, weak, none."
+                        ),
+                    },
+                    "capacity_assessment": {
+                        "type": "string",
+                        "description": (
+                            "Gate 3 result. One of: both_clear, time_blocked, "
+                            "budget_blocked, both_blocked."
+                        ),
+                    },
+                    "objections_raised": {
+                        "type": "string",
+                        "description": (
+                            "Comma-separated list of objection types raised "
+                            "during the call. E.g. "
+                            "'price_too_expensive,need_to_check_finances'. "
+                            "Empty string if no objections."
+                        ),
+                    },
+                    "follow_up_date": {
+                        "type": "string",
+                        "description": (
+                            "Scheduled follow-up date if outcome is FOLLOW_UP. "
+                            "ISO format: YYYY-MM-DD. Omit if not applicable."
+                        ),
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": (
+                            "Brief 2-3 sentence summary of the call. What was "
+                            "discussed, lead's situation, and outcome reason."
+                        ),
+                    },
+                },
+            },
+        },
+    ]
