@@ -103,3 +103,51 @@ CREATE TRIGGER trg_log_status_transition
     AFTER UPDATE OF status ON leads
     FOR EACH ROW
     EXECUTE FUNCTION log_status_transition();
+
+
+-- ============================================================================
+-- FUNCTION 3: pick_next_lead() (DATA-06)
+-- Atomic queue-picking RPC for the auto-dialer.
+-- Selects the highest-priority queued lead, locks it with FOR UPDATE
+-- SKIP LOCKED (prevents race conditions), updates status to 'calling',
+-- and returns the lead row.
+--
+-- Called from Python: supabase.rpc("pick_next_lead").execute()
+-- Returns empty set if no queued leads (not an error).
+-- ============================================================================
+
+DROP FUNCTION IF EXISTS pick_next_lead();
+
+CREATE OR REPLACE FUNCTION pick_next_lead()
+RETURNS SETOF leads
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    selected_lead leads%ROWTYPE;
+BEGIN
+    -- Select highest-priority queued lead with row-level lock
+    -- SKIP LOCKED ensures concurrent callers don't block each other
+    SELECT * INTO selected_lead
+    FROM leads
+    WHERE status = 'queued'
+    ORDER BY priority DESC, created_at ASC
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED;
+
+    -- If no queued leads found, return empty set
+    IF selected_lead.id IS NULL THEN
+        RETURN;
+    END IF;
+
+    -- Atomically update status to 'calling'
+    -- This fires the enforce_lead_status_transition trigger (queued->calling is valid)
+    UPDATE leads
+    SET status = 'calling', updated_at = NOW()
+    WHERE id = selected_lead.id;
+
+    -- Return the lead with updated status
+    selected_lead.status := 'calling';
+    selected_lead.updated_at := NOW();
+    RETURN NEXT selected_lead;
+END;
+$$;
