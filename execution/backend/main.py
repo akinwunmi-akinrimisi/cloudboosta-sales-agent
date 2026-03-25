@@ -21,6 +21,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator, validator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from typing import Any, Optional
 
 load_dotenv()
@@ -46,6 +49,13 @@ logger = logging.getLogger("sarah")
 # App
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Sarah — Cloudboosta Sales Agent", version="0.1.0")
+
+# ---------------------------------------------------------------------------
+# Rate limiting (slowapi)
+# ---------------------------------------------------------------------------
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 DASHBOARD_SECRET_KEY = os.environ.get("DASHBOARD_SECRET_KEY", "")
 WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
@@ -231,6 +241,7 @@ async def health():
 
 # ---- Tool calls from Retell ----
 @app.post("/retell/tool")
+@limiter.limit("100/minute")
 async def retell_tool(request: Request):
     body = await verify_retell_signature(request)
     payload = ToolCallPayload(**json.loads(body))
@@ -245,6 +256,7 @@ async def retell_tool(request: Request):
 
 # ---- Webhook lifecycle events ----
 @app.post("/retell/webhook")
+@limiter.limit("100/minute")
 async def retell_webhook(request: Request):
     body = await verify_retell_signature(request)
     payload = WebhookPayload(**json.loads(body))
@@ -370,7 +382,9 @@ async def retell_webhook(request: Request):
 
 # ---- Initiate outbound call ----
 @app.post("/retell/initiate-call")
-async def initiate_call(req: InitiateCallRequest):
+@limiter.limit("1/2minutes")
+@limiter.limit("200/day")
+async def initiate_call(request: Request, req: InitiateCallRequest):
     lead = (
         supabase.table("leads")
         .select("*")
@@ -420,14 +434,16 @@ async def initiate_call(req: InitiateCallRequest):
 
 # ---- Auto-dialer controls ----
 @app.post("/dialer/start")
-async def dialer_start(req: DialerRequest):
+@limiter.limit("10/minute")
+async def dialer_start(request: Request, req: DialerRequest):
     # TODO: Implement dialer start logic (Phase 5)
     logger.info("Dialer start requested")
     return {"status": "dialer_start_acknowledged", "message": "Auto-dialer not yet implemented"}
 
 
 @app.post("/dialer/stop")
-async def dialer_stop():
+@limiter.limit("10/minute")
+async def dialer_stop(request: Request):
     # TODO: Implement dialer stop logic (Phase 5)
     logger.info("Dialer stop requested")
     return {"status": "dialer_stop_acknowledged", "message": "Auto-dialer not yet implemented"}
@@ -435,14 +451,16 @@ async def dialer_stop():
 
 # ---- Dashboard API ----
 @app.get("/api/dashboard/live")
-async def dashboard_live():
+@limiter.limit("60/minute")
+async def dashboard_live(request: Request):
     """Current active call + recent calls for the live view."""
     # TODO: Implement with real Supabase queries (Phase 6)
     return {"active_call": None, "recent_calls": [], "today_stats": {}}
 
 
 @app.get("/api/dashboard/pipeline")
-async def dashboard_pipeline():
+@limiter.limit("60/minute")
+async def dashboard_pipeline(request: Request):
     """Lead counts by status for the pipeline view."""
     result = supabase.table("leads").select("status").execute()
     counts: dict[str, int] = {}
@@ -453,7 +471,8 @@ async def dashboard_pipeline():
 
 
 @app.get("/api/dashboard/strategy")
-async def dashboard_strategy():
+@limiter.limit("60/minute")
+async def dashboard_strategy(request: Request):
     """Strategy performance data for the analytics view."""
     # TODO: Query strategy_performance view (Phase 6)
     return {"strategies": []}
