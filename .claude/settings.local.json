@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(pip install:*)",
+      "Bash(test -f \"$HOME/.gsd/defaults.json\")",
+      "Read(//c/Users/DELL/Documents/Antigravity/cloudboosta-sales-agent/$HOME/.gsd/**)",
+      "WebFetch(domain:docs.retellai.com)",
+      "WebFetch(domain:www.retellai.com)",
+      "WebFetch(domain:blog.bloola.com)",
+      "WebFetch(domain:www.ceval.dev)",
+      "WebFetch(domain:www.coval.dev)",
+      "WebFetch(domain:www.lindy.ai)",
+      "WebFetch(domain:www.cekura.ai)",
+      "WebFetch(domain:www.agentvoice.com)",
+      "WebFetch(domain:dialshark.ai)"
+    ]
+  }
+}
