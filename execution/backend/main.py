@@ -17,9 +17,10 @@ import time as time_mod
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator, validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -59,14 +60,34 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 DASHBOARD_SECRET_KEY = os.environ.get("DASHBOARD_SECRET_KEY", "")
 WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
+DASHBOARD_ORIGIN = os.environ.get("DASHBOARD_ORIGIN", "http://localhost:5173")
 
-# CORS — restrict in production
+# ---------------------------------------------------------------------------
+# Bearer token authentication
+# ---------------------------------------------------------------------------
+bearer_scheme = HTTPBearer(auto_error=True)
+
+
+async def verify_bearer_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> str:
+    """Validate bearer token matches DASHBOARD_SECRET_KEY."""
+    if not DASHBOARD_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Server misconfigured: no dashboard secret key")
+    if credentials.credentials != DASHBOARD_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return credentials.credentials
+
+
+# ---------------------------------------------------------------------------
+# CORS — restricted to dashboard origin
+# ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        DASHBOARD_ORIGIN,
         "http://localhost:3000",
         "http://localhost:5173",
-        # TODO: Add production dashboard domain
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
@@ -384,7 +405,7 @@ async def retell_webhook(request: Request):
 @app.post("/retell/initiate-call")
 @limiter.limit("1/2minutes")
 @limiter.limit("200/day")
-async def initiate_call(request: Request, req: InitiateCallRequest):
+async def initiate_call(request: Request, req: InitiateCallRequest, _token: str = Depends(verify_bearer_token)):
     lead = (
         supabase.table("leads")
         .select("*")
@@ -452,7 +473,7 @@ async def dialer_stop(request: Request):
 # ---- Dashboard API ----
 @app.get("/api/dashboard/live")
 @limiter.limit("60/minute")
-async def dashboard_live(request: Request):
+async def dashboard_live(request: Request, _token: str = Depends(verify_bearer_token)):
     """Current active call + recent calls for the live view."""
     # TODO: Implement with real Supabase queries (Phase 6)
     return {"active_call": None, "recent_calls": [], "today_stats": {}}
@@ -460,7 +481,7 @@ async def dashboard_live(request: Request):
 
 @app.get("/api/dashboard/pipeline")
 @limiter.limit("60/minute")
-async def dashboard_pipeline(request: Request):
+async def dashboard_pipeline(request: Request, _token: str = Depends(verify_bearer_token)):
     """Lead counts by status for the pipeline view."""
     result = supabase.table("leads").select("status").execute()
     counts: dict[str, int] = {}
@@ -472,7 +493,7 @@ async def dashboard_pipeline(request: Request):
 
 @app.get("/api/dashboard/strategy")
 @limiter.limit("60/minute")
-async def dashboard_strategy(request: Request):
+async def dashboard_strategy(request: Request, _token: str = Depends(verify_bearer_token)):
     """Strategy performance data for the analytics view."""
     # TODO: Query strategy_performance view (Phase 6)
     return {"strategies": []}
