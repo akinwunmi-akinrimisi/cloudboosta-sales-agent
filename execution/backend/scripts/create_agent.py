@@ -87,7 +87,6 @@ def main() -> None:
             },
             # Webhook
             webhook_url=webhook_base_url.rstrip("/") + "/retell/webhook",
-            webhook_events=["call_started", "call_ended", "call_analyzed"],
             # Audio processing
             denoising_mode="noise-cancellation",
             normalize_for_speech=True,

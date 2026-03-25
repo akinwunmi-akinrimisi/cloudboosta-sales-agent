@@ -1,9 +1,9 @@
-"""One-time migration: Update phone number +17404943597 to weighted agents format.
+"""Assign phone number +17404943597 to Sarah's Retell agent.
 
-DEADLINE: March 31, 2026 -- deprecated fields stop working after this date.
+Uses retell-sdk 5.x API: outbound_agent_id / inbound_agent_id (single agent).
 
 Usage:
-  python migrate_phone_number.py           # Run migration
+  python migrate_phone_number.py           # Run assignment
   python migrate_phone_number.py --verify  # Check current config only
 
 Requires: RETELL_API_KEY, RETELL_AGENT_ID in .env
@@ -25,10 +25,12 @@ def verify_phone_number():
     """Fetch and display current phone number configuration."""
     print(f"\n--- Verifying phone number {PHONE_NUMBER} ---\n")
     try:
-        phone = retell_client.phone_number.get(phone_number=PHONE_NUMBER)
-        print(f"Phone number:    {phone.phone_number}")
-        print(f"Outbound agents: {phone.outbound_agents}")
-        print(f"Inbound agents:  {phone.inbound_agents}")
+        phone = retell_client.phone_number.retrieve(phone_number=PHONE_NUMBER)
+        print(f"Phone number:       {phone.phone_number}")
+        outbound = getattr(phone, "outbound_agent_id", None)
+        inbound = getattr(phone, "inbound_agent_id", None)
+        print(f"Outbound agent ID:  {outbound}")
+        print(f"Inbound agent ID:   {inbound}")
         return phone
     except Exception as e:
         _handle_api_error(e, context="verify")
@@ -36,7 +38,7 @@ def verify_phone_number():
 
 
 def migrate_phone_number():
-    """Update phone number to weighted agents format."""
+    """Assign phone number to agent using retell-sdk 5.x API."""
     agent_id = os.environ.get("RETELL_AGENT_ID")
     if not agent_id:
         print("ERROR: RETELL_AGENT_ID environment variable is not set.")
@@ -44,25 +46,27 @@ def migrate_phone_number():
         print("  export RETELL_AGENT_ID=your_agent_id_here")
         sys.exit(1)
 
-    print(f"\n--- Migrating phone number {PHONE_NUMBER} ---")
+    print(f"\n--- Assigning phone number {PHONE_NUMBER} ---")
     print(f"Agent ID: {agent_id}")
-    print(f"Weight:   1.0 (single agent)\n")
+    print(f"Mode:     outbound_agent_id + inbound_agent_id (sdk 5.x)\n")
 
     try:
         result = retell_client.phone_number.update(
             phone_number=PHONE_NUMBER,
-            outbound_agents=[{"agent_id": agent_id, "weight": 1.0}],
-            inbound_agents=[{"agent_id": agent_id, "weight": 1.0}],
+            outbound_agent_id=agent_id,
+            inbound_agent_id=agent_id,
         )
-        print("Migration successful!")
-        print(f"Phone number:    {result.phone_number}")
-        print(f"Outbound agents: {result.outbound_agents}")
-        print(f"Inbound agents:  {result.inbound_agents}")
+        print("Assignment successful!")
+        print(f"Phone number:       {result.phone_number}")
+        outbound = getattr(result, "outbound_agent_id", None)
+        inbound = getattr(result, "inbound_agent_id", None)
+        print(f"Outbound agent ID:  {outbound}")
+        print(f"Inbound agent ID:   {inbound}")
     except Exception as e:
         _handle_api_error(e, context="migrate")
         sys.exit(1)
 
-    # Verify the migration by re-fetching
+    # Verify the assignment by re-fetching
     print("\n--- Verification (re-fetch) ---")
     verify_phone_number()
 

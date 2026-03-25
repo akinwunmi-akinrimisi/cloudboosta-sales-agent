@@ -116,7 +116,10 @@ def check_voicemail(agent) -> bool:
 
 
 def check_phone(client, agent_id: str) -> bool:
-    """Check phone number +17404943597 has agent in outbound and inbound agents."""
+    """Check phone number +17404943597 has agent as outbound and inbound agent.
+
+    Supports retell-sdk 5.x (outbound_agent_id / inbound_agent_id).
+    """
     passed = True
 
     phone_number = os.environ.get("RETELL_PHONE_NUMBER", "+17404943597")
@@ -127,34 +130,20 @@ def check_phone(client, agent_id: str) -> bool:
         print(f"  FAIL: Could not retrieve phone number '{phone_number}': {e}")
         return False
 
-    # Check outbound_agents
-    outbound = getattr(phone, "outbound_agents", None) or []
-    outbound_bound = False
-    for entry in outbound:
-        eid = entry.get("agent_id") if isinstance(entry, dict) else getattr(entry, "agent_id", None)
-        if eid == agent_id:
-            outbound_bound = True
-            break
-
-    if outbound_bound:
-        print(f"  PASS: Agent {agent_id} in outbound_agents for {phone_number}")
+    # Check outbound agent (sdk 5.x: outbound_agent_id)
+    outbound_id = getattr(phone, "outbound_agent_id", None)
+    if outbound_id == agent_id:
+        print(f"  PASS: outbound_agent_id = {agent_id} for {phone_number}")
     else:
-        print(f"  FAIL: Agent {agent_id} not in outbound_agents for {phone_number}")
+        print(f"  FAIL: outbound_agent_id is '{outbound_id}', expected '{agent_id}' for {phone_number}")
         passed = False
 
-    # Check inbound_agents
-    inbound = getattr(phone, "inbound_agents", None) or []
-    inbound_bound = False
-    for entry in inbound:
-        eid = entry.get("agent_id") if isinstance(entry, dict) else getattr(entry, "agent_id", None)
-        if eid == agent_id:
-            inbound_bound = True
-            break
-
-    if inbound_bound:
-        print(f"  PASS: Agent {agent_id} in inbound_agents for {phone_number}")
+    # Check inbound agent (sdk 5.x: inbound_agent_id)
+    inbound_id = getattr(phone, "inbound_agent_id", None)
+    if inbound_id == agent_id:
+        print(f"  PASS: inbound_agent_id = {agent_id} for {phone_number}")
     else:
-        print(f"  FAIL: Agent {agent_id} not in inbound_agents for {phone_number}")
+        print(f"  FAIL: inbound_agent_id is '{inbound_id}', expected '{agent_id}' for {phone_number}")
         passed = False
 
     return passed
