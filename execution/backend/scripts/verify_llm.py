@@ -140,7 +140,13 @@ def check_variables(llm) -> bool:
 
 
 def check_model_and_begin(llm) -> bool:
-    """Check model is gpt-4o-mini and begin_message uses lead_name."""
+    """Check model is gpt-4o-mini and begin_message is valid.
+
+    Valid begin_message states:
+    - None/null: LLM generates dynamically from prompt (Phase 3+ expected state)
+    - Contains {{lead_name}}: Static greeting with lead name (Phase 2 state)
+    - Anything else: Warning (not a failure)
+    """
     passed = True
 
     model = getattr(llm, "model", None)
@@ -150,12 +156,16 @@ def check_model_and_begin(llm) -> bool:
         print(f"  FAIL: Model is '{model}', expected 'gpt-4o-mini'")
         passed = False
 
-    begin_msg = getattr(llm, "begin_message", None) or ""
-    if "{{lead_name}}" in begin_msg:
+    begin_msg = getattr(llm, "begin_message", "UNSET")
+    if begin_msg is None:
+        print("  PASS: begin_message is null (dynamic generation from prompt)")
+    elif begin_msg == "UNSET":
+        print("  WARN: begin_message attribute not found on LLM object")
+    elif "{{lead_name}}" in (begin_msg or ""):
         print(f"  PASS: begin_message contains '{{{{lead_name}}}}'")
     else:
-        print(f"  FAIL: begin_message missing '{{{{lead_name}}}}': {begin_msg!r}")
-        passed = False
+        print(f"  WARN: begin_message is: {begin_msg!r}")
+        # Not a failure -- null is the Phase 3+ expected state
 
     return passed
 

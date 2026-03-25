@@ -36,6 +36,11 @@ def main() -> None:
         action="store_true",
         help="Only update the system prompt (skip tools)",
     )
+    parser.add_argument(
+        "--null-begin-message",
+        action="store_true",
+        help="Set begin_message to null (LLM generates dynamically from prompt)",
+    )
     args = parser.parse_args()
 
     # Load environment
@@ -90,6 +95,10 @@ def main() -> None:
         update_kwargs["model"] = "gpt-4o-mini"
         update_kwargs["model_temperature"] = 0.3
         update_kwargs["tool_call_strict_mode"] = True
+
+    # Override begin_message to null if requested (LLM generates dynamically)
+    if args.null_begin_message:
+        update_kwargs["begin_message"] = None
 
     try:
         llm = client.llm.update(llm_id, **update_kwargs)
