@@ -14,6 +14,7 @@ import logging
 import os
 import re
 import time as time_mod
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
@@ -168,6 +169,58 @@ def is_safe_destination(phone: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Disconnect reason to lead status mapping
+# ---------------------------------------------------------------------------
+# Maps Retell's 31 disconnect_reason values to lead status strings.
+# None means "check if tool already set status" (connected calls where
+# log_call_outcome may have already updated the lead).
+DISCONNECT_TO_STATUS: dict[str, str | None] = {
+    # Never connected -- dial failures
+    "dial_no_answer": "no_answer",
+    "dial_busy": "busy",
+    "dial_failed": "failed",
+    "invalid_destination": "failed",
+
+    # Connected but reached automation
+    "voicemail_reached": "voicemail",
+    "ivr_reached": "voicemail",  # Treat IVR same as voicemail for retry
+
+    # Connected -- human interaction (status set by tool, not webhook)
+    "user_hangup": None,         # Check if tool already set status
+    "agent_hangup": None,        # Check if tool already set status
+    "inactivity": None,          # Lead went silent
+
+    # Errors
+    "error_retell": "failed",
+    "error_unknown": "failed",
+    "error_llm_websocket_open": "failed",
+    "error_llm_websocket_lost_connection": "failed",
+    "error_llm_websocket_runtime": "failed",
+    "error_no_audio_received": "failed",
+
+    # System limits
+    "max_duration_reached": None,  # Check if tool set status
+    "concurrency_limit_reached": "failed",
+    "no_valid_payment": "failed",
+    "scam_detected": "failed",
+    "marked_as_spam": "failed",
+    "telephony_provider_permission_denied": "failed",
+    "telephony_provider_unavailable": "failed",
+    "sip_routing_error": "failed",
+    "user_declined": "failed",   # User rejected the call
+
+    # Shouldn't happen for outbound
+    "call_transfer": None,
+    "transfer_bridged": None,
+    "transfer_cancelled": None,
+    "registered_call_timeout": "failed",
+    "error_user_not_joined": "failed",
+    "error_asr": "failed",
+    "error_llm_websocket_corrupt_payload": "failed",
+}
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
@@ -203,16 +256,114 @@ async def retell_webhook(request: Request):
     logger.info("Webhook event: %s for call %s", event, call_id)
 
     if event == "call_started":
-        # TODO: Update lead status to in_call
-        pass
+        try:
+            lead_id = call_data.get("metadata", {}).get("lead_id")
+            if lead_id:
+                supabase.table("leads").update({
+                    "status": "in_call",
+                    "last_call_at": datetime.now(timezone.utc).isoformat(),
+                    "last_call_id": call_id,
+                }).eq("id", lead_id).eq("status", "calling").execute()
+                logger.info("call_started: lead %s -> in_call", lead_id)
+            else:
+                logger.warning("call_started: no lead_id in metadata for call %s", call_id)
+        except Exception as exc:
+            logger.error("call_started DB error for call %s: %s", call_id, exc, exc_info=True)
 
     elif event == "call_ended":
-        # TODO: Extract transcript, duration, recording; update lead + call_logs
-        pass
+        try:
+            lead_id = call_data.get("metadata", {}).get("lead_id")
+            duration_ms = call_data.get("duration_ms")
+            duration_seconds = (duration_ms or 0) / 1000
+            recording_url = call_data.get("recording_url")
+            transcript = call_data.get("transcript")
+            from_number = call_data.get("from_number")
+            to_number = call_data.get("to_number")
+            disconnection_reason = call_data.get("disconnection_reason")
+            ended_at = datetime.now(timezone.utc).isoformat()
+
+            # UPSERT call_logs -- update if log_call_outcome tool already created the row,
+            # insert if not (e.g. call dropped before tool fired)
+            upsert_data = {
+                "retell_call_id": call_id,
+                "lead_id": lead_id,
+                "duration_seconds": duration_seconds,
+                "recording_url": recording_url,
+                "transcript": transcript,
+                "ended_at": ended_at,
+                "from_number": from_number,
+                "to_number": to_number,
+                "disconnection_reason": disconnection_reason,
+            }
+            supabase.table("call_logs").upsert(
+                upsert_data, on_conflict="retell_call_id"
+            ).execute()
+            logger.info(
+                "call_ended: upserted call_logs for call %s (reason=%s)",
+                call_id, disconnection_reason,
+            )
+
+            # Resolve lead status from disconnect reason
+            if lead_id and disconnection_reason:
+                mapped_status = DISCONNECT_TO_STATUS.get(disconnection_reason)
+                if mapped_status is not None:
+                    # Dial failure or error -- set lead status directly
+                    supabase.table("leads").update({
+                        "status": mapped_status,
+                    }).eq("id", lead_id).execute()
+                    logger.info(
+                        "call_ended: lead %s -> %s (reason=%s)",
+                        lead_id, mapped_status, disconnection_reason,
+                    )
+                else:
+                    # Connected call -- check if tool already set outcome
+                    call_row = (
+                        supabase.table("call_logs")
+                        .select("outcome")
+                        .eq("retell_call_id", call_id)
+                        .limit(1)
+                        .execute()
+                    )
+                    has_outcome = (
+                        call_row.data
+                        and call_row.data[0].get("outcome")
+                    )
+                    if not has_outcome:
+                        # No tool outcome -- check if lead is still in_call
+                        lead_row = (
+                            supabase.table("leads")
+                            .select("status")
+                            .eq("id", lead_id)
+                            .limit(1)
+                            .execute()
+                        )
+                        if lead_row.data and lead_row.data[0].get("status") == "in_call":
+                            supabase.table("leads").update({
+                                "status": "declined",
+                            }).eq("id", lead_id).eq("status", "in_call").execute()
+                            logger.info(
+                                "call_ended: lead %s -> declined (no tool outcome, reason=%s)",
+                                lead_id, disconnection_reason,
+                            )
+        except Exception as exc:
+            logger.error("call_ended DB error for call %s: %s", call_id, exc, exc_info=True)
 
     elif event == "call_analyzed":
-        # TODO: Store call analysis data
-        pass
+        try:
+            call_analysis = call_data.get("call_analysis", {})
+            if call_analysis:
+                call_summary = call_analysis.get("call_summary")
+                user_sentiment = call_analysis.get("user_sentiment")
+
+                supabase.table("call_logs").update({
+                    "call_summary": call_summary,
+                    "sentiment": user_sentiment,
+                }).eq("retell_call_id", call_id).execute()
+                logger.info("call_analyzed: updated analysis for call %s", call_id)
+            else:
+                logger.warning("call_analyzed: empty call_analysis for call %s", call_id)
+        except Exception as exc:
+            logger.error("call_analyzed DB error for call %s: %s", call_id, exc, exc_info=True)
 
     return {"status": "ok"}
 
