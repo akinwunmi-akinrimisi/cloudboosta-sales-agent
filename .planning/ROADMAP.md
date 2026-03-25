@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. pick_next_lead() RPC atomically selects and locks the highest-priority queued lead
   4. Phone number +1 (740) 494-3597 is configured on Retell using weighted agents array (not deprecated inbound_agent_id/outbound_agent_id)
   5. retell-sdk 5.8.0 is installed and basic API calls (list agents, get phone number) succeed
-**Plans:** 3/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md -- Supabase tables (4 core + 3 reference), indexes, RLS policies, trigger functions
@@ -173,7 +173,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + SDK Migration | 3/3 | Complete | 2026-03-25 |
+| 1. Foundation + SDK Migration | 3/3 | Complete    | 2026-03-25 |
 | 2. Retell LLM Configuration | 0/2 | Not started | - |
 | 3. Voice Agent Creation | 0/1 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |
