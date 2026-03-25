@@ -34,12 +34,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. pick_next_lead() RPC atomically selects and locks the highest-priority queued lead
   4. Phone number +1 (740) 494-3597 is configured on Retell using weighted agents array (not deprecated inbound_agent_id/outbound_agent_id)
   5. retell-sdk 5.8.0 is installed and basic API calls (list agents, get phone number) succeed
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Supabase schema and RLS policies
-- [ ] 01-02: SQL views and pick_next_lead() RPC function
-- [ ] 01-03: retell-sdk 5.x upgrade and phone number weighted agents migration
+- [ ] 01-01-PLAN.md -- Supabase tables (4 core + 3 reference), indexes, RLS policies, trigger functions
+- [ ] 01-02-PLAN.md -- SQL views, pick_next_lead() RPC, seed data (programmes, pricing, objections, test leads), test script
+- [ ] 01-03-PLAN.md -- retell-sdk 5.x upgrade, main.py SDK migration, phone number weighted agents migration script
 
 ### Phase 2: Retell LLM Configuration
 **Goal**: Sarah's brain is configured on Retell with her full sales personality, qualification flow, and tool definitions
@@ -173,7 +173,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + SDK Migration | 0/3 | Not started | - |
+| 1. Foundation + SDK Migration | 0/3 | Planning complete | - |
 | 2. Retell LLM Configuration | 0/2 | Not started | - |
 | 3. Voice Agent Creation | 0/1 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |
