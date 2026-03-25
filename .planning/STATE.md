@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 07-02-PLAN.md (CSV lead import workflow)
-last_updated: "2026-03-25T18:09:37.775Z"
-last_activity: 2026-03-25 -- Completed plan 07-02 (CSV lead import workflow)
+stopped_at: Completed 07-01-PLAN.md (post-call handler)
+last_updated: "2026-03-25T18:10:37Z"
+last_activity: 2026-03-25 -- Completed plan 07-01 (post-call handler workflow)
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 94
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls -- no human intervention required during the call, no pre-contact needed.
-**Current focus:** Phase 7 in progress -- Post-Call Workflows (07-02 done, 07-01 pending).
+**Current focus:** Phase 7 complete -- Post-Call Workflows (2/2 plans done). Phase 8 next.
 
 ## Current Position
 
-Phase: 7 of 9 (Post-Call Workflows) -- IN PROGRESS
-Plan: 2 of 2 in current phase (1 complete: 07-02)
-Status: Plan 07-02 (CSV lead import workflow) complete. Plan 07-01 (post-call handler) still pending.
-Last activity: 2026-03-25 -- Completed plan 07-02 (CSV lead import workflow)
+Phase: 7 of 9 (Post-Call Workflows) -- COMPLETE
+Plan: 2 of 2 in current phase (2 complete)
+Status: Phase 7 complete. Phase 8 (Dashboard) ready for planning.
+Last activity: 2026-03-25 -- Completed plan 07-01 (post-call handler workflow)
 
 Progress: [█████████░] 94%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
+- Total plans completed: 16
 - Average duration: 5.1min
-- Total execution time: 76 min
+- Total execution time: 82 min
 
 **By Phase:**
 
@@ -58,10 +58,11 @@ Progress: [█████████░] 94%
 | 06 | P01 | 4min | 2 | 2 |
 | 06 | P02 | 10min | 2 | 1 |
 | 07 | P02 | 2min | 1 | 1 |
+| 07 | P01 | 6min | 2 | 4 |
 
 **Recent Trend:**
-- Last 5 plans: 05-02 (5min), 06-01 (4min), 06-02 (10min), 07-02 (2min)
-- Trend: fast (07-02 single-task n8n workflow)
+- Last 5 plans: 06-01 (4min), 06-02 (10min), 07-02 (2min), 07-01 (6min)
+- Trend: stable (consistent execution speed)
 
 *Updated after each plan completion*
 
@@ -117,6 +118,11 @@ Recent decisions affecting current work:
 - [Phase 06]: Supabase credentials need manual re-linking in n8n UI after import (placeholder IDs used in JSON)
 - [Phase 07]: PostgREST Prefer: resolution=ignore-duplicates header for DB-level dedup in bulk lead import (preferred over per-row insert)
 - [Phase 07]: extractFromFile node (not deprecated Spreadsheet File) for CSV parsing in n8n
+- [Phase 07]: MailerSend HTTP Request nodes for transactional email (MailerLite node only manages subscribers)
+- [Phase 07]: MAILERLITE_API_KEY env var name preserved per CONTEXT.md despite holding a MailerSend token
+- [Phase 07]: Post-call trigger fires only for connected calls with tool outcomes (not no_answer/voicemail/busy retries)
+- [Phase 07]: resend==2.5.1 removed from requirements.txt -- all email sending via n8n/MailerSend
+- [Phase 07]: n8n post-call-handler workflow imported inactive -- activation deferred to Phase 9
 
 ### Pending Todos
 
@@ -131,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T18:09:37.761Z
-Stopped at: Completed 07-02-PLAN.md (CSV lead import workflow)
-Resume file: None
+Last session: 2026-03-25T18:10:37Z
+Stopped at: Completed 07-01-PLAN.md (post-call handler)
+Resume file: .planning/phases/07-post-call-workflows/07-01-SUMMARY.md
