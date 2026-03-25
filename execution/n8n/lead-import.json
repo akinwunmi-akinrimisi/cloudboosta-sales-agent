@@ -1,9 +1,129 @@
 {
-  "_comment": "n8n workflow: Lead Import — Placeholder for Phase 5.3",
-  "name": "Lead Import",
-  "nodes": [],
-  "connections": {},
+  "name": "Sarah Lead Import",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-import",
+        "responseMode": "lastNode",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "name": "CSV Import Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "lead-import-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and prepare CSV rows for Supabase insert\n// E.164 regex matches database CHECK constraint on leads.phone\nconst E164_REGEX = /^\\+[1-9]\\d{6,14}$/;\nconst valid = [];\nconst errors = [];\nconst seenPhones = new Set(); // In-batch dedup\n\nfor (let i = 0; i < $input.all().length; i++) {\n  const row = $input.all()[i].json;\n  const rowNum = i + 2; // +2 for 1-indexed + header row\n  const phone = (row.phone || '').trim();\n  const name = (row.name || '').trim();\n\n  if (!phone) {\n    errors.push({ row: rowNum, reason: 'Missing phone' });\n    continue;\n  }\n  if (!E164_REGEX.test(phone)) {\n    errors.push({ row: rowNum, reason: `Invalid E.164 phone: ${phone}` });\n    continue;\n  }\n  if (!name) {\n    errors.push({ row: rowNum, reason: 'Missing name' });\n    continue;\n  }\n  if (seenPhones.has(phone)) {\n    errors.push({ row: rowNum, reason: `Duplicate phone in CSV: ${phone}` });\n    continue;\n  }\n  seenPhones.add(phone);\n\n  valid.push({\n    phone,\n    name,\n    email: (row.email || '').trim() || null,\n    location: (row.location || '').trim() || null,\n    country: (row.country || '').trim() || null,\n    status: 'new',\n    source: 'csv_import'\n  });\n}\n\n// Return one item with the full batch\n// For >1000 rows, consider SplitInBatches upstream\nreturn [{ json: { valid, errors, totalRows: $input.all().length } }];"
+      },
+      "name": "Validate and Prepare Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=ignore-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.valid) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "name": "Insert Leads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 0],
+      "notes": "Uses PostgREST Prefer: resolution=ignore-duplicates header for bulk dedup.\nThe leads.phone UNIQUE constraint causes duplicates to be silently skipped.\nAlternative: If Prefer header is unavailable, use a Code node to POST each row\nindividually via fetch() and catch 409 Conflict responses."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build import summary from Supabase response and validation results\nconst insertResult = $json;\nconst validationData = $('Validate and Prepare Rows').item.json;\nconst insertedRows = Array.isArray(insertResult.body) ? insertResult.body : [];\nconst validCount = validationData.valid ? validationData.valid.length : 0;\nconst imported = insertedRows.length;\nconst dbSkipped = validCount - imported;\nconst validationErrors = validationData.errors || [];\n\nreturn [{\n  json: {\n    imported,\n    skipped: validationErrors.length + dbSkipped,\n    validation_errors: validationErrors,\n    db_duplicates_skipped: dbSkipped,\n    total_rows: validationData.totalRows || 0\n  }\n}];"
+      },
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 0]
+    }
+  ],
+  "connections": {
+    "CSV Import Webhook": {
+      "main": [
+        [
+          { "node": "Parse CSV", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          { "node": "Validate and Prepare Rows", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Validate and Prepare Rows": {
+      "main": [
+        [
+          { "node": "Insert Leads", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Insert Leads": {
+      "main": [
+        [
+          { "node": "Build Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
   "active": false,
-  "settings": {},
-  "tags": ["sarah", "lead-import"]
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "sarah" },
+    { "name": "lead-import" }
+  ]
 }
