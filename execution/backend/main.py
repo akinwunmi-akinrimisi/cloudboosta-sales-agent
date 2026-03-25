@@ -383,6 +383,10 @@ async def initiate_call(req: InitiateCallRequest):
 
     lead_data = lead.data
 
+    # Active call guard -- prevent concurrent calls
+    if await is_call_active():
+        raise HTTPException(status_code=409, detail="Another call is already active")
+
     # Safety checks
     if lead_data["status"] in ("do_not_contact", "declined"):
         raise HTTPException(status_code=403, detail="Lead is do-not-contact or declined")
