@@ -49,8 +49,8 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [ ] **AUTO-02**: Post-call handler n8n workflow routing outcomes: COMMITTED -> payment email, FOLLOW_UP -> reschedule, DECLINED -> log
 - [ ] **AUTO-03**: Lead import n8n workflow accepting CSV with E.164 phone validation and deduplication
 - [ ] **AUTO-04**: Payment email via Resend API with bank transfer details (Revolut + GTBank) on COMMITTED outcome
-- [ ] **AUTO-05**: Retry logic: max 2 retries per lead with 60-minute backoff delay, requeue to 'queued' status
-- [ ] **AUTO-06**: Do-not-contact enforcement: hard block in dialer for leads with status 'do_not_contact' or 'declined'
+- [x] **AUTO-05**: Retry logic: max 2 retries per lead with 60-minute backoff delay, requeue to 'queued' status
+- [x] **AUTO-06**: Do-not-contact enforcement: hard block in dialer for leads with status 'do_not_contact' or 'declined'
 
 ### Dashboard
 
@@ -139,8 +139,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTO-02 | Phase 7: Post-Call Workflows | Pending |
 | AUTO-03 | Phase 7: Post-Call Workflows | Pending |
 | AUTO-04 | Phase 7: Post-Call Workflows | Pending |
-| AUTO-05 | Phase 6: Auto-Dialer + Retry Logic | Pending |
-| AUTO-06 | Phase 6: Auto-Dialer + Retry Logic | Pending |
+| AUTO-05 | Phase 6: Auto-Dialer + Retry Logic | Complete |
+| AUTO-06 | Phase 6: Auto-Dialer + Retry Logic | Complete |
 | DASH-01 | Phase 8: Dashboard | Pending |
 | DASH-02 | Phase 8: Dashboard | Pending |
 | DASH-03 | Phase 8: Dashboard | Pending |
