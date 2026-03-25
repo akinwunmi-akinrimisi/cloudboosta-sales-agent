@@ -49,11 +49,11 @@ Plans:
   1. Retell LLM exists with system prompt under 8K tokens containing qualification gates, 8-stage conversation flow, and 6 closing strategies
   2. All 3 custom tools (lookup_programme, get_objection_response, log_call_outcome) are registered on the LLM with correct webhook URLs and parameter schemas
   3. Dynamic variables (lead_name, lead_location) are defined in the LLM configuration and referenced in the system prompt
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: System prompt authoring (under 8K tokens)
-- [ ] 02-02: Tool definitions and webhook URL registration on Retell LLM
+- [ ] 02-01-PLAN.md -- System prompt authoring with personality, qualification gates, closing strategies, and token counting utility
+- [ ] 02-02-PLAN.md -- LLM creation script with 3 tool definitions, dynamic variables, and verification scripts
 
 ### Phase 3: Voice Agent Creation
 **Goal**: Sarah exists as a callable voice agent with natural British speech and her phone number assigned
