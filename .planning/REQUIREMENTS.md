@@ -10,10 +10,10 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 ### Voice Platform
 
 - [x] **VOICE-01**: Retell LLM configured with Sarah's system prompt (under 8K tokens) including qualification gates and 6 closing strategies
-- [ ] **VOICE-02**: 3 custom tool definitions (lookup_programme, get_objection_response, log_call_outcome) registered on Retell LLM with webhook URLs
+- [x] **VOICE-02**: 3 custom tool definitions (lookup_programme, get_objection_response, log_call_outcome) registered on Retell LLM with webhook URLs
 - [ ] **VOICE-03**: Voice agent created with British female voice, backchannel enabled (frequency 0.8)
 - [x] **VOICE-04**: Phone number +1 (740) 494-3597 assigned to agent using weighted agents format (not deprecated fields)
-- [ ] **VOICE-05**: Dynamic voice variables (lead_name, lead_location) injected per outbound call via retell_llm_dynamic_variables
+- [x] **VOICE-05**: Dynamic voice variables (lead_name, lead_location) injected per outbound call via retell_llm_dynamic_variables
 
 ### Tools
 

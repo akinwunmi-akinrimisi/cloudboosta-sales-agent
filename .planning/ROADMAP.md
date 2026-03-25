@@ -13,7 +13,7 @@ Sarah goes from zero to 10 real cold calls in 8 phases. Phase 1 addresses the ha
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation + SDK Migration** - Supabase schema, retell-sdk 5.x upgrade, and phone number weighted agents migration (DEADLINE: March 31)
-- [ ] **Phase 2: Retell LLM Configuration** - System prompt with qualification gates, 6 closing strategies, 3 tool definitions, and dynamic variables
+- [x] **Phase 2: Retell LLM Configuration** - System prompt with qualification gates, 6 closing strategies, 3 tool definitions, and dynamic variables
 - [ ] **Phase 3: Voice Agent Creation** - British female voice agent with backchannel, assigned to migrated phone number
 - [ ] **Phase 4: Tool Execution Backend** - FastAPI tool call router with 3 handlers, fallback responses, and speak-during-execution
 - [ ] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting
@@ -49,11 +49,11 @@ Plans:
   1. Retell LLM exists with system prompt under 8K tokens containing qualification gates, 8-stage conversation flow, and 6 closing strategies
   2. All 3 custom tools (lookup_programme, get_objection_response, log_call_outcome) are registered on the LLM with correct webhook URLs and parameter schemas
   3. Dynamic variables (lead_name, lead_location) are defined in the LLM configuration and referenced in the system prompt
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md -- System prompt authoring with personality, qualification gates, closing strategies, and token counting utility
-- [ ] 02-02-PLAN.md -- LLM creation script with 3 tool definitions, dynamic variables, and verification scripts
+- [x] 02-02-PLAN.md -- LLM creation script with 3 tool definitions, dynamic variables, and verification scripts
 
 ### Phase 3: Voice Agent Creation
 **Goal**: Sarah exists as a callable voice agent with natural British speech and her phone number assigned
@@ -174,7 +174,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + SDK Migration | 3/3 | Complete    | 2026-03-25 |
-| 2. Retell LLM Configuration | 1/2 | In progress | - |
+| 2. Retell LLM Configuration | 2/2 | Complete    | 2026-03-25 |
 | 3. Voice Agent Creation | 0/1 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |
 | 5. Webhook Backend + Security | 0/2 | Not started | - |
