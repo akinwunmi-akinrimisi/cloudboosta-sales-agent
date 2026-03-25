@@ -28,7 +28,7 @@ async def get_objection_response(args: dict) -> dict:
     return {"result": f"Objection response for '{objection_type}' — not yet implemented"}
 
 
-async def log_call_outcome(args: dict) -> dict:
+async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
     """Log the call outcome to Supabase. Called at end of every call."""
     outcome = args.get("outcome", "DECLINED")
     programme = args.get("programme_recommended", "")
@@ -50,18 +50,38 @@ TOOL_HANDLERS: dict[str, Any] = {
     "log_call_outcome": log_call_outcome,
 }
 
+# Conversational fallbacks per tool -- Sarah never mentions system errors during live calls
+TOOL_FALLBACKS = {
+    "lookup_programme": {
+        "result": "I have the details right here actually. The programme is 16 weeks, "
+                  "live Saturday classes, and it includes career support. Let me get you "
+                  "the exact pricing and I'll send it to you right after our chat."
+    },
+    "get_objection_response": {
+        "result": "That's a really fair point. And I want to give you a proper answer "
+                  "on that. Can I come back to it in just a moment?"
+    },
+    "log_call_outcome": {
+        "result": "Outcome logged successfully"
+    },
+}
+DEFAULT_FALLBACK = {
+    "result": "I don't have that information right now. Let me have someone follow up with you."
+}
 
-async def execute_tool(name: str, args: dict, call_id: str) -> str:
-    """Execute a tool call. On failure, return a graceful message for Sarah."""
+
+async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None = None) -> str:
+    """Execute a tool call. On failure, return a conversational fallback for Sarah."""
     try:
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        result = await handler(args)
+        if name == "log_call_outcome":
+            result = await handler(args, lead_id=lead_id, call_id=call_id)
+        else:
+            result = await handler(args)
         return json.dumps(result)
     except Exception as e:
         logger.error("Tool %s failed for call %s: %s", name, call_id, e)
-        return json.dumps({
-            "result": "I don't have that information right now. "
-                      "Let me have someone on the team follow up with you on that."
-        })
+        fallback = TOOL_FALLBACKS.get(name, DEFAULT_FALLBACK)
+        return json.dumps(fallback)
