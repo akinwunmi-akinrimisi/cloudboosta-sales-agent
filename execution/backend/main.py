@@ -9,8 +9,6 @@ Endpoints:
   GET  /api/dashboard/*  — Dashboard data endpoints
 """
 
-import hashlib
-import hmac
 import json
 import logging
 import os
@@ -21,8 +19,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, validator
-from typing import Optional
+from pydantic import BaseModel, field_validator, validator
+from typing import Any, Optional
 
 load_dotenv()
 
@@ -48,7 +46,6 @@ logger = logging.getLogger("sarah")
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Sarah — Cloudboosta Sales Agent", version="0.1.0")
 
-WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "")
 DASHBOARD_SECRET_KEY = os.environ.get("DASHBOARD_SECRET_KEY", "")
 WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
 
@@ -90,16 +87,20 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Webhook signature verification
 # ---------------------------------------------------------------------------
 async def verify_retell_signature(request: Request) -> bytes:
-    """Verify Retell webhook HMAC-SHA256 signature."""
+    """Verify Retell webhook signature using the Retell SDK."""
     body = await request.body()
-    signature = request.headers.get("x-retell-signature", "")
 
-    if not WEBHOOK_SECRET:
-        logger.warning("WEBHOOK_SECRET not set — skipping signature verification")
+    if not os.environ.get("RETELL_API_KEY"):
+        logger.warning("RETELL_API_KEY not set -- skipping signature verification")
         return body
 
-    expected = hmac.new(WEBHOOK_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(signature, expected):
+    post_data = json.loads(body)
+    valid = retell_client.verify(
+        json.dumps(post_data, separators=(",", ":"), ensure_ascii=False),
+        api_key=str(os.environ["RETELL_API_KEY"]),
+        signature=str(request.headers.get("X-Retell-Signature", "")),
+    )
+    if not valid:
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     return body
@@ -109,16 +110,26 @@ async def verify_retell_signature(request: Request) -> bytes:
 # Pydantic models
 # ---------------------------------------------------------------------------
 class ToolCallPayload(BaseModel):
-    call_id: str
+    """Retell custom function webhook payload (args_at_root=false)."""
     name: str
-    args: dict
+    call: dict[str, Any]  # Full call object from Retell
+    args: dict[str, Any]  # Tool arguments matching parameter schema
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def valid_function_name(cls, v):
         allowed = {"lookup_programme", "get_objection_response", "log_call_outcome"}
         if v not in allowed:
             raise ValueError(f"Unknown function: {v}")
         return v
+
+    @property
+    def call_id(self) -> str:
+        return self.call.get("call_id", "unknown")
+
+    @property
+    def lead_id(self) -> str | None:
+        return self.call.get("metadata", {}).get("lead_id")
 
 
 class WebhookPayload(BaseModel):
@@ -170,7 +181,12 @@ async def health():
 async def retell_tool(request: Request):
     body = await verify_retell_signature(request)
     payload = ToolCallPayload(**json.loads(body))
-    result = await execute_tool(payload.name, payload.args, payload.call_id)
+    result = await execute_tool(
+        name=payload.name,
+        args=payload.args,
+        call_id=payload.call_id,
+        lead_id=payload.lead_id,
+    )
     return json.loads(result)
 
 
@@ -228,11 +244,12 @@ async def initiate_call(req: InitiateCallRequest):
 
     # SDK 5.x: Phone number's outbound_agents binding determines the agent.
     # No agent_id parameter -- removed in SDK 5.x.
-    # The phone number +17404943597 must have outbound_agents configured
+    # The phone number +17405085360 must have outbound_agents configured
     # (done by migrate_phone_number.py).
     call = retell_client.call.create_phone_call(
-        from_number="+17404943597",
+        from_number="+17405085360",
         to_number=lead_data["phone"],
+        metadata={"lead_id": str(req.lead_id)},
         retell_llm_dynamic_variables={
             "lead_name": lead_data["name"],
             "lead_location": lead_data.get("location", "unknown"),
