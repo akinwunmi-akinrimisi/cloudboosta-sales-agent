@@ -1,0 +1,87 @@
+/**
+ * Shared constants for Sarah Dashboard.
+ *
+ * Kanban column definitions, outcome badge colors, polling intervals,
+ * and utility formatters used across all 3 tabs.
+ */
+
+/** Kanban column definitions for the pipeline view. */
+export const KANBAN_COLUMNS = [
+  { key: "new", label: "New", statuses: ["new"] },
+  { key: "queued", label: "Queued", statuses: ["queued"] },
+  { key: "in_progress", label: "In Progress", statuses: ["calling", "in_call"] },
+  { key: "follow_up", label: "Follow Up", statuses: ["follow_up"] },
+  { key: "committed", label: "Committed", statuses: ["committed", "payment_sent"] },
+  {
+    key: "closed",
+    label: "Closed",
+    statuses: ["declined", "not_qualified", "do_not_contact", "failed"],
+  },
+];
+
+/** Tailwind class mappings for outcome badges. */
+export const OUTCOME_COLORS = {
+  committed: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-500" },
+  follow_up: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
+  declined: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
+  no_answer: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+  voicemail: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+  busy: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+};
+
+/** Default gray style for unknown outcomes. */
+export const OUTCOME_DEFAULT = { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" };
+
+/** Polling intervals (ms). */
+export const POLL_LIVE = 5000;
+export const POLL_PIPELINE = 30000;
+export const POLL_STRATEGY = 30000;
+
+/**
+ * Mask a phone number for display (privacy).
+ * "+1740508####" -> "+174****60"
+ *
+ * @param {string|null} phone
+ * @returns {string}
+ */
+export function maskPhone(phone) {
+  if (!phone || phone.length < 6) return phone || "";
+  return phone.slice(0, 4) + "****" + phone.slice(-2);
+}
+
+/**
+ * Format seconds as mm:ss or hh:mm:ss.
+ *
+ * @param {number|null} seconds
+ * @returns {string}
+ */
+export function formatDuration(seconds) {
+  if (seconds == null || seconds < 0) return "0:00";
+  const s = Math.round(seconds);
+  const hrs = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  if (hrs > 0) {
+    return `${hrs}:${pad(mins)}:${pad(secs)}`;
+  }
+  return `${mins}:${pad(secs)}`;
+}
+
+/**
+ * Format an ISO timestamp as a short locale time string.
+ *
+ * @param {string|null} isoString
+ * @returns {string}
+ */
+export function formatTime(isoString) {
+  if (!isoString) return "";
+  try {
+    return new Date(isoString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
