@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting (completed 2026-03-25)
 - [x] **Phase 6: Auto-Dialer + Retry Logic** - n8n scheduled dialer with dial windows, retry backoff, and do-not-contact enforcement (completed 2026-03-25)
 - [x] **Phase 7: Post-Call Workflows** - n8n post-call outcome routing, payment email via MailerSend, CSV lead import (completed 2026-03-25)
-- [ ] **Phase 8: Dashboard** - React SPA with Live View, Pipeline kanban, Strategy Analytics, and bearer token auth
+- [x] **Phase 8: Dashboard** - React SPA with Live View, Pipeline kanban, Strategy Analytics, and bearer token auth (completed 2026-03-25)
 - [ ] **Phase 9: Testing + Wave 0** - Self-test checklist, 10 real calls, transcript review, strategy data collection
 
 ## Phase Details
@@ -142,7 +142,7 @@ Plans:
   3. Clicking any lead on Pipeline tab opens full transcript, call recording, and call details
   4. Strategy Analytics tab shows conversion rate by strategy as a bar chart with totals table
   5. Dashboard requires bearer token authentication and rejects unauthenticated requests
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 08-01-PLAN.md -- Backend API endpoints (live, pipeline, strategy, lead detail) + dashboard project upgrade (React 19, Vite 6, Recharts 3) + shared infrastructure (api.js, useInterval, constants, EmptyState, OutcomeBadge)
@@ -181,5 +181,5 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 5. Webhook Backend + Security | 1/2 | Complete    | 2026-03-25 |
 | 6. Auto-Dialer + Retry Logic | 2/2 | Complete    | 2026-03-25 |
 | 7. Post-Call Workflows | 2/2 | Complete    | 2026-03-25 |
-| 8. Dashboard | 0/4 | Planning complete | - |
+| 8. Dashboard | 0/4 | Complete    | 2026-03-25 |
 | 9. Testing + Wave 0 | 0/2 | Not started | - |
