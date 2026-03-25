@@ -139,3 +139,35 @@ curl -X POST http://localhost:8000/dialer/start \
 # Run dashboard dev server
 cd execution/dashboard && npm run dev
 ```
+
+
+---
+
+## FRONTEND DESIGN SKILL (Anthropic)
+
+The frontend-design skill is installed and activates automatically when
+writing HTML, CSS, React, or any UI component. It produces production-grade,
+distinctive interfaces. Use it for all dashboard work (Phase 6).
+
+Do NOT produce generic Bootstrap or Material UI output. Follow the
+frontend-design skill's guidance for clean, professional design.
+
+## GSTACK (Selective Use Only)
+
+gstack is installed but Superpowers controls the build workflow.
+
+**DO NOT USE these gstack skills** (Superpowers handles planning/review):
+/office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review
+
+**DO USE these gstack skills:**
+- /qa — Full QA testing (Phase 7 and before any deploy)
+- /qa-only — Quick targeted test pass
+- /browse — Headless browser for testing endpoints
+- /careful — Warns before destructive commands
+- /freeze — Locks edits to a specific directory (use when touching production)
+- /guard — Combines /careful + /freeze
+- /unfreeze — Removes freeze boundary
+- /review — Final code review before deploy ONLY (not during build)
+
+Available gstack skills: /qa, /qa-only, /browse, /careful, /freeze,
+/guard, /unfreeze, /review, /investigate, /retro, /gstack-upgrade
