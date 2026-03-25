@@ -226,13 +226,13 @@ async def initiate_call(req: InitiateCallRequest):
     if not await check_daily_limit():
         raise HTTPException(status_code=429, detail="Daily call limit reached")
 
-    agent_id = os.environ["RETELL_AGENT_ID"]
-    from_number = os.environ.get("TWILIO_NUMBER", "+11615700419")
-
+    # SDK 5.x: Phone number's outbound_agents binding determines the agent.
+    # No agent_id parameter -- removed in SDK 5.x.
+    # The phone number +17404943597 must have outbound_agents configured
+    # (done by migrate_phone_number.py).
     call = retell_client.call.create_phone_call(
-        from_number=from_number,
+        from_number="+17404943597",
         to_number=lead_data["phone"],
-        agent_id=agent_id,
         retell_llm_dynamic_variables={
             "lead_name": lead_data["name"],
             "lead_location": lead_data.get("location", "unknown"),
