@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Tool Execution Backend** - FastAPI tool call router with 3 handlers, fallback responses, and speak-during-execution (completed 2026-03-25)
 - [x] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting (completed 2026-03-25)
 - [x] **Phase 6: Auto-Dialer + Retry Logic** - n8n scheduled dialer with dial windows, retry backoff, and do-not-contact enforcement (completed 2026-03-25)
-- [ ] **Phase 7: Post-Call Workflows** - n8n post-call outcome routing, payment email via Resend, and CSV lead import
+- [ ] **Phase 7: Post-Call Workflows** - n8n post-call outcome routing, payment email via MailerSend, CSV lead import
 - [ ] **Phase 8: Dashboard** - React SPA with Live View, Pipeline kanban, Strategy Analytics, and bearer token auth
 - [ ] **Phase 9: Testing + Wave 0** - Self-test checklist, 10 real calls, transcript review, strategy data collection
 
@@ -118,19 +118,19 @@ Plans:
 - [x] 06-02-PLAN.md -- n8n auto-dialer workflow JSON with schedule trigger, dial window check, active call guard, RPC queue pick, call initiation, and error recovery
 
 ### Phase 7: Post-Call Workflows
-**Goal**: Every call outcome is automatically routed to the correct action -- payment email, reschedule, or log-and-close
+**Goal**: Every call outcome is automatically routed to the correct action -- payment email, follow-up reminder, or graceful close
 **Depends on**: Phase 5 (webhook endpoint triggers post-call workflow)
 **Requirements**: AUTO-02, AUTO-03, AUTO-04
 **Success Criteria** (what must be TRUE):
-  1. COMMITTED outcomes trigger a payment email via Resend with correct bank transfer details (Revolut + GTBank)
-  2. FOLLOW_UP outcomes schedule a retry call at appropriate time
-  3. DECLINED outcomes update lead status and log final disposition
+  1. COMMITTED outcomes trigger a payment email via MailerSend with correct currency-specific bank transfer details (Revolut + GTBank)
+  2. FOLLOW_UP outcomes send a reminder email and schedule a retry call at appropriate time
+  3. DECLINED outcomes send a graceful close email and log final disposition
   4. CSV lead import workflow accepts files with E.164 phone validation and deduplication against existing leads
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 07-01: n8n post-call handler workflow with outcome routing and Resend email
-- [ ] 07-02: n8n lead import workflow with CSV validation and dedup
+- [ ] 07-01-PLAN.md -- Post-call handler: extend call_ended with BackgroundTasks n8n trigger + n8n 3-way outcome routing workflow with MailerSend emails
+- [ ] 07-02-PLAN.md -- CSV lead import: n8n workflow with file upload, E.164 validation, dedup, and import summary
 
 ### Phase 8: Dashboard
 **Goal**: The operator can monitor all calling activity, manage the lead pipeline, and track strategy effectiveness in real time
@@ -180,6 +180,6 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 4. Tool Execution Backend | 0/3 | Complete    | 2026-03-25 |
 | 5. Webhook Backend + Security | 1/2 | Complete    | 2026-03-25 |
 | 6. Auto-Dialer + Retry Logic | 2/2 | Complete    | 2026-03-25 |
-| 7. Post-Call Workflows | 0/2 | Not started | - |
+| 7. Post-Call Workflows | 0/2 | Planning    | - |
 | 8. Dashboard | 0/4 | Not started | - |
 | 9. Testing + Wave 0 | 0/2 | Not started | - |
