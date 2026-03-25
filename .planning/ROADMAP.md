@@ -111,11 +111,11 @@ Plans:
   2. Dialer checks for no active call and non-empty queue before each call attempt
   3. Failed calls (no_answer, voicemail) retry up to 2 times with 60-minute backoff delay
   4. Leads with status 'do_not_contact' or 'declined' are never called (hard block in dialer)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: n8n auto-dialer workflow with dial window and queue checks
-- [ ] 06-02: Retry logic and do-not-contact enforcement
+- [ ] 06-01-PLAN.md -- Schema migration (next_retry_at column, calling->failed state machine fix, pick_next_lead RPC update) + retry requeue logic in call_ended handler
+- [ ] 06-02-PLAN.md -- n8n auto-dialer workflow JSON with schedule trigger, dial window check, active call guard, RPC queue pick, call initiation, and error recovery
 
 ### Phase 7: Post-Call Workflows
 **Goal**: Every call outcome is automatically routed to the correct action -- payment email, reschedule, or log-and-close
