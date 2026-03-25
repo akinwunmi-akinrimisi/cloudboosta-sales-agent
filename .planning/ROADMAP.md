@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Retell LLM Configuration** - System prompt with qualification gates, 6 closing strategies, 3 tool definitions, and dynamic variables
 - [x] **Phase 3: Voice Agent Creation** - British female voice agent with backchannel, assigned to migrated phone number
 - [x] **Phase 4: Tool Execution Backend** - FastAPI tool call router with 3 handlers, fallback responses, and speak-during-execution (completed 2026-03-25)
-- [ ] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting
+- [x] **Phase 5: Webhook Backend + Security** - Call lifecycle webhooks, call initiation endpoint, HMAC verification, CORS, rate limiting (completed 2026-03-25)
 - [ ] **Phase 6: Auto-Dialer + Retry Logic** - n8n scheduled dialer with dial windows, retry backoff, and do-not-contact enforcement
 - [ ] **Phase 7: Post-Call Workflows** - n8n post-call outcome routing, payment email via Resend, and CSV lead import
 - [ ] **Phase 8: Dashboard** - React SPA with Live View, Pipeline kanban, Strategy Analytics, and bearer token auth
@@ -96,7 +96,7 @@ Plans:
   3. All Retell endpoints verify HMAC-SHA256 signature from x-retell-signature header and reject invalid requests with 401
   4. CORS allows only the dashboard origin; all other origins are rejected
   5. Rate limiting enforces 1 call per 2 minutes and 200 calls per day
-**Plans:** 1/2 plans complete
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 05-01-PLAN.md -- Webhook lifecycle handlers (call_started, call_ended, call_analyzed) and active-call guard on initiate-call
@@ -178,7 +178,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 2. Retell LLM Configuration | 2/2 | Complete    | 2026-03-25 |
 | 3. Voice Agent Creation | 2/2 | Complete    | 2026-03-25 |
 | 4. Tool Execution Backend | 0/3 | Complete    | 2026-03-25 |
-| 5. Webhook Backend + Security | 1/2 | In Progress | - |
+| 5. Webhook Backend + Security | 1/2 | Complete    | 2026-03-25 |
 | 6. Auto-Dialer + Retry Logic | 0/2 | Not started | - |
 | 7. Post-Call Workflows | 0/2 | Not started | - |
 | 8. Dashboard | 0/4 | Not started | - |
