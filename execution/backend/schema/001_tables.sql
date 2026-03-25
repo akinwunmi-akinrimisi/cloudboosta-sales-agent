@@ -45,7 +45,7 @@ CREATE TABLE leads (
     experience_level      TEXT,
     has_aws_sa_cert       BOOLEAN       DEFAULT FALSE,
     has_hands_on_projects BOOLEAN       DEFAULT FALSE,
-    current_role          TEXT,
+    "current_role"        TEXT,
     motivation            TEXT,
 
     -- Call tracking
