@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-25T14:30:04.272Z"
-last_activity: 2026-03-25 -- Completed plan 04-03 (log_call_outcome with call_logs INSERT + leads UPDATE, completing Phase 4)
+status: in-progress
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-25T15:18:49Z"
+last_activity: 2026-03-25 -- Completed plan 05-01 (webhook lifecycle handlers + active-call guard)
 progress:
   total_phases: 9
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_plans: 12
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls -- no human intervention required during the call, no pre-contact needed.
-**Current focus:** Phase 4: Tool Execution Backend
+**Current focus:** Phase 5: Webhook Backend + Security
 
 ## Current Position
 
-Phase: 4 of 9 (Tool Execution Backend)
-Plan: 3 of 3 in current phase (3 complete)
-Status: Phase 4 COMPLETE
-Last activity: 2026-03-25 -- Completed plan 04-03 (log_call_outcome with call_logs INSERT + leads UPDATE, completing Phase 4)
+Phase: 5 of 9 (Webhook Backend + Security)
+Plan: 1 of 2 in current phase (1 complete)
+Status: In progress
+Last activity: 2026-03-25 -- Completed plan 05-01 (webhook lifecycle handlers + active-call guard)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 5.0min
-- Total execution time: 50 min
+- Total execution time: 55 min
 
 **By Phase:**
 
@@ -53,9 +53,10 @@ Progress: [██████████] 100%
 | 04 | P01 | 4min | 2 | 2 |
 | 04 | P02 | 3min | 2 | 1 |
 | 04 | P03 | 5min | 2 | 1 |
+| 05 | P01 | 5min | 2 | 1 |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (5min), 04-01 (4min), 04-02 (3min), 04-03 (5min)
+- Last 5 plans: 04-01 (4min), 04-02 (3min), 04-03 (5min), 05-01 (5min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -97,6 +98,10 @@ Recent decisions affecting current work:
 - [Phase 04]: call_logs INSERT before leads UPDATE so row exists when pipeline_logs trigger fires on status change
 - [Phase 04]: NO_ANSWER outcome skips lead status update -- handled by webhook call_ended handler, not the LLM tool call
 - [Phase 04]: speak_during_execution verified False on log_call_outcome -- Sarah stays silent during end-of-call logging
+- [Phase 05]: datetime.now(timezone.utc).isoformat() for all webhook timestamps -- Supabase client sends values as-is, not SQL expressions
+- [Phase 05]: UPSERT with on_conflict=retell_call_id for idempotent call_logs writes in call_ended handler
+- [Phase 05]: Connected calls with no tool outcome fall back to declined status if lead still in_call
+- [Phase 05]: Active-call guard (409) placed before DNC and daily limit checks for early rejection
 
 ### Pending Todos
 
@@ -111,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T14:30:04.255Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-webhook-backend-security/05-CONTEXT.md
+Last session: 2026-03-25T15:18:49Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: .planning/phases/05-webhook-backend-security/05-02-PLAN.md

@@ -26,10 +26,10 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 ### Backend
 
 - [x] **BACK-01**: FastAPI server with tool call router dispatching to 3 tool handlers at POST /retell/tool
-- [ ] **BACK-02**: Webhook lifecycle endpoint handling call_started, call_ended, call_analyzed events at POST /retell/webhook
-- [ ] **BACK-03**: Call initiation endpoint at POST /retell/initiate-call validating lead status, daily call count, and no active call
+- [x] **BACK-02**: Webhook lifecycle endpoint handling call_started, call_ended, call_analyzed events at POST /retell/webhook
+- [x] **BACK-03**: Call initiation endpoint at POST /retell/initiate-call validating lead status, daily call count, and no active call
 - [ ] **BACK-04**: Dashboard API endpoints returning live view, pipeline, and analytics data
-- [ ] **BACK-05**: HMAC-SHA256 webhook signature verification on all Retell endpoints using x-retell-signature header
+- [x] **BACK-05**: HMAC-SHA256 webhook signature verification on all Retell endpoints using x-retell-signature header
 - [ ] **BACK-06**: CORS configuration allowing dashboard origin only
 - [ ] **BACK-07**: Rate limiting via slowapi enforcing 1 call per 2 minutes and max 200 calls per day
 
@@ -122,10 +122,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-04 | Phase 4: Tool Execution Backend | Complete |
 | TOOL-05 | Phase 4: Tool Execution Backend | Complete |
 | BACK-01 | Phase 4: Tool Execution Backend | Complete |
-| BACK-02 | Phase 5: Webhook Backend + Security | Pending |
-| BACK-03 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-02 | Phase 5: Webhook Backend + Security | Complete |
+| BACK-03 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-04 | Phase 8: Dashboard | Pending |
-| BACK-05 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-05 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-06 | Phase 5: Webhook Backend + Security | Pending |
 | BACK-07 | Phase 5: Webhook Backend + Security | Pending |
 | DATA-01 | Phase 1: Foundation + SDK Migration | Complete |

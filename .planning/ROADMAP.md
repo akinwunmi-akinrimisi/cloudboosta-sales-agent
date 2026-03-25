@@ -96,10 +96,10 @@ Plans:
   3. All Retell endpoints verify HMAC-SHA256 signature from x-retell-signature header and reject invalid requests with 401
   4. CORS allows only the dashboard origin; all other origins are rejected
   5. Rate limiting enforces 1 call per 2 minutes and 200 calls per day
-**Plans:** 2 plans
+**Plans:** 1/2 plans complete
 
 Plans:
-- [ ] 05-01-PLAN.md -- Webhook lifecycle handlers (call_started, call_ended, call_analyzed) and active-call guard on initiate-call
+- [x] 05-01-PLAN.md -- Webhook lifecycle handlers (call_started, call_ended, call_analyzed) and active-call guard on initiate-call
 - [ ] 05-02-PLAN.md -- slowapi rate limiting, CORS env var restriction, bearer token auth on initiate-call and dashboard endpoints
 
 ### Phase 6: Auto-Dialer + Retry Logic
@@ -178,7 +178,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 | 2. Retell LLM Configuration | 2/2 | Complete    | 2026-03-25 |
 | 3. Voice Agent Creation | 2/2 | Complete    | 2026-03-25 |
 | 4. Tool Execution Backend | 0/3 | Complete    | 2026-03-25 |
-| 5. Webhook Backend + Security | 0/2 | Not started | - |
+| 5. Webhook Backend + Security | 1/2 | In Progress | - |
 | 6. Auto-Dialer + Retry Logic | 0/2 | Not started | - |
 | 7. Post-Call Workflows | 0/2 | Not started | - |
 | 8. Dashboard | 0/4 | Not started | - |
