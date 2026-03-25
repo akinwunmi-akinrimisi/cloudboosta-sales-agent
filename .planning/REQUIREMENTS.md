@@ -35,13 +35,13 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Database
 
-- [ ] **DATA-01**: leads table with 14 status states, priority ordering, and phone in E.164 format
-- [ ] **DATA-02**: call_logs table storing retell_call_id, outcome, strategy, persona, transcript, recording URL, duration, cost
-- [ ] **DATA-03**: pipeline_logs table tracking every lead status transition with timestamp and trigger
-- [ ] **DATA-04**: dial_schedules table for time window configuration (start_time, end_time, days_of_week, timezone)
+- [x] **DATA-01**: leads table with 14 status states, priority ordering, and phone in E.164 format
+- [x] **DATA-02**: call_logs table storing retell_call_id, outcome, strategy, persona, transcript, recording URL, duration, cost
+- [x] **DATA-03**: pipeline_logs table tracking every lead status transition with timestamp and trigger
+- [x] **DATA-04**: dial_schedules table for time window configuration (start_time, end_time, days_of_week, timezone)
 - [ ] **DATA-05**: SQL views: pipeline_snapshot, strategy_performance, todays_calls for dashboard queries
 - [ ] **DATA-06**: Atomic pick_next_lead() RPC function using FOR UPDATE SKIP LOCKED to prevent race conditions
-- [ ] **DATA-07**: Row Level Security policies on all tables with service key for backend, anon key for dashboard reads
+- [x] **DATA-07**: Row Level Security policies on all tables with service key for backend, anon key for dashboard reads
 
 ### Automation
 
@@ -128,13 +128,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BACK-05 | Phase 5: Webhook Backend + Security | Pending |
 | BACK-06 | Phase 5: Webhook Backend + Security | Pending |
 | BACK-07 | Phase 5: Webhook Backend + Security | Pending |
-| DATA-01 | Phase 1: Foundation + SDK Migration | Pending |
-| DATA-02 | Phase 1: Foundation + SDK Migration | Pending |
-| DATA-03 | Phase 1: Foundation + SDK Migration | Pending |
-| DATA-04 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-01 | Phase 1: Foundation + SDK Migration | Complete |
+| DATA-02 | Phase 1: Foundation + SDK Migration | Complete |
+| DATA-03 | Phase 1: Foundation + SDK Migration | Complete |
+| DATA-04 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-05 | Phase 1: Foundation + SDK Migration | Pending |
 | DATA-06 | Phase 1: Foundation + SDK Migration | Pending |
-| DATA-07 | Phase 1: Foundation + SDK Migration | Pending |
+| DATA-07 | Phase 1: Foundation + SDK Migration | Complete |
 | AUTO-01 | Phase 6: Auto-Dialer + Retry Logic | Pending |
 | AUTO-02 | Phase 7: Post-Call Workflows | Pending |
 | AUTO-03 | Phase 7: Post-Call Workflows | Pending |

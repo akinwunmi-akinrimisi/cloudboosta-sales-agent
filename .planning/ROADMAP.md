@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Supabase tables (4 core + 3 reference), indexes, RLS policies, trigger functions
+- [x] 01-01-PLAN.md -- Supabase tables (4 core + 3 reference), indexes, RLS policies, trigger functions
 - [ ] 01-02-PLAN.md -- SQL views, pick_next_lead() RPC, seed data (programmes, pricing, objections, test leads), test script
 - [ ] 01-03-PLAN.md -- retell-sdk 5.x upgrade, main.py SDK migration, phone number weighted agents migration script
 
@@ -173,7 +173,7 @@ Note: Phases 6 and 7 can execute in parallel (independent n8n workflows). Phase 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + SDK Migration | 0/3 | Planning complete | - |
+| 1. Foundation + SDK Migration | 1/3 | In Progress | - |
 | 2. Retell LLM Configuration | 0/2 | Not started | - |
 | 3. Voice Agent Creation | 0/1 | Not started | - |
 | 4. Tool Execution Backend | 0/3 | Not started | - |
