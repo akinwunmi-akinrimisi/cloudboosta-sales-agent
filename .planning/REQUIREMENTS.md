@@ -20,12 +20,12 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [ ] **TOOL-01**: lookup_programme tool returns programme details with multi-currency pricing (GBP/USD/EUR/NGN) based on lead country
 - [ ] **TOOL-02**: get_objection_response tool returns multi-layer responses for 11 objection types
 - [ ] **TOOL-03**: log_call_outcome tool records outcome, closing strategy used, and persona detected per call
-- [ ] **TOOL-04**: All 3 tools execute within 10 seconds with hardcoded fallback responses on failure
+- [x] **TOOL-04**: All 3 tools execute within 10 seconds with hardcoded fallback responses on failure
 - [ ] **TOOL-05**: Speak-during-execution enabled on all tools ("Let me look that up") to avoid dead air
 
 ### Backend
 
-- [ ] **BACK-01**: FastAPI server with tool call router dispatching to 3 tool handlers at POST /retell/tool
+- [x] **BACK-01**: FastAPI server with tool call router dispatching to 3 tool handlers at POST /retell/tool
 - [ ] **BACK-02**: Webhook lifecycle endpoint handling call_started, call_ended, call_analyzed events at POST /retell/webhook
 - [ ] **BACK-03**: Call initiation endpoint at POST /retell/initiate-call validating lead status, daily call count, and no active call
 - [ ] **BACK-04**: Dashboard API endpoints returning live view, pipeline, and analytics data
@@ -119,9 +119,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-01 | Phase 4: Tool Execution Backend | Pending |
 | TOOL-02 | Phase 4: Tool Execution Backend | Pending |
 | TOOL-03 | Phase 4: Tool Execution Backend | Pending |
-| TOOL-04 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-04 | Phase 4: Tool Execution Backend | Complete |
 | TOOL-05 | Phase 4: Tool Execution Backend | Pending |
-| BACK-01 | Phase 4: Tool Execution Backend | Pending |
+| BACK-01 | Phase 4: Tool Execution Backend | Complete |
 | BACK-02 | Phase 5: Webhook Backend + Security | Pending |
 | BACK-03 | Phase 5: Webhook Backend + Security | Pending |
 | BACK-04 | Phase 8: Dashboard | Pending |
