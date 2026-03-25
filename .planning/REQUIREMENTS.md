@@ -17,8 +17,8 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Tools
 
-- [ ] **TOOL-01**: lookup_programme tool returns programme details with multi-currency pricing (GBP/USD/EUR/NGN) based on lead country
-- [ ] **TOOL-02**: get_objection_response tool returns multi-layer responses for 11 objection types
+- [x] **TOOL-01**: lookup_programme tool returns programme details with multi-currency pricing (GBP/USD/EUR/NGN) based on lead country
+- [x] **TOOL-02**: get_objection_response tool returns multi-layer responses for 11 objection types
 - [ ] **TOOL-03**: log_call_outcome tool records outcome, closing strategy used, and persona detected per call
 - [x] **TOOL-04**: All 3 tools execute within 10 seconds with hardcoded fallback responses on failure
 - [ ] **TOOL-05**: Speak-during-execution enabled on all tools ("Let me look that up") to avoid dead air
@@ -116,8 +116,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VOICE-03 | Phase 3: Voice Agent Creation | Complete |
 | VOICE-04 | Phase 1: Foundation + SDK Migration | Complete |
 | VOICE-05 | Phase 2: Retell LLM Configuration | Pending |
-| TOOL-01 | Phase 4: Tool Execution Backend | Pending |
-| TOOL-02 | Phase 4: Tool Execution Backend | Pending |
+| TOOL-01 | Phase 4: Tool Execution Backend | Complete |
+| TOOL-02 | Phase 4: Tool Execution Backend | Complete |
 | TOOL-03 | Phase 4: Tool Execution Backend | Pending |
 | TOOL-04 | Phase 4: Tool Execution Backend | Complete |
 | TOOL-05 | Phase 4: Tool Execution Backend | Pending |

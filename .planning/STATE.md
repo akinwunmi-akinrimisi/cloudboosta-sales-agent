@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-25T13:39:53.419Z"
-last_activity: "2026-03-25 -- Completed plan 04-01 (Tool call router fix: ToolCallPayload corrected, SDK signature verification, tool-specific fallbacks)"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-25T13:45:49Z"
+last_activity: "2026-03-25 -- Completed plan 04-02 (lookup_programme + get_objection_response handlers with Supabase queries)"
 progress:
   total_phases: 9
   completed_phases: 3
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 4 of 9 (Tool Execution Backend)
-Plan: 1 of 3 in current phase (1 complete)
+Plan: 2 of 3 in current phase (2 complete)
 Status: Phase 4 in progress
-Last activity: 2026-03-25 -- Completed plan 04-01 (Tool call router fix: ToolCallPayload corrected, SDK signature verification, tool-specific fallbacks)
+Last activity: 2026-03-25 -- Completed plan 04-02 (lookup_programme + get_objection_response handlers with Supabase queries)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 5.3min
-- Total execution time: 42 min
+- Total plans completed: 9
+- Average duration: 5.0min
+- Total execution time: 45 min
 
 **By Phase:**
 
@@ -51,10 +51,11 @@ Progress: [████████░░] 80%
 | 03 | P01 | 4min | 2 | 5 |
 | 03 | P02 | 5min | 2 | 3 |
 | 04 | P01 | 4min | 2 | 2 |
+| 04 | P02 | 3min | 2 | 1 |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (5min), 03-01 (4min), 03-02 (5min), 04-01 (4min)
-- Trend: stable
+- Last 5 plans: 03-01 (4min), 03-02 (5min), 04-01 (4min), 04-02 (3min)
+- Trend: stable/improving
 
 *Updated after each plan completion*
 
@@ -89,6 +90,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Used field_validator (pydantic v2) for ToolCallPayload, kept validator for WebhookPayload
 - [Phase 04]: TOOL_FALLBACKS uses exact conversational messages from CONTEXT.md -- never mentions errors/system/database for live call safety
 - [Phase 04]: log_call_outcome dispatch uses explicit name check rather than inspect-based kwarg detection for clarity
+- [Phase 04]: Profile X (catch-all) maps to zero-to-cloud-devops bundle since cloud-computing is a pathway not a bundle in pricing table
+- [Phase 04]: DEFAULT_TESTIMONIAL (Ebunlomo) used because tool_definitions.py does not pass lead_persona to lookup_programme
+- [Phase 04]: ADQ (Acknowledge, Dig, Question) fallback for unknown objection keys -- never returns error messages during live calls
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T13:39:53.397Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-25T13:45:49Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
