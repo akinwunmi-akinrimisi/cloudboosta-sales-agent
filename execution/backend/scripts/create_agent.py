@@ -57,15 +57,15 @@ def main() -> None:
             voice_id="cartesia-Willa",
             voice_model="sonic-3",
             voice_speed=1.0,
-            voice_temperature=0.8,
+            voice_temperature=0.5,
             language="en-GB",
             # Backchannel (LOCKED: enabled, 0.8)
             enable_backchannel=True,
             backchannel_frequency=0.8,
             backchannel_words=["yeah", "uh-huh", "I see", "right", "absolutely"],
             # Responsiveness (LOCKED: responsive ~0.5s)
-            responsiveness=0.7,
-            interruption_sensitivity=0.8,
+            responsiveness=0.5,
+            interruption_sensitivity=0.6,
             # Silence tolerance (LOCKED: 3-5s)
             reminder_trigger_ms=4000,
             reminder_max_count=2,
