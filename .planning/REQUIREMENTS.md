@@ -30,8 +30,8 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 - [x] **BACK-03**: Call initiation endpoint at POST /retell/initiate-call validating lead status, daily call count, and no active call
 - [ ] **BACK-04**: Dashboard API endpoints returning live view, pipeline, and analytics data
 - [x] **BACK-05**: HMAC-SHA256 webhook signature verification on all Retell endpoints using x-retell-signature header
-- [ ] **BACK-06**: CORS configuration allowing dashboard origin only
-- [ ] **BACK-07**: Rate limiting via slowapi enforcing 1 call per 2 minutes and max 200 calls per day
+- [x] **BACK-06**: CORS configuration allowing dashboard origin only
+- [x] **BACK-07**: Rate limiting via slowapi enforcing 1 call per 2 minutes and max 200 calls per day
 
 ### Database
 
@@ -126,8 +126,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BACK-03 | Phase 5: Webhook Backend + Security | Complete |
 | BACK-04 | Phase 8: Dashboard | Pending |
 | BACK-05 | Phase 5: Webhook Backend + Security | Complete |
-| BACK-06 | Phase 5: Webhook Backend + Security | Pending |
-| BACK-07 | Phase 5: Webhook Backend + Security | Pending |
+| BACK-06 | Phase 5: Webhook Backend + Security | Complete |
+| BACK-07 | Phase 5: Webhook Backend + Security | Complete |
 | DATA-01 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-02 | Phase 1: Foundation + SDK Migration | Complete |
 | DATA-03 | Phase 1: Foundation + SDK Migration | Complete |

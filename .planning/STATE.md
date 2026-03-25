@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in-progress
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-25T15:18:49Z"
-last_activity: 2026-03-25 -- Completed plan 05-01 (webhook lifecycle handlers + active-call guard)
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-25T15:30:33Z"
+last_activity: 2026-03-25 -- Completed plan 05-02 (rate limiting, bearer auth, CORS restriction)
 progress:
   total_phases: 9
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Sarah converts cold leads into paid Cloudboosta programme enrolments through autonomous outbound calls -- no human intervention required during the call, no pre-contact needed.
-**Current focus:** Phase 5: Webhook Backend + Security
+**Current focus:** Phase 5 complete -- ready for Phase 6 (Auto-Dialer)
 
 ## Current Position
 
-Phase: 5 of 9 (Webhook Backend + Security)
-Plan: 1 of 2 in current phase (1 complete)
-Status: In progress
-Last activity: 2026-03-25 -- Completed plan 05-01 (webhook lifecycle handlers + active-call guard)
+Phase: 5 of 9 (Webhook Backend + Security) -- COMPLETE
+Plan: 2 of 2 in current phase (2 complete)
+Status: Phase complete
+Last activity: 2026-03-25 -- Completed plan 05-02 (rate limiting, bearer auth, CORS restriction)
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 5.0min
-- Total execution time: 55 min
+- Total execution time: 60 min
 
 **By Phase:**
 
@@ -54,9 +54,10 @@ Progress: [█████████░] 92%
 | 04 | P02 | 3min | 2 | 1 |
 | 04 | P03 | 5min | 2 | 1 |
 | 05 | P01 | 5min | 2 | 1 |
+| 05 | P02 | 5min | 2 | 2 |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (4min), 04-02 (3min), 04-03 (5min), 05-01 (5min)
+- Last 5 plans: 04-02 (3min), 04-03 (5min), 05-01 (5min), 05-02 (5min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 05]: UPSERT with on_conflict=retell_call_id for idempotent call_logs writes in call_ended handler
 - [Phase 05]: Connected calls with no tool outcome fall back to declined status if lead still in_call
 - [Phase 05]: Active-call guard (409) placed before DNC and daily limit checks for early rejection
+- [Phase 05]: slowapi in-memory store sufficient for single-server single-operator (no Redis needed)
+- [Phase 05]: Dialer endpoints defer auth to Phase 6 when n8n auth pattern is known
+- [Phase 05]: DASHBOARD_ORIGIN defaults to http://localhost:5173 with localhost:3000 fallback
 
 ### Pending Todos
 
@@ -116,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T15:18:49Z
-Stopped at: Completed 05-01-PLAN.md
-Resume file: .planning/phases/05-webhook-backend-security/05-02-PLAN.md
+Last session: 2026-03-25T15:30:33Z
+Stopped at: Completed 05-02-PLAN.md
+Resume file: Phase 5 complete. Next: Phase 6 planning.
