@@ -54,11 +54,11 @@ Requirements for Wave 0 (10 test calls) and initial production. Each maps to roa
 
 ### Dashboard
 
-- [ ] **DASH-01**: Live View tab showing active call card, recent calls list, and today's stats (polls Supabase every 5s)
-- [ ] **DASH-02**: Pipeline tab with kanban view of leads grouped by status
-- [ ] **DASH-03**: Pipeline tab: click any lead to view full transcript, call recording, and call details
-- [ ] **DASH-04**: Strategy Analytics tab with conversion rate by strategy bar chart and totals table
-- [ ] **DASH-05**: Bearer token authentication using DASHBOARD_SECRET_KEY (single operator)
+- [x] **DASH-01**: Live View tab showing active call card, recent calls list, and today's stats (polls Supabase every 5s)
+- [x] **DASH-02**: Pipeline tab with kanban view of leads grouped by status
+- [x] **DASH-03**: Pipeline tab: click any lead to view full transcript, call recording, and call details
+- [x] **DASH-04**: Strategy Analytics tab with conversion rate by strategy bar chart and totals table
+- [x] **DASH-05**: Bearer token authentication using DASHBOARD_SECRET_KEY (single operator)
 - [x] **DASH-06**: Responsive web layout using React 19 + Vite 6 + Tailwind 3.4 + Recharts 3
 
 ### Testing
@@ -141,11 +141,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTO-04 | Phase 7: Post-Call Workflows | Complete |
 | AUTO-05 | Phase 6: Auto-Dialer + Retry Logic | Complete |
 | AUTO-06 | Phase 6: Auto-Dialer + Retry Logic | Complete |
-| DASH-01 | Phase 8: Dashboard | Pending |
-| DASH-02 | Phase 8: Dashboard | Pending |
-| DASH-03 | Phase 8: Dashboard | Pending |
-| DASH-04 | Phase 8: Dashboard | Pending |
-| DASH-05 | Phase 8: Dashboard | Pending |
+| DASH-01 | Phase 8: Dashboard | Complete |
+| DASH-02 | Phase 8: Dashboard | Complete |
+| DASH-03 | Phase 8: Dashboard | Complete |
+| DASH-04 | Phase 8: Dashboard | Complete |
+| DASH-05 | Phase 8: Dashboard | Complete |
 | DASH-06 | Phase 8: Dashboard | Complete |
 | TEST-01 | Phase 9: Testing + Wave 0 | Pending |
 | TEST-02 | Phase 9: Testing + Wave 0 | Pending |
