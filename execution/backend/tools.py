@@ -44,6 +44,15 @@ PERSONA_TESTIMONIALS = {
 }
 DEFAULT_TESTIMONIAL = {"name": "Ebunlomo", "story": "Was a nurse in the UK, now a DevOps Engineer"}
 
+# A.D.Q. (Acknowledge, Dig, Question) fallback for unknown objection keys
+ADQ_FALLBACK = {
+    "responses": [
+        {"label": "A.D.Q. Framework", "script": "That's a really fair point. Can I ask what specifically concerns you about that?"}
+    ],
+    "cultural_nuances": {},
+    "recovery_script": "I appreciate you sharing that concern. What specifically worries you most about it?"
+}
+
 
 async def lookup_programme(args: dict) -> dict:
     """Look up programme details and pricing based on lead profile and country."""
@@ -96,10 +105,24 @@ async def lookup_programme(args: dict) -> dict:
 
 
 async def get_objection_response(args: dict) -> dict:
-    """Retrieve multi-layer objection response by type."""
+    """Retrieve multi-layer objection response by objection key from Supabase."""
     objection_type = args.get("objection_type", "")
-    # TODO: Query objections table in Supabase (Phase 4.2)
-    return {"result": f"Objection response for '{objection_type}' — not yet implemented"}
+    logger.info("get_objection_response called: objection_type=%s", objection_type)
+
+    # Query Supabase objection_responses table by exact key match
+    result = supabase.table("objection_responses").select(
+        "responses, cultural_nuances, recovery_script"
+    ).eq("objection_key", objection_type).execute()
+
+    if not result.data:
+        return ADQ_FALLBACK
+
+    row = result.data[0]
+    return {
+        "responses": row["responses"],
+        "cultural_nuances": row.get("cultural_nuances", {}),
+        "recovery_script": row.get("recovery_script", ""),
+    }
 
 
 async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
