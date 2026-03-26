@@ -20,7 +20,8 @@ from dotenv import load_dotenv
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator, validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -90,6 +91,7 @@ app.add_middleware(
         DASHBOARD_ORIGIN,
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://sarah-api.srv1297445.hstgr.cloud",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
@@ -731,3 +733,22 @@ async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = De
     )
 
     return {"lead": lead_result.data, "calls": calls_result.data or []}
+
+
+# ---------------------------------------------------------------------------
+# Dashboard SPA — serve built React app (must be LAST)
+# ---------------------------------------------------------------------------
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+
+if os.path.isdir(_static_dir):
+    _assets_dir = os.path.join(_static_dir, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="static-assets")
+
+    @app.get("/{path:path}")
+    async def serve_spa(path: str):
+        """Serve the React SPA — fall back to index.html for client-side routing."""
+        file_path = os.path.join(_static_dir, path)
+        if path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(_static_dir, "index.html"))
