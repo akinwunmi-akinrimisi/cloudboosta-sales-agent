@@ -1,18 +1,9 @@
-/**
- * Active call hero card for the Live View tab.
- *
- * Shows a pulsing green indicator when a call is live, with lead details,
- * masked phone, recommended programme, and a live duration timer.
- * Falls back to a neutral "no active call" state when idle.
- */
-
 import { useState, useEffect } from "react";
 import { maskPhone, formatDuration } from "../constants";
 
 export default function ActiveCallCard({ call }) {
   const [elapsed, setElapsed] = useState(0);
 
-  // Live duration timer -- counts up from call.last_call_at
   useEffect(() => {
     if (!call?.last_call_at) {
       setElapsed(0);
@@ -30,45 +21,23 @@ export default function ActiveCallCard({ call }) {
     return () => clearInterval(id);
   }, [call?.last_call_at]);
 
-  // Idle state
   if (!call) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3 w-3">
-            <span className="inline-flex h-3 w-3 rounded-full bg-gray-300 dark:bg-gray-600" />
-          </span>
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              No Active Call
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Waiting for next dial check...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const isInCall = call.status === "in_call";
-  const statusLabel = isInCall ? "In Call" : "Calling";
-  const statusColor = isInCall
-    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border p-6 transition-all ${
+      className={`glass-card p-5 ${
         isInCall
-          ? "border-green-500/50 shadow-md shadow-green-500/10"
-          : "border-amber-400/50 shadow-sm"
+          ? "border-orange-500/30 shadow-lg shadow-orange-500/5"
+          : "border-amber-500/20"
       }`}
     >
       <div className="flex items-start justify-between">
-        {/* Left: indicator + info */}
         <div className="flex items-start gap-3">
-          {/* Pulsing dot */}
+          {/* Pulse dot */}
           <span className="relative flex h-3 w-3 mt-1.5">
             <span
               className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
@@ -79,32 +48,31 @@ export default function ActiveCallCard({ call }) {
               className={`relative inline-flex h-3 w-3 rounded-full ${
                 isInCall ? "bg-green-500" : "bg-amber-400"
               }`}
+              style={isInCall ? { boxShadow: "0 0 8px #22c55e" } : {}}
             />
           </span>
 
           <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <div className="flex items-center gap-2">
+              <span className="label-mono text-orange-500">
+                {isInCall ? "LIVE CALL" : "CALLING"}
+              </span>
+            </div>
+            <h2 className="text-lg font-semibold text-zinc-50">
               {call.name || "Unknown Lead"}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-zinc-500">
               {maskPhone(call.phone)}
             </p>
 
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColor}`}
-              >
-                {statusLabel}
-              </span>
-
               {call.programme_recommended && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-blue-500/15 border border-blue-500/30 text-blue-500">
                   {call.programme_recommended}
                 </span>
               )}
-
               {call.last_strategy_used && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-medium bg-violet-500/15 border border-violet-500/30 text-violet-500">
                   {call.last_strategy_used}
                 </span>
               )}
@@ -112,14 +80,12 @@ export default function ActiveCallCard({ call }) {
           </div>
         </div>
 
-        {/* Right: duration timer */}
+        {/* Duration timer */}
         <div className="text-right">
-          <p className="text-2xl font-mono font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+          <p className="text-2xl font-mono font-bold text-zinc-50 tabular-nums">
             {formatDuration(elapsed)}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Duration
-          </p>
+          <p className="label-mono mt-1">Duration</p>
         </div>
       </div>
     </div>
