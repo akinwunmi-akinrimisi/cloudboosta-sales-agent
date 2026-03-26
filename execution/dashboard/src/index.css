@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #09090b;
+    color: #fafafa;
+  }
+
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-glass-fill border border-glass-border rounded-xl transition-colors;
+    backdrop-filter: blur(8px);
+  }
+
+  .glass-card-hover:hover {
+    @apply border-glass-border-hover bg-glass-fill-hover;
+  }
+
+  .label-mono {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[1.5px] text-zinc-500;
+  }
+
+  .value-lg {
+    @apply font-sans text-[28px] font-bold text-zinc-50 tabular-nums;
+  }
+}
+
+@layer utilities {
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 4px currentColor; opacity: 1; }
+    50% { box-shadow: 0 0 10px currentColor; opacity: 0.6; }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
