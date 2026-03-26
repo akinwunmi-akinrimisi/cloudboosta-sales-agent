@@ -121,20 +121,33 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Webhook signature verification
 # ---------------------------------------------------------------------------
 async def verify_retell_signature(request: Request) -> bytes:
-    """Verify Retell webhook signature using the Retell SDK."""
+    """Verify Retell webhook signature using HMAC-SHA256.
+
+    Retell signs webhooks with the API key using HMAC-SHA256.
+    The body must be serialized with compact JSON (no spaces).
+    """
     body = await request.body()
 
-    if not os.environ.get("RETELL_API_KEY"):
+    api_key = os.environ.get("RETELL_API_KEY", "")
+    if not api_key:
         logger.warning("RETELL_API_KEY not set -- skipping signature verification")
         return body
 
+    signature = request.headers.get("x-retell-signature", "")
+    if not signature:
+        logger.warning("No x-retell-signature header -- skipping verification")
+        return body
+
+    import hashlib
+    import hmac
     post_data = json.loads(body)
-    valid = retell_client.verify(
-        json.dumps(post_data, separators=(",", ":"), ensure_ascii=False),
-        api_key=str(os.environ["RETELL_API_KEY"]),
-        signature=str(request.headers.get("X-Retell-Signature", "")),
-    )
-    if not valid:
+    expected = hmac.new(
+        api_key.encode("utf-8"),
+        json.dumps(post_data, separators=(",", ":"), ensure_ascii=False).encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(signature, expected):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     return body
