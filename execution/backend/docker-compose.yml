@@ -1,6 +1,8 @@
 services:
   sarah-backend:
-    build: .
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     labels:
       - traefik.enable=true
