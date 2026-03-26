@@ -19,18 +19,46 @@ export const KANBAN_COLUMNS = [
   },
 ];
 
-/** Tailwind class mappings for outcome badges. */
+/** Dark Glass badge styles: translucent bg + colored border + colored text. */
 export const OUTCOME_COLORS = {
-  committed: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-500" },
-  follow_up: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
-  declined: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
-  no_answer: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
-  voicemail: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
-  busy: { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+  committed: {
+    bg: "bg-green-500/15 border border-green-500/30",
+    text: "text-green-500",
+    dot: "bg-green-500",
+  },
+  follow_up: {
+    bg: "bg-blue-500/15 border border-blue-500/30",
+    text: "text-blue-500",
+    dot: "bg-blue-500",
+  },
+  declined: {
+    bg: "bg-red-500/15 border border-red-500/30",
+    text: "text-red-500",
+    dot: "bg-red-500",
+  },
+  no_answer: {
+    bg: "bg-zinc-500/15 border border-zinc-500/30",
+    text: "text-zinc-400",
+    dot: "bg-zinc-500",
+  },
+  voicemail: {
+    bg: "bg-zinc-500/15 border border-zinc-500/30",
+    text: "text-zinc-400",
+    dot: "bg-zinc-500",
+  },
+  busy: {
+    bg: "bg-zinc-500/15 border border-zinc-500/30",
+    text: "text-zinc-400",
+    dot: "bg-zinc-500",
+  },
 };
 
-/** Default gray style for unknown outcomes. */
-export const OUTCOME_DEFAULT = { bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" };
+/** Default style for unknown outcomes. */
+export const OUTCOME_DEFAULT = {
+  bg: "bg-zinc-500/15 border border-zinc-500/30",
+  text: "text-zinc-400",
+  dot: "bg-zinc-500",
+};
 
 /** Polling intervals (ms). */
 export const POLL_LIVE = 5000;
