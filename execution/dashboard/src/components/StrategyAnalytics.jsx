@@ -1,52 +1,35 @@
-/**
- * StrategyAnalytics -- Closing strategy performance charts and tables.
- *
- * Horizontal bar chart showing conversion rate per closing strategy (Recharts 3)
- * and a totals table with per-strategy and aggregate metrics.
- * Data auto-refreshes every 30 seconds via the /api/dashboard/strategy endpoint.
- */
-
 import { useState, useEffect, useCallback } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer, Cell,
 } from "recharts";
 import { apiFetch } from "../api";
 import { useInterval } from "../hooks/useInterval";
 import { POLL_STRATEGY } from "../constants";
 import EmptyState from "./EmptyState";
 
-/** Return a bar color based on conversion rate performance. */
 function rateColor(rate) {
-  if (rate >= 40) return "#22c55e"; // green-500 -- high performer
-  if (rate >= 20) return "#3b82f6"; // blue-500 -- mid performer
-  return "#9ca3af"; // gray-400 -- needs improvement
+  if (rate >= 40) return "#22c55e";
+  if (rate >= 20) return "#3b82f6";
+  return "#71717a";
 }
 
-/** Return a Tailwind text color class for conversion rate display. */
 function rateTextClass(rate) {
-  if (rate >= 40) return "text-green-600";
-  if (rate >= 20) return "text-blue-600";
-  return "text-gray-500";
+  if (rate >= 40) return "text-green-500";
+  if (rate >= 20) return "text-blue-500";
+  return "text-zinc-500";
 }
 
-/** Custom tooltip for the bar chart. */
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-sm">
-      <p className="font-medium text-gray-900 dark:text-gray-100">{label}</p>
-      <p className="text-gray-600 dark:text-gray-400">
-        Conversion: <span className="font-semibold">{d.conversion_rate}%</span>
+    <div className="bg-zinc-800 border border-glass-border rounded-lg shadow-xl px-3 py-2 text-sm">
+      <p className="font-medium text-zinc-100">{label}</p>
+      <p className="text-zinc-400">
+        Conversion: <span className="font-semibold text-zinc-200">{d.conversion_rate}%</span>
       </p>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-zinc-400">
         {d.committed_count} committed / {d.total_calls} calls
       </p>
     </div>
@@ -67,28 +50,16 @@ export default function StrategyAnalytics() {
     }
   }, []);
 
-  // Initial fetch on mount.
-  useEffect(() => {
-    fetchStrategy();
-  }, [fetchStrategy]);
-
-  // Poll every POLL_STRATEGY ms (30 s).
+  useEffect(() => { fetchStrategy(); }, [fetchStrategy]);
   useInterval(fetchStrategy, POLL_STRATEGY);
 
-  /* ---- Error banner ---- */
   const errorBanner = error ? (
-    <div className="flex items-center justify-between bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-3 text-sm text-red-700 dark:text-red-400">
-      <span>{error}</span>
-      <button
-        onClick={fetchStrategy}
-        className="ml-4 font-medium underline hover:no-underline"
-      >
-        Retry
-      </button>
+    <div className="glass-card border-red-500/30 px-4 py-3 text-sm flex items-center justify-between">
+      <span className="text-red-400">{error}</span>
+      <button onClick={fetchStrategy} className="ml-4 text-red-400 hover:text-red-300 font-mono text-xs">Retry</button>
     </div>
   ) : null;
 
-  /* ---- Empty state ---- */
   if (strategies.length === 0 && !error) {
     return (
       <div className="space-y-6">
@@ -101,58 +72,25 @@ export default function StrategyAnalytics() {
     );
   }
 
-  /* ---- Aggregate row for footer ---- */
   const totalCalls = strategies.reduce((sum, s) => sum + s.total_calls, 0);
-  const totalCommitted = strategies.reduce(
-    (sum, s) => sum + s.committed_count,
-    0,
-  );
-  const weightedRate =
-    totalCalls > 0
-      ? Number(((totalCommitted / totalCalls) * 100).toFixed(1))
-      : 0;
-  const totalPersonas = strategies.reduce(
-    (sum, s) => sum + (s.personas_seen || 0),
-    0,
-  );
+  const totalCommitted = strategies.reduce((sum, s) => sum + s.committed_count, 0);
+  const weightedRate = totalCalls > 0 ? Number(((totalCommitted / totalCalls) * 100).toFixed(1)) : 0;
+  const totalPersonas = strategies.reduce((sum, s) => sum + (s.personas_seen || 0), 0);
 
   return (
     <div className="space-y-6">
       {errorBanner}
 
-      {/* ---- Bar chart card ---- */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">
-          Conversion Rate by Strategy
-        </h2>
-        <ResponsiveContainer
-          width="100%"
-          height={Math.max(200, strategies.length * 50)}
-        >
-          <BarChart
-            layout="vertical"
-            data={strategies}
-            margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-            <XAxis
-              type="number"
-              domain={[0, 100]}
-              unit="%"
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              type="category"
-              dataKey="strategy"
-              width={160}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip content={<ChartTooltip />} />
-            <Bar
-              dataKey="conversion_rate"
-              radius={[0, 4, 4, 0]}
-              barSize={24}
-            >
+      {/* Bar chart card */}
+      <div className="glass-card p-6">
+        <h2 className="text-lg font-semibold mb-4 text-zinc-100">Conversion Rate by Strategy</h2>
+        <ResponsiveContainer width="100%" height={Math.max(200, strategies.length * 50)}>
+          <BarChart layout="vertical" data={strategies} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+            <XAxis type="number" domain={[0, 100]} unit="%" tick={{ fontSize: 12, fill: "#71717a" }} axisLine={{ stroke: "rgba(255,255,255,0.08)" }} tickLine={false} />
+            <YAxis type="category" dataKey="strategy" width={160} tick={{ fontSize: 12, fill: "#a1a1aa" }} axisLine={false} tickLine={false} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+            <Bar dataKey="conversion_rate" radius={[0, 4, 4, 0]} barSize={24}>
               {strategies.map((entry, idx) => (
                 <Cell key={idx} fill={rateColor(entry.conversion_rate)} />
               ))}
@@ -161,81 +99,38 @@ export default function StrategyAnalytics() {
         </ResponsiveContainer>
       </div>
 
-      {/* ---- Totals table card ---- */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">
-          Strategy Performance Summary
-        </h2>
+      {/* Totals table card */}
+      <div className="glass-card p-6">
+        <h2 className="text-lg font-semibold mb-4 text-zinc-100">Strategy Performance Summary</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Strategy
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Total Calls
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Committed
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Conversion Rate
-                </th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">
-                  Personas Seen
-                </th>
+              <tr className="border-b border-glass-border">
+                <th className="text-left px-4 py-3 label-mono">Strategy</th>
+                <th className="text-right px-4 py-3 label-mono">Total Calls</th>
+                <th className="text-right px-4 py-3 label-mono">Committed</th>
+                <th className="text-right px-4 py-3 label-mono">Conversion</th>
+                <th className="text-right px-4 py-3 label-mono">Personas</th>
               </tr>
             </thead>
             <tbody>
               {strategies.map((s, idx) => (
-                <tr
-                  key={s.strategy}
-                  className={
-                    idx % 2 === 0
-                      ? "bg-white dark:bg-gray-800"
-                      : "bg-gray-50/50 dark:bg-gray-800/30"
-                  }
-                >
-                  <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
-                    {s.strategy}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                    {s.total_calls}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                    {s.committed_count}
-                  </td>
-                  <td
-                    className={`px-4 py-3 text-right font-medium ${rateTextClass(s.conversion_rate)}`}
-                  >
-                    {s.conversion_rate}%
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
-                    {s.personas_seen}
-                  </td>
+                <tr key={s.strategy} className={`border-b border-glass-border ${idx % 2 === 1 ? "bg-white/[0.01]" : ""}`}>
+                  <td className="px-4 py-3 font-semibold text-zinc-200">{s.strategy}</td>
+                  <td className="px-4 py-3 text-right text-zinc-400 font-mono">{s.total_calls}</td>
+                  <td className="px-4 py-3 text-right text-zinc-400 font-mono">{s.committed_count}</td>
+                  <td className={`px-4 py-3 text-right font-mono font-medium ${rateTextClass(s.conversion_rate)}`}>{s.conversion_rate}%</td>
+                  <td className="px-4 py-3 text-right text-zinc-400 font-mono">{s.personas_seen}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 font-semibold">
-                <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
-                  All Strategies
-                </td>
-                <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                  {totalCalls}
-                </td>
-                <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                  {totalCommitted}
-                </td>
-                <td
-                  className={`px-4 py-3 text-right ${rateTextClass(weightedRate)}`}
-                >
-                  {weightedRate}%
-                </td>
-                <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
-                  {totalPersonas}
-                </td>
+              <tr className="border-t-2 border-zinc-700 font-semibold">
+                <td className="px-4 py-3 text-zinc-100">All Strategies</td>
+                <td className="px-4 py-3 text-right text-zinc-200 font-mono">{totalCalls}</td>
+                <td className="px-4 py-3 text-right text-zinc-200 font-mono">{totalCommitted}</td>
+                <td className={`px-4 py-3 text-right font-mono ${rateTextClass(weightedRate)}`}>{weightedRate}%</td>
+                <td className="px-4 py-3 text-right text-zinc-200 font-mono">{totalPersonas}</td>
               </tr>
             </tfoot>
           </table>
