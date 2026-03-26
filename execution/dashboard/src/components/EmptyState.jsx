@@ -1,14 +1,7 @@
-/**
- * Reusable empty state placeholder for dashboard sections.
- *
- * Shows a muted icon, title, and description text centered in its container.
- * Used when no data is available (e.g., before Sarah's first calls).
- */
-
 function DefaultIcon() {
   return (
     <svg
-      className="mx-auto h-12 w-12 text-gray-300"
+      className="mx-auto h-12 w-12 text-zinc-700"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -27,13 +20,13 @@ function DefaultIcon() {
 export default function EmptyState({
   icon,
   title = "No data yet",
-  message = "No data yet. Analytics will appear after Sarah's first calls.",
+  message = "Analytics will appear after Sarah's first calls.",
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
+    <div className="flex flex-col items-center justify-center py-16 px-4">
       {icon || <DefaultIcon />}
-      <h3 className="mt-4 text-sm font-semibold text-gray-500">{title}</h3>
-      <p className="mt-1 text-sm text-gray-400 text-center max-w-sm">{message}</p>
+      <h3 className="mt-4 text-sm font-medium text-zinc-500">{title}</h3>
+      <p className="mt-1 text-sm text-zinc-600 text-center max-w-sm">{message}</p>
     </div>
   );
 }
