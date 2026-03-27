@@ -12,6 +12,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 os.environ.setdefault("DASHBOARD_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("RETELL_API_KEY", "test-retell-key")
 
+# slowapi reads `.env` from the cwd at import time via starlette.Config.
+# The repo-root .env contains UTF-8 box-drawing characters that Windows'
+# default cp1252 codec can't decode.  Temporarily switch cwd to the tests
+# directory (no .env there) before the app module is loaded, then restore.
+_orig_cwd = os.getcwd()
+os.chdir(os.path.dirname(__file__))
+
 
 @pytest.fixture(scope="session")
 def auth_token():
@@ -23,6 +30,8 @@ def auth_token():
 def app():
     """FastAPI app instance."""
     from main import app as fastapi_app
+    # Restore original cwd now that the app module has been imported
+    os.chdir(_orig_cwd)
     return fastapi_app
 
 

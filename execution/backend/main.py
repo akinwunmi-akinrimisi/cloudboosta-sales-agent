@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, field_validator, validator
+from pydantic import BaseModel, ValidationError, field_validator, validator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -367,7 +367,14 @@ async def health():
 @limiter.limit("100/minute")
 async def retell_tool(request: Request):
     body = await verify_retell_signature(request)
-    payload = ToolCallPayload(**json.loads(body))
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {exc}")
+    try:
+        payload = ToolCallPayload(**data)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     result = await execute_tool(
         name=payload.name,
         args=payload.args,
@@ -382,7 +389,14 @@ async def retell_tool(request: Request):
 @limiter.limit("100/minute")
 async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
     body = await verify_retell_signature(request)
-    payload = WebhookPayload(**json.loads(body))
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {exc}")
+    try:
+        payload = WebhookPayload(**data)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
     event = payload.event
     call_data = payload.call or {}
@@ -712,14 +726,19 @@ async def dashboard_strategy(request: Request, _token: str = Depends(verify_bear
 @limiter.limit("60/minute")
 async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
     """Full lead details and call history for the lead detail panel."""
-    # Fetch lead
-    lead_result = (
-        supabase.table("leads")
-        .select("*")
-        .eq("id", lead_id)
-        .single()
-        .execute()
-    )
+    # Fetch lead — use limit(1) instead of .single() to avoid a raised exception
+    # when no rows match (postgrest returns 406 for .single() with 0 rows).
+    try:
+        lead_result = (
+            supabase.table("leads")
+            .select("*")
+            .eq("id", lead_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("dashboard_lead_detail: DB error for lead %s: %s", lead_id, exc)
+        raise HTTPException(status_code=404, detail="Lead not found")
     if not lead_result.data:
         raise HTTPException(status_code=404, detail="Lead not found")
 
@@ -732,7 +751,7 @@ async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = De
         .execute()
     )
 
-    return {"lead": lead_result.data, "calls": calls_result.data or []}
+    return {"lead": lead_result.data[0], "calls": calls_result.data or []}
 
 
 # ---------------------------------------------------------------------------
