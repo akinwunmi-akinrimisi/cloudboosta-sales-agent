@@ -41,6 +41,7 @@ from dialer import (
     can_dial_next,
     check_daily_limit,
 )
+from webinar_schedule import determine_call_type
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -616,15 +617,30 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
     # No agent_id parameter -- removed in SDK 5.x.
     # The phone number +17405085360 must have outbound_agents configured
     # (done by migrate_phone_number.py).
+
+    # Determine call type and webinar context
+    call_context = determine_call_type(lead_data)
+    call_type = call_context["call_type"]
+    webinar = call_context["webinar"]
+    is_returning = call_context["is_returning"]
+
+    dynamic_vars = {
+        "lead_name": lead_data["name"],
+        "lead_location": lead_data.get("location", "unknown"),
+        "lead_email": lead_data.get("email", ""),
+        "call_type": call_type,
+        "is_returning_lead": "yes" if is_returning else "no",
+        "webinar_date": webinar["date_iso"] if webinar else "",
+        "webinar_topic": webinar["topic"] if webinar else "",
+        "webinar_summary": webinar["summary"] if webinar else "",
+        "webinars_invited": ",".join(lead_data.get("webinars_invited") or []),
+    }
+
     call = retell_client.call.create_phone_call(
         from_number="+17405085360",
         to_number=lead_data["phone"],
         metadata={"lead_id": str(req.lead_id)},
-        retell_llm_dynamic_variables={
-            "lead_name": lead_data["name"],
-            "lead_location": lead_data.get("location", "unknown"),
-            "lead_email": lead_data.get("email", ""),
-        },
+        retell_llm_dynamic_variables=dynamic_vars,
     )
 
     # Update lead status

@@ -92,6 +92,12 @@ def main() -> None:
             "lead_name": "there",
             "lead_location": "unknown",
             "lead_email": "",
+            "call_type": "invite",
+            "is_returning_lead": "no",
+            "webinar_date": "",
+            "webinar_topic": "",
+            "webinar_summary": "",
+            "webinars_invited": "",
         }
         update_kwargs["model"] = "gpt-4o-mini"
         update_kwargs["model_temperature"] = 0.3
