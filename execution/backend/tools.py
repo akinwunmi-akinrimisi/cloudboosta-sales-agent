@@ -137,6 +137,9 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
     motivation = args.get("motivation_strength", "")
     capacity = args.get("capacity_assessment", "")
     confirmed_email = args.get("confirmed_email", "")
+    call_type = args.get("call_type", "direct_sell")
+    webinar_date = args.get("webinar_date", "")
+    webinar_attended_str = args.get("webinar_attended", "")
 
     logger.info(
         "log_call_outcome called: outcome=%s strategy=%s persona=%s call_id=%s lead_id=%s",
@@ -152,6 +155,7 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
         "closing_strategy_used": strategy,
         "detected_persona": persona,
         "summary": summary,
+        "call_type": call_type,
     }).execute()
 
     # 2. Update lead status based on outcome (skip NO_ANSWER -- handled by webhook)
@@ -161,20 +165,51 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
             "FOLLOW_UP": "follow_up",
             "DECLINED": "declined",
             "NOT_QUALIFIED": "not_qualified",
+            "WEBINAR_INVITED": "webinar_invited",
+            "REMINDER_COMPLETED": "reminder_sent",
         }
         new_status = status_map.get(outcome)
         if new_status:
             update_data: dict[str, Any] = {
                 "status": new_status,
-                "last_strategy_used": strategy,
-                "detected_persona": persona,
-                "programme_recommended": programme,
                 "outcome": outcome,
             }
+            # Only set strategy/persona on sell calls
+            if call_type in ("follow_up", "direct_sell"):
+                update_data["last_strategy_used"] = strategy
+                update_data["detected_persona"] = persona
+                update_data["programme_recommended"] = programme
             if confirmed_email:
                 update_data["email"] = confirmed_email
             if outcome == "FOLLOW_UP" and follow_up_date:
                 update_data["follow_up_at"] = follow_up_date
+
+            # Webinar tracking: append to invited list
+            if webinar_date and call_type == "invite":
+                lead_row = supabase.table("leads").select("webinars_invited").eq("id", lead_id).limit(1).execute()
+                current = (lead_row.data[0]["webinars_invited"] or []) if lead_row.data else []
+                if webinar_date not in current:
+                    current.append(webinar_date)
+                    update_data["webinars_invited"] = current
+
+            # Webinar attendance tracking
+            if webinar_attended_str and call_type == "follow_up":
+                update_data["last_webinar_attended"] = webinar_attended_str.lower() == "true"
+
+            # Schedule next call based on outcome
+            if outcome == "WEBINAR_INVITED" and webinar_date:
+                from datetime import datetime as dt, timezone as tz
+                webinar_dt = dt.strptime(webinar_date, "%Y-%m-%d")
+                reminder_at = webinar_dt.replace(hour=16, minute=0, tzinfo=tz.utc)
+                update_data["next_call_type"] = "reminder"
+                update_data["next_call_at"] = reminder_at.isoformat()
+            elif outcome == "REMINDER_COMPLETED" and webinar_date:
+                from datetime import datetime as dt, timedelta as td, timezone as tz
+                webinar_dt = dt.strptime(webinar_date, "%Y-%m-%d")
+                followup_at = (webinar_dt + td(days=1)).replace(hour=10, minute=0, tzinfo=tz.utc)
+                update_data["next_call_type"] = "follow_up"
+                update_data["next_call_at"] = followup_at.isoformat()
+
             supabase.table("leads").update(update_data).eq("id", lead_id).execute()
 
     return {"result": f"Outcome '{outcome}' logged successfully"}

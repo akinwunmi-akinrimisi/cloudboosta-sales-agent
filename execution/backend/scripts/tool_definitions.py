@@ -118,12 +118,11 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                     "outcome": {
                         "type": "string",
                         "description": (
-                            "Call outcome. COMMITTED = agreed to enrol and "
-                            "payment details will be sent. FOLLOW_UP = interested "
-                            "but needs time, specific follow-up date must be set. "
-                            "DECLINED = said no clearly. NOT_QUALIFIED = not a fit "
-                            "for any programme. NO_ANSWER = voicemail or didn't "
-                            "connect."
+                            "Call outcome. WEBINAR_INVITED = accepted webinar "
+                            "invite. REMINDER_COMPLETED = reminder call done. "
+                            "COMMITTED = agreed to enrol. FOLLOW_UP = interested "
+                            "but needs time. DECLINED = said no clearly. "
+                            "NOT_QUALIFIED = not a fit. NO_ANSWER = didn't connect."
                         ),
                     },
                     "programme_recommended": {
@@ -179,6 +178,29 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                             "If the lead confirmed their existing email, pass it here. "
                             "If they gave a new/different email, pass the new one. "
                             "This is where payment details and follow-up info will be sent."
+                        ),
+                    },
+                    "call_type": {
+                        "type": "string",
+                        "description": (
+                            "Type of call being logged. One of: invite, "
+                            "reminder, follow_up, direct_sell."
+                        ),
+                    },
+                    "webinar_date": {
+                        "type": "string",
+                        "description": (
+                            "ISO date of the webinar referenced in this call "
+                            "(e.g. '2026-04-03'). Only for invite, reminder, "
+                            "and follow_up calls."
+                        ),
+                    },
+                    "webinar_attended": {
+                        "type": "string",
+                        "description": (
+                            "Whether the lead attended the webinar. 'true' or "
+                            "'false'. Only set on follow_up calls after asking "
+                            "the lead."
                         ),
                     },
                     "follow_up_date": {
