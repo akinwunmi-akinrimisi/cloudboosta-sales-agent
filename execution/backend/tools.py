@@ -136,6 +136,7 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
     objections = args.get("objections_raised", "")
     motivation = args.get("motivation_strength", "")
     capacity = args.get("capacity_assessment", "")
+    confirmed_email = args.get("confirmed_email", "")
 
     logger.info(
         "log_call_outcome called: outcome=%s strategy=%s persona=%s call_id=%s lead_id=%s",
@@ -170,6 +171,8 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
                 "programme_recommended": programme,
                 "outcome": outcome,
             }
+            if confirmed_email:
+                update_data["email"] = confirmed_email
             if outcome == "FOLLOW_UP" and follow_up_date:
                 update_data["follow_up_at"] = follow_up_date
             supabase.table("leads").update(update_data).eq("id", lead_id).execute()

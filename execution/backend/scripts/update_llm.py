@@ -91,6 +91,7 @@ def main() -> None:
         update_kwargs["default_dynamic_variables"] = {
             "lead_name": "there",
             "lead_location": "unknown",
+            "lead_email": "",
         }
         update_kwargs["model"] = "gpt-4o-mini"
         update_kwargs["model_temperature"] = 0.3

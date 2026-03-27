@@ -172,6 +172,15 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                             "Empty string if no objections."
                         ),
                     },
+                    "confirmed_email": {
+                        "type": "string",
+                        "description": (
+                            "The lead's confirmed or newly collected email address. "
+                            "If the lead confirmed their existing email, pass it here. "
+                            "If they gave a new/different email, pass the new one. "
+                            "This is where payment details and follow-up info will be sent."
+                        ),
+                    },
                     "follow_up_date": {
                         "type": "string",
                         "description": (

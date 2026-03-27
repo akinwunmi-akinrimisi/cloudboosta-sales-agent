@@ -623,6 +623,7 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
         retell_llm_dynamic_variables={
             "lead_name": lead_data["name"],
             "lead_location": lead_data.get("location", "unknown"),
+            "lead_email": lead_data.get("email", ""),
         },
     )
 
