@@ -636,7 +636,7 @@ class TestSecurityLive:
 
 Run:
 ```bash
-cd execution/tests && LIVE_DASHBOARD_TOKEN=sarah-dashboard-secret-2026 python -m pytest test_live_smoke.py -v --tb=short -m live 2>&1
+cd execution/tests && LIVE_DASHBOARD_TOKEN=$DASHBOARD_SECRET_KEY python -m pytest test_live_smoke.py -v --tb=short -m live 2>&1
 ```
 Expected: All tests pass.
 
@@ -665,7 +665,7 @@ Expected: All tests pass.
 
 Run:
 ```bash
-cd execution/tests && LIVE_DASHBOARD_TOKEN=sarah-dashboard-secret-2026 python -m pytest test_live_smoke.py -v --tb=short 2>&1
+cd execution/tests && LIVE_DASHBOARD_TOKEN=$DASHBOARD_SECRET_KEY python -m pytest test_live_smoke.py -v --tb=short 2>&1
 ```
 Expected: All tests pass.
 
@@ -673,7 +673,7 @@ Expected: All tests pass.
 
 Run:
 ```bash
-cd execution/tests && LIVE_DASHBOARD_TOKEN=sarah-dashboard-secret-2026 python -m pytest -v --tb=short 2>&1
+cd execution/tests && LIVE_DASHBOARD_TOKEN=$DASHBOARD_SECRET_KEY python -m pytest -v --tb=short 2>&1
 ```
 Expected: All tests pass. Report total count.
 
