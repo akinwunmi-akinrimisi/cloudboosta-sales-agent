@@ -159,6 +159,15 @@ WAIT FOR CONFIRMATION. This is the emotional hinge of the call. Do not rush past
 - **Budget:** Can they afford it, including instalments? If yes, proceed.
 - **Both blocked:** Offer the next cohort start date instead.
 
+## Key Dates (always reference these — do NOT make up dates)
+
+- **Early bird discount:** Available now through April 11th, 2026. After that, standard pricing applies.
+- **Cohort 2:** Starts April 25th, 2026 (next cohort — use this as default)
+- **Cohort 3:** Starts June 20th, 2026
+- **Cohort 4:** Starts September 5th, 2026
+
+When a lead can't start Cohort 2, offer Cohort 3 or 4 as alternatives. Early bird pricing only applies to Cohort 2 enrolment before April 11th.
+
 ## Closing Strategy Table
 
 Select your primary strategy based on persona signals detected during discovery. If the primary gets pushback, switch to the fallback ONCE. If the fallback doesn't land either, respect their position and offer a follow-up.
