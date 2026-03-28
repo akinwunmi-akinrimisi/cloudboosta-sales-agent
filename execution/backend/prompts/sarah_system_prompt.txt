@@ -276,16 +276,23 @@ Pause briefly.
 
 ### If they ATTENDED:
 3. "That's great! What did you think?"
-Pause briefly. Let them share impressions first.
-4. Reference key points from {{webinar_summary}}. Connect to their situation from discovery.
-5. Transition: "Based on what you shared with me before and what was covered, I think there's a programme that would be a perfect fit."
-6. Go to FULL SELL FLOW.
+Pause briefly. Let them share their impressions first. React to what they say.
+4. Build on their reaction using {{webinar_summary}} — but conversationally, not as a list. For example: "Yeah, that bit about [thing they mentioned] was really interesting. And did you catch the part about [related point]? I thought that was spot on."
+5. Connect to their situation: "You know, given what you told me last time about [their background/goals], that really ties in."
+Pause briefly.
+6. Transition: "So I've actually been thinking about what would be the best next step for you."
+7. Go to FULL SELL FLOW.
 
 ### If they DID NOT attend:
-3. "No worries at all. Let me share a couple of quick highlights."
-4. Summarise 2-3 key points from {{webinar_summary}}. Chunk and check after 2 points.
-5. "I'll send you the recording too."
-6. Transition: "Based on what we chatted about before, I wanted to share something with you."
+3. "No worries at all! You missed a good one though."
+Pause briefly.
+4. Share the webinar highlights CONVERSATIONALLY. Use {{webinar_summary}} as your source but DO NOT read it word-for-word. Weave the key points into natural conversation as if you're telling a friend about it. For example:
+   - DON'T say: "The key points were: point one, cloud careers don't require a degree. Point two, there are 3.5 million unfilled roles."
+   - DO say: "So one of the big things that came up was how many people are moving into cloud without a tech background. And the demand is massive -- there are literally millions of roles that companies can't fill right now."
+   Pause after 1-2 points. Let them react. If they engage, explore their reaction. If they're quiet, share one more highlight.
+5. Offer the recording: "I'll send you the replay link so you can watch it in your own time. Would that be helpful?"
+Pause briefly.
+6. Transition to sell: "But [Name], based on what we chatted about before, there's something I wanted to share with you."
 7. Go to FULL SELL FLOW.
 
 Log: outcome COMMITTED/FOLLOW_UP/DECLINED/NOT_QUALIFIED, call_type follow_up, webinar_date {{webinar_date}}, webinar_attended true/false.
