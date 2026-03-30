@@ -29,6 +29,10 @@ every rule during implementation.
 | CSV import | Malicious payloads in uploaded data | XSS, injection, data corruption | MEDIUM |
 | Dependencies | Vulnerable packages | Remote code execution | MEDIUM |
 | Error messages | Stack traces in API responses | Information disclosure | LOW |
+| OpenClaw API | Unauthenticated message sending | Spam from your WhatsApp, account ban | HIGH |
+| Cal.com webhooks | Fake booking injection | False leads, wasted call slots | MEDIUM |
+| Email content | PII in outreach emails | Data exposure if email forwarded | MEDIUM |
+| WhatsApp message replies | Injection via reply text | Malicious content parsed by AI | LOW |
 
 ---
 
@@ -75,6 +79,9 @@ PATTERNS=(
     'ghp_[a-zA-Z0-9]{36}'
     'password\s*=\s*["\x27][^"\x27]+'
     'Bearer\s+[a-zA-Z0-9._-]{20,}'
+    'OPENCLAW_API_KEY\s*='
+    'CAL_COM_API_KEY\s*='
+    'CAL_COM_WEBHOOK_SECRET\s*='
 )
 
 STAGED=$(git diff --cached --name-only)
@@ -148,6 +155,12 @@ WEBHOOK_SECRET=generate_a_random_32_char_string
 DASHBOARD_SECRET_KEY=generate_a_random_64_char_string
 N8N_BASE_URL=https://your-n8n-instance.com
 N8N_WEBHOOK_SECRET=generate_a_random_32_char_string
+OPENCLAW_API_URL=http://your-vps2-ip:8080
+OPENCLAW_API_KEY=your_openclaw_key_here
+OPENCLAW_INSTANCE=cloudboosta
+CAL_COM_URL=https://cal.yourdomain.com
+CAL_COM_API_KEY=your_cal_com_key_here
+CAL_COM_WEBHOOK_SECRET=generate_random_32_chars
 ```
 
 ### 1.4 Secrets Rotation Schedule
@@ -160,6 +173,8 @@ N8N_WEBHOOK_SECRET=generate_a_random_32_char_string
 | RESEND_API_KEY | Every 90 days | Rotate in Resend dashboard → update .env |
 | WEBHOOK_SECRET | Every 90 days | Generate new random string → update .env + Retell webhook config |
 | DASHBOARD_SECRET_KEY | Every 90 days | Generate new string → update .env → all sessions invalidated |
+| OPENCLAW_API_KEY | Every 90 days | Regenerate in OpenClaw dashboard → update .env |
+| CAL_COM_API_KEY | Every 90 days | Regenerate in Cal.com admin → update .env |
 
 ---
 
@@ -246,6 +261,27 @@ In n8n workflow:
 - Set header name and expected value
 - Requests without valid header are rejected (401)
 ```
+
+### 2.4 Cal.com Webhook Verification
+```python
+async def verify_calcom_webhook(request: Request) -> bytes:
+    body = await request.body()
+    signature = request.headers.get("x-cal-signature-256", "")
+    expected = hmac.new(
+        os.environ["CAL_COM_WEBHOOK_SECRET"].encode(),
+        body, hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=401, detail="Invalid Cal.com signature")
+    return body
+```
+
+### 2.5 OpenClaw API Security
+- OpenClaw runs on VPS #2 with no public exposure
+- All API calls require the apikey header
+- Never expose the OpenClaw API URL or key to frontend code
+- Rate limit outbound WhatsApp: max 30 messages per hour
+- Never send WhatsApp to numbers marked do_not_contact
 
 ---
 
@@ -597,6 +633,30 @@ class WebhookPayload(BaseModel):
         return v
 ```
 
+### 6.4 WhatsApp Reply Sanitization
+```python
+def sanitize_whatsapp_reply(text: str) -> str:
+    text = text.strip()
+    if len(text) > 500:
+        text = text[:500]
+    text = re.sub(r'https?://\S+', '[link removed]', text)
+    text = re.sub(r'[{}\[\]<>]', '', text)
+    return text
+```
+
+### 6.5 Email Address Validation
+```python
+EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+def validate_email(email: str) -> str:
+    email = email.strip().lower()
+    if not EMAIL_PATTERN.match(email):
+        raise ValueError(f"Invalid email: {email}")
+    if len(email) > 254:
+        raise ValueError("Email too long")
+    return email
+```
+
 ---
 
 ## 7. NETWORK SECURITY
@@ -703,6 +763,12 @@ async def pre_call_check(supabase, lead_id: str) -> bool:
 
     return True
 ```
+
+### 8.3 WhatsApp Anti-Spam Compliance
+- Max 30 outreach messages per hour
+- Never send more than 1 message to same number in 24 hours
+- If lead replies "stop" or "unsubscribe", immediately set do_not_contact=true
+- Log every outbound WhatsApp in pipeline_logs
 
 ---
 
@@ -917,6 +983,13 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 [ ] pip-audit shows no critical vulnerabilities
 [ ] Firewall rules applied on VPS
 [ ] Logs do not contain full phone numbers or API keys
+[ ] OpenClaw API not exposed to public internet
+[ ] Cal.com webhook signature verification enabled
+[ ] WhatsApp outreach rate limited to 30/hour
+[ ] WhatsApp opt-out ("stop") handling implemented
+[ ] Email validation on save_email tool
+[ ] WhatsApp reply text sanitized before AI parsing
+[ ] OpenClaw and Cal.com API keys in .env (not hardcoded)
 ```
 
 ---
@@ -929,6 +1002,7 @@ If a security incident occurs:
 2. **Unauthorized Access** — Disable affected endpoint. Review audit logs. Rotate affected credentials. Investigate source.
 3. **Data Breach** — Stop the auto-dialer. Assess scope. Notify affected parties if PII exposed. Document timeline.
 4. **Toll Fraud** — Disable outbound calling immediately. Check Retell and Twilio dashboards for unauthorized calls. Set spending limits.
+5. **WhatsApp Account Ban** — Stop all outbound messages immediately. Review message templates. Contact WhatsApp Business support. Reduce sending rate. Never resume until restored.
 
 Emergency contacts:
 - Retell support: support@retellai.com
