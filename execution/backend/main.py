@@ -607,8 +607,8 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
         raise HTTPException(status_code=409, detail="Another call is already active")
 
     # Safety checks
-    if lead_data["status"] in ("do_not_contact", "declined"):
-        raise HTTPException(status_code=403, detail="Lead is do-not-contact or declined")
+    if lead_data["status"] == "do_not_contact":
+        raise HTTPException(status_code=403, detail="Lead is do-not-contact")
 
     if not is_safe_destination(lead_data["phone"]):
         raise HTTPException(status_code=403, detail="Blocked destination")
@@ -1101,8 +1101,8 @@ async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_
         raise HTTPException(status_code=409, detail="Another call is already active")
 
     # Do-not-contact / declined guard
-    if lead_data["status"] in ("do_not_contact", "declined"):
-        raise HTTPException(status_code=403, detail="Lead is do-not-contact or declined")
+    if lead_data["status"] == "do_not_contact":
+        raise HTTPException(status_code=403, detail="Lead is do-not-contact")
 
     # Phone safety check
     if not is_safe_destination(lead_data["phone"]):
@@ -1160,7 +1160,11 @@ async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_
         retell_llm_dynamic_variables=dynamic_vars,
     )
 
-    # Update lead status
+    # Update lead status — handle state machine transitions
+    current_status = lead_data.get("status", "")
+    needs_queued_first = current_status in ("declined", "not_qualified", "failed", "no_answer", "voicemail", "busy")
+    if needs_queued_first:
+        supabase.table("leads").update({"status": "queued"}).eq("id", lead_id).execute()
     supabase.table("leads").update({"status": "calling"}).eq("id", lead_id).execute()
 
     logger.info("call-now: call initiated %s -> %s", call.call_id, lead_data["phone"][:4] + "****")
