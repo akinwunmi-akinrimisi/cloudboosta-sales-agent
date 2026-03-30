@@ -1,18 +1,18 @@
 # Agent Instructions (DOE)
-## Sarah — AI Cold-Calling Sales Agent on Retell AI
+## John — AI Sales Agent on Retell AI
 ### Directive → Observation → Experiment
 
 > **AI is probabilistic. Sales pipeline execution must be deterministic.**
 > This system separates those responsibilities. Retell AI handles all voice processing.
-> Your backend handles tool execution, scheduling, and data persistence.
-> Every call outcome is logged. Every strategy is tracked. The system learns what works.
+> Your backend handles outreach, booking, tool execution, and data persistence.
+> Every interaction is logged. Every strategy is tracked. The system learns what works.
 > If a lead says "no," respect it immediately. If the dialer breaks, the pipeline stops.
 > Reliability and trust are non-negotiable.
 
-**Version 2.0 | Operscale Systems | March 2026**
+**Version 3.0 | Operscale Systems | March 2026**
 **Owner:** Akinwunmi Akinrimisi
 **Client:** Cloudboosta Technology Solutions Ltd
-**Stack:** Retell AI (voice platform) + Supabase (self-hosted PostgreSQL at supabase.operscale.cloud) + n8n (self-hosted on Hostinger KVM 4) + Resend (email delivery) + FastAPI (webhook backend)
+**Stack:** Retell AI (voice) + Supabase (database) + n8n (orchestration) + OpenClaw/Evolution API (WhatsApp, VPS #2) + Cal.com (booking, self-hosted) + Resend (email) + FastAPI (webhook backend)
 
 ---
 
@@ -23,13 +23,15 @@ All work must:
 - Read the relevant `directives/` file before writing or modifying any workflow, endpoint, or prompt.
 - Push every repeatable operation into deterministic scripts in `execution/`.
 - Treat every error as a learning signal — self-anneal by fixing the script, then updating the directive.
-- **Never hardcode API keys** (Retell, Supabase, Twilio, Resend). Always reference environment variables. Any key exposed in code, workflow JSON, or logs must be rotated immediately.
-- Read `security.md` before writing ANY code. Every endpoint, query, and data flow must satisfy the security controls defined there.
-- **Never call a lead marked `do_not_contact` or `declined`.** The pre-call check is non-negotiable.
-- **Never guarantee job outcomes.** Sarah uses "opportunity" and "support", never "guarantee" or "promise".
-- All programme data comes from the knowledge base — Sarah never fabricates details.
+- **Superpowers is the build methodology.** Follow brainstorm → plan → execute. Use TDD. Use subagent-driven development.
+- **Never hardcode API keys.** Always reference environment variables. Any key exposed in code must be rotated immediately.
+- Read `security.md` before writing ANY code.
+- **Never call a lead marked `do_not_contact` or `declined`.**
+- **Never guarantee job outcomes.** John uses "opportunity" and "support", never "guarantee" or "promise".
+- All programme data comes from the knowledge base — John never fabricates details.
 - Every call must end with a classification: COMMITTED, FOLLOW_UP, or DECLINED.
-- FOLLOW_UP must have a specific date/time locked in. "I'll get back to you" is not acceptable.
+- FOLLOW_UP must have a specific date/time locked in.
+- **John's name is John.** Not Sarah. Update all references.
 - Do not rewrite or regenerate this file unless explicitly instructed.
 
 ---
@@ -38,296 +40,396 @@ All work must:
 
 | Layer | Name | What lives here | Your role |
 |-------|------|-----------------|-----------|
-| **1** | Directive | `directives/` — Markdown SOPs per project phase. Goals, inputs, tools, outputs, edge cases. | READ before acting |
-| **2** | Orchestration | **THIS AGENT — you.** Interpret directives, route API calls, trigger n8n workflows, handle errors, update directives. | DECIDE & ROUTE |
-| **3** | Execution | `execution/` — FastAPI webhook server, Retell SDK config scripts, n8n workflow JSONs, Supabase migrations. | RUN & OBSERVE |
-
-**Example:** You don't configure the Retell agent by guessing parameters. You read `directives/03_voice_agent.md`, determine the required voice, language, and behaviour settings, then call `client.agent.create()`. If Retell returns an error, you parse the response, fix the parameters, retest, and update the directive with what you learned.
+| **1** | Directive | `directives/` — Markdown SOPs per phase | READ before acting |
+| **2** | Orchestration | **THIS AGENT — you.** Interpret directives, route API calls, trigger workflows, handle errors | DECIDE & ROUTE |
+| **3** | Execution | `execution/` — FastAPI server, n8n workflows, Retell config scripts, Supabase migrations | RUN & OBSERVE |
 
 ---
 
 ## 2. System Architecture
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌───────────────────┐
-│  Lead's Phone   │◄───►│   Retell AI      │◄───►│  Webhook Backend  │
-│  (+234/+44/+1)  │voice│  • STT (speech)  │text │  (FastAPI on VPS) │
-│                 │     │  • TTS (voice)   │     │  • Tool execution │
-│                 │     │  • VAD (turns)   │     │  • Supabase CRUD  │
-│                 │     │  • LLM (brain)   │     │  • Dialer control │
-└─────────────────┘     └──────────────────┘     └───────────────────┘
-                               │                         │
-                               │ webhooks                │
-                               ▼                         ▼
-                        ┌──────────────────┐     ┌───────────────────┐
-                        │  n8n (VPS #1)    │     │  Supabase         │
-                        │  • Auto-dialer   │     │  • leads          │
-                        │  • Post-call     │     │  • call_logs      │
-                        │  • Lead import   │     │  • pipeline_logs  │
-                        └──────────────────┘     │  • dial_schedules │
-                                                 └───────────────────┘
-                                                         │
-                                                         ▼
-                                                 ┌───────────────────┐
-                                                 │  Dashboard (React)│
-                                                 │  • Live call view │
-                                                 │  • Lead pipeline  │
-                                                 │  • Strategy stats │
-                                                 └───────────────────┘
+                    ┌──────────────────────────────────────────┐
+                    │           LEAD IMPORT (CSV)              │
+                    │    first_name, last_name, phone, email   │
+                    └──────────────┬───────────────────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────────────────┐
+                    │         SUPABASE (leads table)           │
+                    │  Tags: has_email, has_whatsapp, timezone │
+                    └──────────────┬───────────────────────────┘
+                                   │
+                          ┌────────┴────────┐
+                          ▼                 ▼
+               ┌─────────────────┐  ┌─────────────────┐
+               │ WhatsApp Check  │  │  Has Email?      │
+               │ (OpenClaw API)  │  │                  │
+               └────────┬────────┘  └────────┬─────────┘
+                        │                    │
+          ┌─────────────┴─────────────┐      │
+          ▼                           ▼      ▼
+ ┌─────────────────┐      ┌──────────────────────────┐
+ │ Send WhatsApp   │      │    Send Email            │
+ │ (OpenClaw)      │      │    (Resend)              │
+ │ + Cal.com link  │      │    + Cal.com link        │
+ │ + reply option  │      │    + reply option        │
+ └────────┬────────┘      └──────────┬───────────────┘
+          │                          │
+          └──────────┬───────────────┘
+                     ▼
+          ┌─────────────────────────────────┐
+          │  MONITOR FOR RESPONSE           │
+          │  • Cal.com webhook (booking)    │
+          │  • OpenClaw webhook (WA reply)  │
+          │  • n8n polling (backup)         │
+          │  • AI parses reply → datetime   │
+          └──────────────┬──────────────────┘
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+    ┌──────────────────┐  ┌──────────────────┐
+    │ Lead books via   │  │ Lead replies     │
+    │ Cal.com          │  │ with pref. time  │
+    │ → exact datetime │  │ → AI extracts    │
+    └────────┬─────────┘  └────────┬─────────┘
+             │                     │
+             └──────────┬──────────┘
+                        ▼
+             ┌─────────────────────────────┐
+             │  SCHEDULED CALL             │
+             │  John calls at lead's       │
+             │  preferred time             │
+             │  (via Retell API)           │
+             └──────────────┬──────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │  RETELL AI (voice call)      │
+             │  • STT / TTS / VAD           │
+             │  • LLM (John's brain)        │
+             │  • Dynamic vars: lead context,│
+             │    previous call summaries,   │
+             │    known email status         │
+             └──────────────┬───────────────┘
+                            │
+                            ▼
+             ┌──────────────────────────────┐
+             │  POST-CALL AUTOMATION        │
+             │  • Log transcript + outcome  │
+             │  • COMMITTED → payment email │
+             │  • FOLLOW_UP → schedule next │
+             │  • DECLINED → close out      │
+             └──────────────────────────────┘
 ```
 
-**What each component does:**
-
-| Component | Responsibility | You write code for it? |
-|-----------|---------------|----------------------|
-| Retell AI | All voice: STT, TTS, VAD, turn-taking, interruptions, LLM orchestration | No — config only via SDK |
-| Retell LLM | Sarah's brain: system prompt, conversation flow, strategy selection | Config via SDK — the prompt is the product |
-| Webhook Backend | Executes tools when Sarah calls a function during a live call | Yes — FastAPI server |
-| Supabase | All data: leads, call logs, strategy tracking, pipeline events | Yes — schema + queries |
-| n8n | Scheduled auto-dialer, post-call automation, lead import | Yes — workflow builder |
-| Dashboard | Operator view: live calls, pipeline, strategy analytics | Yes — React app (GSD skill) |
+**For leads with NO email AND NOT on WhatsApp:** Skip pre-contact entirely. John cold-calls directly via the scheduled auto-dialer at a time appropriate for the lead's timezone.
 
 ---
 
-## 3. Telephony
+## 3. Infrastructure Map
 
-- **Number:** +1 161 570 0419 (US, currently on Twilio)
-- **Migration:** Import to Retell via `client.phone_number.import_twilio()`
-- **Fallback:** If import fails, configure Twilio SIP trunk → Retell SIP endpoint
-- **Outbound:** `client.call.create_phone_call()` triggers cold calls from this number
-- **Caller ID:** +1 161 570 0419 shows on the lead's phone
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Retell AI | Cloud (retellai.com) | Voice: STT, TTS, VAD, LLM orchestration |
+| Supabase | supabase.operscale.cloud | Database: leads, call_logs, bookings, pipeline |
+| n8n | VPS #1 (Hostinger) | Orchestration: auto-dialer, post-call, outreach workflows |
+| OpenClaw/Evolution API | VPS #2 (Hostinger) | WhatsApp: send messages, receive replies, number detection |
+| Cal.com | VPS (self-hosted, to be installed) | Booking: leads schedule call times |
+| Resend | Cloud API | Email: intro messages, payment details |
+| FastAPI Backend | VPS #1 or Cloud Run | Webhooks: Retell tool calls, Cal.com events, dashboard API |
+| Dashboard | Static / VPS | React app: live calls, pipeline, strategy analytics |
 
 ---
 
-## 4. Cold Calling Model
+## 4. Telephony
 
-This is pure cold calling. No WhatsApp, no email, no pre-contact. Sarah calls leads directly from the Supabase queue.
+- **Number:** +1 161 570 0419 (US, Twilio → Retell via SIP trunk)
+- **Outbound:** Retell API triggers calls from this number
+- **Warm transfer:** To +44 7592 233052 (Akinwunmi / Cloudboosta team) during live call when lead is highly interested or requests human
 
-**Scheduled Auto-Dialer:**
+---
 
-| Parameter | Value | Configurable? |
-|-----------|-------|--------------|
-| Dial window | Set by operator (e.g., 9am-5pm WAT) | Yes — `dial_schedules` table |
-| Call interval | 1 call per 2 minutes minimum | Yes — `calls_per_hour` field |
-| Max concurrent | 1 call at a time | Fixed for cold calling |
-| Max daily calls | 200 | Configurable in backend |
-| Max retries | 2 per lead (no-answer/voicemail) | Yes — `max_retries` field |
-| Retry delay | 60 minutes (busy), next day (no-answer) | Configurable |
+## 5. Lead Contact Flow
 
-**Call disposition flow:**
+### 5.1 CSV Import
+
+Upload CSV with columns: `first_name`, `last_name`, `phone`, `email`. Any field except `phone` may be empty. System:
+1. Validates phone (E.164 format)
+2. Deduplicates by phone number
+3. Checks if phone is registered on WhatsApp (OpenClaw API)
+4. Derives timezone from phone country code
+5. Tags lead: `has_email` (bool), `has_whatsapp` (bool), `timezone` (string)
+6. Sets status to `new`
+
+### 5.2 Multi-Channel Pre-Contact Outreach
+
+| Lead Profile | Channels | Action |
+|-------------|----------|--------|
+| Has email + on WhatsApp | Email + WhatsApp | Send both with Cal.com booking link |
+| Has email, NOT on WhatsApp | Email only | Send email with Cal.com link |
+| No email, on WhatsApp | WhatsApp only | Send WhatsApp with Cal.com link |
+| No email, NOT on WhatsApp | None (direct call) | Skip outreach, queue for cold call |
+
+**Message content (both channels):**
+- Brief intro: "Hi [First Name], I'm John from Cloudboosta's advisory team."
+- Value prop: "We help professionals transition into cloud and DevOps careers."
+- CTA: "I'd love to have a brief 5-minute chat with you. You can book a time here: [Cal.com link]"
+- Alternative: "Or simply reply with a time that works for you."
+
+### 5.3 Booking + Reply Monitoring
+
+**Path A — Cal.com booking:**
+Cal.com fires a webhook on new booking → n8n receives → updates lead status to `call_scheduled` with exact datetime → auto-dialer calls at that time.
+
+**Path B — Reply with preferred time:**
+1. OpenClaw webhook fires when lead replies on WhatsApp
+2. n8n also polls for new messages every 5 minutes (backup)
+3. AI (Claude via n8n) parses the reply text to extract date/time
+4. If clear datetime → update lead to `call_scheduled`
+5. If ambiguous → send clarifying WhatsApp: "Just to confirm — would that be Tuesday at 3pm?"
+
+**Path C — No response after 48 hours:**
+Lead didn't book and didn't reply → status changes to `outreach_no_response` → queue for direct cold call at appropriate timezone.
+
+### 5.4 Smart Call Timing
+
+Derive timezone from phone number country code:
+- +44 → Europe/London (GMT/BST)
+- +234 → Africa/Lagos (WAT)
+- +1 → America/New_York (default, can refine by area code)
+- +353 → Europe/Dublin
+- Others → map as needed
+
+Call during lead's local business hours: 9am-6pm in their timezone. Never call before 9am or after 7pm local time.
+
+---
+
+## 6. Context-Aware Calling (Call Memory)
+
+### 6.1 First Call
+
+John's system prompt receives dynamic variables:
+```
+lead_name: "David"
+lead_email: "david@email.com" (or "none")
+has_email: true/false
+contact_method: "whatsapp_booking" / "email_reply" / "cold_call"
+previous_calls: [] (empty for first call)
+```
+
+If the lead booked via Cal.com or replied to a message, John opens with: "Hi David, thanks for making time. You booked this call through our link — I appreciate that."
+
+If it's a cold call: "Hi David, I'm John from Cloudboosta's advisory team. I help professionals transition into cloud and DevOps careers. Do you have 2 minutes?"
+
+### 6.2 Subsequent Calls
+
+Before each call, the system retrieves all previous call records from `call_logs` and injects a summary into John's dynamic variables:
 
 ```
-Lead picks up → Conversation → Outcome logged
-No answer     → status='no_answer' → retry next day (max 2)
-Voicemail     → status='voicemail' → retry next day (max 2)
-Busy          → status='busy' → retry in 60 minutes
-Invalid       → status='invalid_number' → skip permanently
-Exhausted     → status='exhausted' → no more retries
+previous_calls: [
+  {
+    "date": "2026-04-02",
+    "duration": "4m 32s",
+    "summary": "David is interested in Advanced DevOps. Has 2 years IT experience. Main concern: time commitment. Outcome: FOLLOW_UP. Promised to check schedule.",
+    "programme_discussed": "Advanced DevOps",
+    "objections": ["no-time"],
+    "strategy_used": "NEPQ Sequence"
+  }
+]
 ```
 
----
+John opens subsequent calls with: "Hi David, it's John from Cloudboosta again. Last time we spoke, you were looking into the Advanced DevOps pathway and wanted to check your schedule. How did that go?"
 
-## 5. Pipeline Stages
+### 6.3 Follow-Up Scheduling
 
-| # | Stage | System | Status Value | Directive |
-|---|-------|--------|-------------|-----------|
-| 1 | Lead uploaded | Supabase (CSV/manual) | `new` | `directives/05_lead_import.md` |
-| 2 | Queued for dialing | n8n auto-dialer | `queued` | `directives/05_auto_dialer.md` |
-| 3 | Call initiated | Retell API | `calling` | `directives/05_auto_dialer.md` |
-| 4 | No answer / voicemail | Retell webhook | `no_answer` / `voicemail` | `directives/06_post_call.md` |
-| 5 | Conversation | Retell + LLM | `in_call` | `directives/02_system_prompt.md` |
-| 6 | Outcome classified | Retell webhook → n8n | `committed` / `follow_up` / `declined` | `directives/06_post_call.md` |
-| 7 | Payment email | n8n → Resend | `payment_pending` | `directives/06_post_call.md` |
-| 8 | Follow-up scheduled | n8n scheduler | `follow_up_scheduled` | `directives/06_post_call.md` |
-| 9 | Payment received | Manual check | `enrolled` | — |
+For every FOLLOW_UP outcome, John MUST ask: "When would be a good time for me to follow up with you?"
+
+If vague: "Would Tuesday or Wednesday work better? Morning or afternoon?"
+
+The exact datetime is logged to `leads.follow_up_at`. The auto-dialer picks it up and calls at that time.
 
 ---
 
-## 6. Sarah's Conversation Flow
+## 7. Smart Email Handling
 
-Eight stages per call. Target duration: 5-7 minutes.
+| Scenario | John's Behaviour |
+|----------|-----------------|
+| Email in Supabase | Never asks for email. Says: "I'll send the details to your email." |
+| No email, contacted via WhatsApp | "Could you drop your email in our WhatsApp chat so I can send the full details?" |
+| No email, direct cold call | If needed: "What's your email address so I can send this over?" If unclear: "Could you spell that out for me?" — NEVER uses NATO alphabet (no "B for Bravo"). Just natural: "Was that D-A-V-I-D?" |
+| Email captured on call | Immediately stored in Supabase. Post-call automation uses it for payment/follow-up emails. |
+
+---
+
+## 8. Warm Transfer
+
+During a live call, if John detects the lead is highly interested AND:
+- Asks complex questions John can't answer, OR
+- Explicitly requests to speak to a human, OR
+- Is ready to commit and wants personal reassurance
+
+John says: "Let me connect you with someone from our team who can help with that right now."
+
+Retell executes warm transfer to: **+44 7592 233052** (Akinwunmi / Cloudboosta advisor)
+
+John stays on briefly for handoff: "I've got [Name] on the line — they were asking about [topic]."
+
+---
+
+## 9. John's Conversation Flow
+
+Eight stages per call. Target: 5-7 minutes.
 
 ```
 OPEN → DISCOVERY → QUALIFY → BRIDGE → PRESENT → HANDLE OBJECTIONS → CLOSE → FOLLOW-UP LOCK
 ```
 
-| Stage | Duration | Purpose | Key Actions |
-|-------|----------|---------|-------------|
-| OPEN | 30s | Earn permission to talk (cold call) | Introduce, state value prop, ask for 2 minutes |
-| DISCOVERY | 60-90s | Ask 4-5 qualifying questions | Current role, motivation, experience, certs, location |
-| QUALIFY | 15s | Apply 3-gate decision tree | Gate 1: Cloud Computing or skip? Gate 2: Bundle? Gate 3: Specialise? |
-| BRIDGE | 15s | Summarise their story back | Proves Sarah listened. Never skip. |
-| PRESENT | 60-90s | Present the recommended programme | Name, duration, highlights, format, differentiator, social proof, price |
-| OBJECTIONS | 60-120s | Handle resistance with layered responses | 11 objection types, multi-layer responses |
-| CLOSE | 30s | Get commitment | Strategy-specific close (6 strategies available) |
-| FOLLOW-UP LOCK | 15s | If not ready, lock specific date/time | Never accept vague "I'll get back to you" |
+**OPEN** adapts based on how the lead was contacted:
+- Booked via Cal.com → warm, grateful, reference the booking
+- Replied to message → warm, reference their reply
+- Cold call → brief intro, ask for 2 minutes, earn permission first
 
-**Qualification Gate Logic:**
+**DISCOVERY through CLOSE** — same 6-strategy system from closing-strategies.md.
 
-- **Gate 1:** Everyone starts at Cloud Computing UNLESS they hold AWS Solutions Architect certification AND have multiple hands-on projects → then skip to Advanced DevOps
-- **Gate 2:** Based on goal → single pathway (£1,350) / Zero to Cloud DevOps (£2,400) / Zero to DevOps Pro (£4,500)
-- **Gate 3:** After DevOps → Platform Engineer (monitoring/security focus) OR SRE (IaC/multi-cloud focus)
+**FOLLOW-UP LOCK** — always pin down specific date and time.
 
 ---
 
-## 7. Closing Strategy System
+## 10. Qualification Gate Logic
 
-Sarah has 6 closing strategies, selected based on lead persona detected during DISCOVERY. See `closing-strategies.md` for full definitions.
-
-| # | Strategy | Source | Best For |
-|---|----------|--------|----------|
-| 1 | Doctor Frame | Dan Lok | Upskillers, experienced devs |
-| 2 | Pain Close | Dan Lok | Career changers, frustrated leads |
-| 3 | Inverse Close | Dan Lok | Analytical, sceptical, burned-before leads |
-| 4 | NEPQ Sequence | Jeremy Miner | Beginners, fearful leads |
-| 5 | Diffusion Framework | Jeremy Miner | Price-sensitive, "need to think" leads |
-| 6 | Direct Close | — | Already-warm leads, strong buying signals |
-
-**Adaptive learning:** After each call, `closing_strategy_used` + `lead_persona` + `outcome` are logged to `call_logs`. Weekly analysis via the dashboard reveals which strategy converts best per persona. System prompt is updated monthly based on real data.
+- **Gate 1:** Everyone → Cloud Computing UNLESS AWS SA cert + hands-on projects → skip to Advanced DevOps
+- **Gate 2:** Based on goal → single pathway / Zero to Cloud DevOps bundle / Zero to DevOps Pro
+- **Gate 3:** After DevOps → Platform Engineer OR SRE
 
 ---
 
-## 8. Knowledge Base
+## 11. Closing Strategy System
 
-Six PDF documents contain all programme data Sarah draws from:
+6 strategies from Dan Lok + Jeremy Miner. Selected based on persona detected during DISCOVERY.
+Strategy + persona + outcome logged per call. Weekly analysis reveals what works.
 
-| Document | Content | Pages |
-|----------|---------|-------|
-| `programmes.pdf` | 4 pathways, pricing, delivery model, career outcomes | 3 |
-| `faqs.pdf` | 19 Q&As covering every common lead question | 2 |
-| `payment-details.pdf` | Bank transfer details: GBP/USD/EUR (Revolut) + NGN (GTBank) | 2 |
-| `conversation-sequence.pdf` | 8-stage call flow, 3 qualification gates, outcome rules | 4 |
-| `objection-handling.pdf` | 11 objections with multi-layer responses + frequency table | 8 |
-| `coming-soon.pdf` | Future programmes, redirect protocol | 1 |
-
-**Authoritative pricing (never change without explicit instruction):**
-
-| Option | Standard | Early Bird | USD | EUR | NGN |
-|--------|----------|------------|-----|-----|-----|
-| 1 pathway (8 wks) | £1,500 | £1,350 | $1,850 | €1,650 | ₦2,700,000 |
-| 2 pathways (16 wks) | £3,000 | £2,400 | $3,300 | €2,900 | ₦4,800,000 |
-| 3 pathways (24 wks) | £4,500 | £3,450 | $4,800 | €4,100 | ₦6,900,000 |
-| All 4 (32 wks) | £6,000 | £4,500 | $6,150 | €5,300 | ₦9,000,000 |
-
-Cohort 2 starts: **Saturday 25 April 2026**
+See: `closing-strategies.md` (update all "Sarah" references to "John")
 
 ---
 
-## 9. Custom Functions (Tools)
+## 12. Knowledge Base (6 PDFs)
 
-Sarah can invoke these during a live call. Retell sends the tool call to your webhook backend, which executes it and returns the result.
-
-| Function | Purpose | Parameters | Webhook |
-|----------|---------|-----------|---------|
-| `lookup_programme` | Get programme details for a given experience level | `experience_level`, `interest_area` | POST /retell/tool |
-| `get_objection_response` | Get layered response for a specific objection | `objection_type` (enum) | POST /retell/tool |
-| `log_call_outcome` | Log the final call result | `outcome`, `programme_recommended`, `summary`, `objections_raised`, `follow_up_date`, `closing_strategy_used`, `lead_persona` | POST /retell/tool |
-| `end_call` | End the call | `reason` | Built-in Retell |
-| `transfer_call` | Transfer to human advisor | `transfer_to` (+44 7592 233052) | Built-in Retell |
+programmes.pdf, faqs.pdf, payment-details.pdf, conversation-sequence.pdf, objection-handling.pdf, coming-soon.pdf
 
 ---
 
-## 10. Dashboard
+## 13. Custom Functions (Tools)
 
-Three-tab React application built with GSD skill:
-
-| Tab | Shows | Refresh Rate |
-|-----|-------|-------------|
-| Live View | Active call card (name, timer, strategy), recent calls, today's stats, dialer start/stop | 5 seconds |
-| Lead Pipeline | Kanban by status, search, click for transcript, CSV upload | 30 seconds |
-| Strategy Analytics | Conversion by strategy, strategy×persona heatmap, daily trends | 30 seconds |
+| Function | Purpose | When |
+|----------|---------|------|
+| `lookup_programme` | Get programme details for lead's profile | After qualification |
+| `get_objection_response` | Get layered response for objection | During objection handling |
+| `log_call_outcome` | Log outcome + strategy + follow-up date | End of every call |
+| `get_lead_context` | Retrieve previous call history for this lead | Start of subsequent calls |
+| `save_email` | Store email address captured during call | When lead provides email |
+| `end_call` | End the call | Built-in Retell |
+| `transfer_call` | Warm transfer to +44 7592 233052 | When lead requests human |
 
 ---
 
-## 11. Self-Annealing Loop
+## 14. Pipeline Stages
 
-When something goes wrong during the pipeline:
+| # | Stage | Trigger | Status |
+|---|-------|---------|--------|
+| 1 | Lead imported | CSV upload | `new` |
+| 2 | WhatsApp check | n8n workflow | `enriched` |
+| 3 | Outreach sent | n8n → OpenClaw/Resend | `outreach_sent` |
+| 4 | Lead books call | Cal.com webhook | `call_scheduled` |
+| 5 | Lead replies with time | OpenClaw webhook + AI parse | `call_scheduled` |
+| 6 | No response (48h) | n8n scheduler | `outreach_no_response` → queued for cold call |
+| 7 | Call initiated | Retell API | `calling` |
+| 8 | No answer / voicemail | Retell webhook | `no_answer` / `voicemail` |
+| 9 | Conversation | Retell + LLM | `in_call` |
+| 10 | Outcome | Retell webhook → n8n | `committed` / `follow_up` / `declined` |
+| 11 | Payment email sent | n8n → Resend | `payment_pending` |
+| 12 | Follow-up scheduled | n8n scheduler | `follow_up_scheduled` |
+| 13 | Payment received | Manual | `enrolled` |
+
+---
+
+## 15. Custom Dashboard
+
+Three tabs, built with Anthropic frontend-design skill:
+
+1. **Live View** — Active call, recent calls, today's stats, dialer controls
+2. **Lead Pipeline** — Kanban by status, search, transcript viewer, CSV upload
+3. **Strategy Analytics** — Conversion by strategy, strategy×persona heatmap, trends
+
+---
+
+## 16. Self-Annealing Loop
 
 ```
-1. OBSERVE  — Read the error from Retell webhook, n8n execution log, or Supabase pipeline_logs
-2. DIAGNOSE — Identify root cause (wrong prompt? tool failure? rate limit? bad phone number?)
-3. FIX      — Patch the specific component (system prompt, webhook handler, n8n workflow)
-4. CONFIRM  — Run a test call or test webhook to verify the fix
-5. UPDATE   — Update the relevant directive in directives/ with what was learned
-6. CONTINUE — Resume the pipeline from where it stopped
+1. OBSERVE  — Read error from webhook, n8n log, or Supabase
+2. DIAGNOSE — Root cause
+3. FIX      — Patch the specific component
+4. CONFIRM  — Test call or webhook test
+5. UPDATE   — Update directive
+6. CONTINUE — Resume pipeline
 ```
 
-**Example:** Sarah recommends the wrong programme to a lead with 5 years of cloud experience. Diagnosis: the system prompt's Gate 1 logic doesn't account for extensive experience without a formal certification. Fix: update the system prompt to include "extensive hands-on experience (5+ years)" as an alternative to "AWS SA cert + projects" for skipping Cloud Computing. Confirm: test with a simulated discovery conversation. Update: add the edge case to `directives/02_system_prompt.md`. Continue.
+---
+
+## 17. Success Metrics
+
+| Metric | Wave 0 (10) | Wave 1 (50) | Wave 2 (200) |
+|--------|-------------|-------------|--------------|
+| Outreach response rate | N/A (test) | >20% | >25% |
+| Booking rate | N/A | >30% of responses | >35% |
+| Pick-up rate (scheduled) | >80% | >70% | >70% |
+| Pick-up rate (cold) | >30% | >25% | >25% |
+| Commitment rate | Testing | >5% | >8% |
 
 ---
 
-## 12. Known Constraints
-
-| Constraint | Impact | Mitigation |
-|------------|--------|-----------|
-| Retell free tier: limited concurrent calls | Can only run 1 call at a time | Auto-dialer enforces max_concurrent=1 |
-| Twilio trial: must verify every outbound number | Can't cold-call unverified numbers | Upgrade Twilio account ($20) before Wave 1 |
-| US number calling international leads | Leads may not pick up unknown US number | Warn in WhatsApp community first (Wave 0 only) |
-| GPT-4o-mini context window: 128K tokens | Long system prompts reduce available context | Keep system prompt under 8K tokens |
-| Retell webhook timeout: 20 seconds | Tool execution must be fast | Cache programme data, pre-compute objection responses |
-| Cold calling = low pick-up rate (~25%) | Most calls will be no-answer | Auto-retry logic, max 2 retries per lead |
-| Strategy tracking needs volume | Need 30+ calls per strategy to see patterns | Don't optimise strategies until Wave 2 (200+ calls) |
-
----
-
-## 13. Success Metrics
-
-| Metric | Wave 0 (10) | Wave 1 (50) | Wave 2 (200) | Source |
-|--------|-------------|-------------|--------------|--------|
-| Pick-up rate | >50% (friendly contacts) | >25% | >25% | Supabase |
-| Completion rate | >80% | >60% | >60% | Retell analytics |
-| Commitment rate | Testing only | >5% | >8% | call_logs |
-| Avg call duration | 3-7 min | 3-7 min | 3-7 min | Retell analytics |
-| Strategy data points | — | 30+ total | 30+ per strategy | call_logs |
-
----
-
-## 14. Directory Structure
+## 18. Directory Structure
 
 ```
-sarah-retell-project/
-├── AGENT.md                    ← THIS FILE — read first, always
-├── CLAUDE.md                   ← Claude Code operating instructions
-├── security.md                 ← Security controls — read before writing ANY code
-├── implementation.md           ← 8-phase build plan with prompts per task
-├── closing-strategies.md       ← 6 strategies + persona detection + tracking SQL
-├── skills.md                   ← Technical patterns (Retell SDK, Supabase, n8n, FastAPI)
-├── skills.sh                   ← Environment validation script
-├── knowledge-base/             ← 6 PDF documents (programme data, objections, etc.)
-├── directives/                 ← Per-phase SOPs (created during build)
-│   ├── 00_foundation.md
-│   ├── 01_retell_llm.md
-│   ├── 02_system_prompt.md
-│   ├── 03_voice_agent.md
-│   ├── 04_webhook_backend.md
-│   ├── 05_auto_dialer.md
-│   ├── 06_post_call.md
-│   └── 07_dashboard.md
+cloudboosta-sales-agent/
+├── AGENT.md                    ← THIS FILE
+├── CLAUDE.md                   ← Claude Code instructions
+├── security.md                 ← Security controls
+├── implementation.md           ← Phased build plan
+├── closing-strategies.md       ← 6 strategies (John, not Sarah)
+├── skills.md                   ← Technical patterns
+├── skills.sh                   ← Environment validation
+├── leads.md                    ← Lead management reference
+├── knowledge-base/             ← 6 PDFs
+├── .claude/                    ← Superpowers + skills
+├── .planning/                  ← Superpowers state
+├── directives/                 ← Per-phase SOPs
 ├── execution/
 │   ├── backend/                ← FastAPI webhook server
 │   ├── dashboard/              ← React app
-│   └── n8n/                    ← Workflow JSON exports
-└── .env.example                ← Template for all secrets (NEVER commit .env)
+│   ├── n8n/                    ← Workflow JSON exports
+│   └── cal-com/                ← Cal.com config
+├── docs/superpowers/           ← Superpowers docs
+└── .env.example
 ```
 
 ---
 
 ## Summary
 
-You operate between **human intent** (a CSV of phone numbers in Supabase) and **deterministic sales pipeline execution** (a completed call with outcome, transcript, and strategy data logged).
+You operate between **human intent** (a CSV of leads) and **deterministic sales pipeline execution** (outreach → booking → call → outcome → follow-up).
 
+OpenClaw handles WhatsApp.
+Cal.com handles booking.
+Resend handles email.
 Retell handles the voice.
 The LLM handles the conversation.
 Your backend handles the tools.
-n8n handles the scheduling.
+n8n handles the orchestration.
 Supabase holds the truth.
 The dashboard shows the picture.
 
-Read directives.
-Make decisions.
-Run tools.
-Observe results.
-Improve the system.
+Read directives. Make decisions. Run tools. Observe results. Improve the system.
 
 Be pragmatic. Be reliable.
 
