@@ -104,10 +104,16 @@ check_env SUPABASE_SERVICE_KEY
 check_env TWILIO_ACCOUNT_SID
 check_env TWILIO_AUTH_TOKEN
 check_env TWILIO_PHONE_NUMBER false
-check_env RESEND_API_KEY false
 check_env RETELL_AGENT_ID false
 check_env RETELL_LLM_ID false
 check_env WEBHOOK_BASE_URL false
+check_env OPENCLAW_API_URL false
+check_env OPENCLAW_API_KEY false
+check_env OPENCLAW_INSTANCE false
+check_env CAL_COM_URL false
+check_env CAL_COM_API_KEY false
+check_env CAL_COM_WEBHOOK_SECRET false
+check_env RESEND_API_KEY false
 echo ""
 
 # ── 4. Retell AI API ──
@@ -242,6 +248,58 @@ if [ -d "$EXEC" ]; then
     [ -f "$EXEC/dashboard/package.json" ] && pass "dashboard/package.json" || fail "dashboard/package.json MISSING"
 else
     warn "execution/ directory not found"
+fi
+echo ""
+
+# ── 12. OpenClaw / Evolution API ──
+echo "12. OpenClaw / Evolution API"
+if [ -n "${OPENCLAW_API_URL:-}" ] && [ -n "${OPENCLAW_API_KEY:-}" ]; then
+    OC_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "apikey: $OPENCLAW_API_KEY" \
+        "$OPENCLAW_API_URL/instance/fetchInstances" 2>/dev/null || echo "000")
+    if [ "$OC_RESP" = "200" ]; then
+        pass "OpenClaw reachable (HTTP 200)"
+    else
+        fail "OpenClaw HTTP $OC_RESP — check URL and API key"
+    fi
+else
+    warn "OPENCLAW_API_URL or OPENCLAW_API_KEY not set"
+fi
+echo ""
+
+# ── 13. Cal.com ──
+echo "13. Cal.com (self-hosted)"
+if [ -n "${CAL_COM_URL:-}" ]; then
+    CAL_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+        "$CAL_COM_URL/api/v1/me" \
+        -H "Authorization: Bearer ${CAL_COM_API_KEY:-none}" 2>/dev/null || echo "000")
+    if [ "$CAL_RESP" = "200" ]; then
+        pass "Cal.com reachable and authenticated"
+    elif [ "$CAL_RESP" = "401" ]; then
+        warn "Cal.com reachable but auth failed — check CAL_COM_API_KEY"
+    else
+        fail "Cal.com HTTP $CAL_RESP at $CAL_COM_URL"
+    fi
+else
+    warn "CAL_COM_URL not set — Cal.com not yet installed"
+fi
+echo ""
+
+# ── 14. Resend Email ──
+echo "14. Resend (email)"
+if [ -n "${RESEND_API_KEY:-}" ]; then
+    RESEND_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "Authorization: Bearer $RESEND_API_KEY" \
+        "https://api.resend.com/domains" 2>/dev/null || echo "000")
+    if [ "$RESEND_RESP" = "200" ]; then
+        pass "Resend API reachable"
+    elif [ "$RESEND_RESP" = "401" ]; then
+        fail "Resend API 401 — bad API key"
+    else
+        warn "Resend HTTP $RESEND_RESP"
+    fi
+else
+    warn "RESEND_API_KEY not set"
 fi
 echo ""
 
