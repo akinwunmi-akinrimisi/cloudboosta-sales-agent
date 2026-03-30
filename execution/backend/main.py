@@ -969,9 +969,15 @@ async def dashboard_command_centre(request: Request, _token: str = Depends(verif
         # Build activity items
         activity_items = []
         for row in pipeline_logs:
-            detail = row.get("event", "")
-            if row.get("details"):
-                detail = f"{detail}: {row['details']}"
+            details_obj = row.get("details") or {}
+            new_status = details_obj.get("new_status", "") if isinstance(details_obj, dict) else ""
+            old_status = details_obj.get("old_status", "") if isinstance(details_obj, dict) else ""
+            if new_status and old_status:
+                detail = f"moved from {old_status.replace('_', ' ')} to {new_status.replace('_', ' ')}"
+            elif new_status:
+                detail = f"moved to {new_status.replace('_', ' ')}"
+            else:
+                detail = row.get("event", "status changed")
             activity_items.append({
                 "type": "status_change",
                 "lead_name": lead_name_map.get(row.get("lead_id", ""), "Unknown"),
@@ -1159,6 +1165,49 @@ async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_
 
     logger.info("call-now: call initiated %s -> %s", call.call_id, lead_data["phone"][:4] + "****")
     return {"call_id": call.call_id, "status": "calling"}
+
+
+@app.post("/api/dashboard/end-call/{lead_id}")
+@limiter.limit("10/minute")
+async def end_call(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
+    """End an active call by finding the Retell call and requesting termination."""
+    lead = supabase.table("leads").select("last_call_id, status").eq("id", lead_id).limit(1).execute()
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    lead_data = lead.data[0]
+    call_id = lead_data.get("last_call_id")
+
+    if call_id:
+        try:
+            retell_client.call.end(call_id)
+            logger.info("end-call: ended Retell call %s for lead %s", call_id, lead_id)
+        except Exception as exc:
+            logger.warning("end-call: Retell end failed for %s: %s", call_id, exc)
+
+    # Reset lead status if stuck in calling/in_call
+    if lead_data.get("status") in ("calling", "in_call"):
+        try:
+            supabase.table("leads").update({"status": "no_answer"}).eq("id", lead_id).execute()
+            supabase.table("leads").update({"status": "queued"}).eq("id", lead_id).execute()
+        except Exception:
+            pass
+
+    return {"status": "ended"}
+
+
+@app.post("/api/dashboard/reset-call/{lead_id}")
+@limiter.limit("10/minute")
+async def reset_call(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
+    """Force-reset a lead stuck in calling/in_call back to queued."""
+    try:
+        supabase.table("leads").update({"status": "no_answer"}).eq("id", lead_id).execute()
+        supabase.table("leads").update({"status": "queued"}).eq("id", lead_id).execute()
+        logger.info("reset-call: lead %s reset to queued", lead_id)
+    except Exception as exc:
+        logger.error("reset-call: failed for %s: %s", lead_id, exc)
+        raise HTTPException(status_code=500, detail="Reset failed")
+    return {"status": "reset"}
 
 
 # ---------------------------------------------------------------------------

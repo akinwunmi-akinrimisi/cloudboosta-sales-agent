@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { maskPhone, formatDuration } from "../constants";
+import { apiPost } from "../api";
 
-export default function ActiveCallCard({ call }) {
+export default function ActiveCallCard({ call, onCallEnded }) {
   const [elapsed, setElapsed] = useState(0);
+  const [ending, setEnding] = useState(false);
 
   useEffect(() => {
     if (!call?.last_call_at) {
@@ -80,12 +82,31 @@ export default function ActiveCallCard({ call }) {
           </div>
         </div>
 
-        {/* Duration timer */}
-        <div className="text-right">
+        {/* Duration + End Call */}
+        <div className="text-right space-y-2">
           <p className="text-2xl font-mono font-bold text-zinc-50 tabular-nums">
             {formatDuration(elapsed)}
           </p>
-          <p className="label-mono mt-1">Duration</p>
+          <p className="label-mono">Duration</p>
+          <button
+            onClick={async () => {
+              setEnding(true);
+              try {
+                await apiPost(`/end-call/${call.id}`);
+                if (onCallEnded) onCallEnded();
+              } catch {
+                // Fallback: force reset the lead status
+                try { await apiPost(`/reset-call/${call.id}`); } catch {}
+                if (onCallEnded) onCallEnded();
+              } finally {
+                setEnding(false);
+              }
+            }}
+            disabled={ending}
+            className="px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-red-500/15 border border-red-500/30 text-red-500 hover:bg-red-500/25 disabled:opacity-50 transition-colors"
+          >
+            {ending ? "Ending..." : "End Call"}
+          </button>
         </div>
       </div>
     </div>
