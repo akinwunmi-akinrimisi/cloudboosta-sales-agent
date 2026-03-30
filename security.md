@@ -1,12 +1,12 @@
 # security.md — Security Enforcement Document
-## Sarah Voice Sales Agent on Retell AI
+## John Voice Sales Agent on Retell AI
 ### Written by: Senior Application Security Engineer (15+ years securing production voice/telephony systems, API platforms, and PII-handling applications)
 
 ---
 
 ## DOCUMENT PURPOSE
 
-This document defines every security control required for the Sarah project.
+This document defines every security control required for the John project.
 It is not advisory — it is mandatory. Every item is a hard requirement.
 No code ships to production without satisfying every applicable control.
 
@@ -869,13 +869,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 ```python
 async def execute_tool(name: str, args: dict, call_id: str) -> str:
-    """Execute a tool call. On failure, return a graceful message for Sarah."""
+    """Execute a tool call. On failure, return a graceful message for John."""
     try:
         result = await TOOL_HANDLERS[name](args)
         return json.dumps(result)
     except Exception as e:
         logger.error(f"Tool {name} failed for call {call_id}: {e}")
-        # Return a message Sarah can speak naturally
+        # Return a message John can speak naturally
         return json.dumps({
             "result": "I don't have that information right now. "
                       "Let me have someone on the team follow up with you on that."

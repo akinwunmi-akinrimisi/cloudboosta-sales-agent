@@ -1,12 +1,12 @@
 # CLAUDE.md — Claude Code Instructions (v2)
-## Sarah Voice Sales Agent on Retell AI
+## John Voice Sales Agent on Retell AI
 
 ---
 
 ## PROJECT CONTEXT
 
-You are building "Sarah" — an AI cold-calling sales agent for Cloudboosta.
-Sarah calls leads directly (no pre-contact), qualifies them, recommends the
+You are building "John" — an AI cold-calling sales agent for Cloudboosta.
+John calls leads directly (no pre-contact), qualifies them, recommends the
 right cloud/DevOps training programme, handles objections, and closes.
 
 **Platform:** Retell AI handles all voice. Your code handles tool execution,
@@ -40,7 +40,7 @@ auto-dialer state management.
 ## FILE STRUCTURE
 
 ```
-sarah-retell-project/
+john-retell-project/
 ├── AGENT.md                    # Master DOE — read first, always
 ├── CLAUDE.md                   # THIS FILE
 ├── security.md                 # Security controls — read before writing ANY code
@@ -90,15 +90,15 @@ sarah-retell-project/
 
 ### Cold Calling Model
 - NO pre-contact (no WhatsApp, no email before the call)
-- Sarah calls leads directly from Supabase queue
+- John calls leads directly from Supabase queue
 - Auto-dialer runs within scheduled time windows
 - Rate limit: 1 call per 2 minutes (configurable)
 - Max 2 retries for no-answer/voicemail
 
-### No OpenClaw
-- OpenClaw is NOT used in this project
-- Email sending uses Resend API (for payment emails post-call)
-- All messaging happens through the voice call itself
+### Channel Routing
+- WhatsApp outreach uses OpenClaw/Evolution API (VPS #2) — NOT Twilio WhatsApp
+- Email outreach uses Resend API — NOT OpenClaw
+- Voice calls use Retell AI via Twilio SIP trunk
 
 ### Multi-Channel Outreach
 - OpenClaw/Evolution API is on VPS #2 (Hostinger). Already running.

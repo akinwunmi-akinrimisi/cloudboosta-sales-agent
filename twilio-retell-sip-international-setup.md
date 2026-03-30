@@ -1,11 +1,11 @@
 # Twilio → Retell AI SIP Trunk Setup Guide
 ## International Calling (Nigeria, Ghana & Worldwide)
 
-**Purpose:** Import your existing Twilio number into Retell AI via Elastic SIP Trunking so your Sarah sales agent can call any international number — including Nigeria (+234) and Ghana (+233).
+**Purpose:** Import your existing Twilio number into Retell AI via Elastic SIP Trunking so your John sales agent can call any international number — including Nigeria (+234) and Ghana (+233).
 
 **Architecture:**
 ```
-Retell AI (Sarah Agent) → SIP → Twilio Elastic SIP Trunk → PSTN → Nigerian/Ghanaian Number
+Retell AI (John Agent) → SIP → Twilio Elastic SIP Trunk → PSTN → Nigerian/Ghanaian Number
 ```
 
 ---
@@ -136,16 +136,16 @@ curl -X POST "https://api.retellai.com/import-phone-number" \
   -d '{
     "phone_number": "+1415XXXXXXX",
     "termination_uri": "your-trunk-name.pstn.twilio.com",
-    "nickname": "Sarah International Outbound",
+    "nickname": "John International Outbound",
     "inbound_agents": [
       {
-        "agent_id": "YOUR_SARAH_AGENT_ID",
+        "agent_id": "YOUR_AGENT_ID",
         "weight": 1
       }
     ],
     "outbound_agents": [
       {
-        "agent_id": "YOUR_SARAH_AGENT_ID",
+        "agent_id": "YOUR_AGENT_ID",
         "weight": 1
       }
     ],
@@ -165,16 +165,16 @@ curl -X POST "https://api.retellai.com/import-phone-number" \
     "termination_uri": "your-trunk-name.pstn.twilio.com",
     "sip_trunk_auth_username": "retell_sip_user",
     "sip_trunk_auth_password": "YOUR_SIP_PASSWORD",
-    "nickname": "Sarah International Outbound",
+    "nickname": "John International Outbound",
     "inbound_agents": [
       {
-        "agent_id": "YOUR_SARAH_AGENT_ID",
+        "agent_id": "YOUR_AGENT_ID",
         "weight": 1
       }
     ],
     "outbound_agents": [
       {
-        "agent_id": "YOUR_SARAH_AGENT_ID",
+        "agent_id": "YOUR_AGENT_ID",
         "weight": 1
       }
     ],
@@ -198,12 +198,12 @@ const phoneNumber = await client.phoneNumber.import({
   // Include these if using credential auth:
   // sip_trunk_auth_username: 'retell_sip_user',
   // sip_trunk_auth_password: 'YOUR_SIP_PASSWORD',
-  nickname: 'Sarah International Outbound',
+  nickname: 'John International Outbound',
   inbound_agents: [
-    { agent_id: 'YOUR_SARAH_AGENT_ID', weight: 1 }
+    { agent_id: 'YOUR_AGENT_ID', weight: 1 }
   ],
   outbound_agents: [
-    { agent_id: 'YOUR_SARAH_AGENT_ID', weight: 1 }
+    { agent_id: 'YOUR_AGENT_ID', weight: 1 }
   ],
   allowed_outbound_country_list: ['US', 'CA', 'GB', 'NG', 'GH', 'KE', 'ZA'],
   inbound_webhook_url: 'https://your-n8n-instance.com/webhook/retell-inbound',
@@ -218,17 +218,17 @@ console.log('Type:', phoneNumber.phone_number_type);
 {
   "phone_number": "+1415XXXXXXX",
   "phone_number_type": "custom",
-  "nickname": "Sarah International Outbound",
+  "nickname": "John International Outbound",
   "sip_outbound_trunk_config": {
     "termination_uri": "your-trunk-name.pstn.twilio.com",
     "auth_username": "retell_sip_user",
     "transport": "TCP"
   },
   "inbound_agents": [
-    { "agent_id": "YOUR_SARAH_AGENT_ID", "weight": 1 }
+    { "agent_id": "YOUR_AGENT_ID", "weight": 1 }
   ],
   "outbound_agents": [
-    { "agent_id": "YOUR_SARAH_AGENT_ID", "weight": 1 }
+    { "agent_id": "YOUR_AGENT_ID", "weight": 1 }
   ],
   "allowed_outbound_country_list": ["US", "CA", "GB", "NG", "GH", "KE", "ZA"]
 }
@@ -260,7 +260,7 @@ curl -X POST "https://api.retellai.com/v2/create-phone-call" \
   -d '{
     "from_number": "+1415XXXXXXX",
     "to_number": "+2348012345678",
-    "override_agent_id": "YOUR_SARAH_AGENT_ID",
+    "override_agent_id": "YOUR_AGENT_ID",
     "retell_llm_dynamic_variables": {
       "customer_name": "Adebayo Ogunlesi",
       "company": "Cloudboosta",
@@ -275,7 +275,7 @@ curl -X POST "https://api.retellai.com/v2/create-phone-call" \
 const call = await client.call.createPhoneCall({
   from_number: '+1415XXXXXXX',
   to_number: '+2348012345678',        // Nigerian number
-  override_agent_id: 'YOUR_SARAH_AGENT_ID',
+  override_agent_id: 'YOUR_AGENT_ID',
   retell_llm_dynamic_variables: {
     customer_name: 'Adebayo Ogunlesi',
     company: 'Cloudboosta',
@@ -292,7 +292,7 @@ console.log('Status:', call.call_status);
 const call = await client.call.createPhoneCall({
   from_number: '+1415XXXXXXX',
   to_number: '+233201234567',          // Ghanaian number
-  override_agent_id: 'YOUR_SARAH_AGENT_ID',
+  override_agent_id: 'YOUR_AGENT_ID',
   retell_llm_dynamic_variables: {
     customer_name: 'Kwame Mensah',
     company: 'Cloudboosta',
@@ -354,7 +354,7 @@ Use an **HTTP Request** node in n8n to trigger calls:
   "body": {
     "from_number": "+1415XXXXXXX",
     "to_number": "{{ $json.phone_number }}",
-    "override_agent_id": "YOUR_SARAH_AGENT_ID",
+    "override_agent_id": "YOUR_AGENT_ID",
     "retell_llm_dynamic_variables": {
       "customer_name": "{{ $json.first_name }} {{ $json.last_name }}",
       "company": "Cloudboosta",
@@ -370,7 +370,7 @@ When you set `inbound_webhook_url` during import, Retell sends a POST to your n8
 
 ```json
 {
-  "agent_id": "YOUR_SARAH_AGENT_ID",
+  "agent_id": "YOUR_AGENT_ID",
   "retell_llm_dynamic_variables": {
     "caller_number": "{{ $json.from_number }}",
     "call_type": "inbound"
@@ -448,7 +448,7 @@ n8n receives the payload and logs to Supabase:
 | Item | Where to Find It |
 |---|---|
 | Retell API Key | Retell Dashboard → Settings → API Keys |
-| Sarah Agent ID | Retell Dashboard → Agents → Select Sarah → Agent ID |
+| John Agent ID | Retell Dashboard → Agents → Select John → Agent ID |
 | Twilio Termination URI | Twilio Console → Elastic SIP Trunking → Your Trunk → Termination tab |
 | Twilio SIP Auth Credentials | Twilio Console → Elastic SIP Trunking → Your Trunk → Termination → Authentication |
 | Retell SIP CIDR (for ACL) | `18.98.16.120/30` |

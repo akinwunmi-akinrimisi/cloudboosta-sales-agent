@@ -1,5 +1,5 @@
 # implementation.md — Phased Build Plan (v2)
-## Sarah Voice Sales Agent on Retell AI
+## John Voice Sales Agent on Retell AI
 ### Pure cold calling, scheduled auto-dialer, custom dashboard
 
 ---
@@ -47,7 +47,7 @@ Steps:
    - Tool-calling patterns
    - Webhook handler templates
    - State machine patterns for conversation flows
-5. Integrate patterns that are useful for the Sarah project:
+5. Integrate patterns that are useful for the John project:
    - Webhook handler pattern → for Retell tool callbacks
    - State machine → for lead pipeline status transitions
    - Agent orchestration → for the auto-dialer scheduler
@@ -171,7 +171,7 @@ Verify all services reachable. Fix any failures before proceeding.
 ---
 
 ## PHASE 2: RETELL LLM CONFIGURATION (Day 2-3)
-### Sarah's brain
+### John's brain
 
 #### Task 2.1: Create Retell LLM with System Prompt
 ```
@@ -191,12 +191,12 @@ Read the following project files to build the system prompt:
 
 The system prompt must include:
 
-IDENTITY: Sarah, AI sales consultant for Cloudboosta. British English. Warm,
+IDENTITY: John, AI sales consultant for Cloudboosta. British English. Warm,
 professional, never pushy. Always transparent about being AI.
 
-COLD CALL OPENING: Since this is a pure cold call (no prior contact), Sarah's
-opening must be different from a warm call. She must:
-- Introduce herself clearly
+COLD CALL OPENING: Since this is a pure cold call (no prior contact), John's
+opening must be different from a warm call. He must:
+- Introduce himself clearly
 - State Cloudboosta's value proposition in one sentence
 - Ask permission to continue ("Do you have 2 minutes?")
 - If no → polite exit, log as declined
@@ -211,7 +211,7 @@ QUALIFICATION GATES (3-gate system):
 - Gate 3: After DevOps → Platform Engineer OR SRE
 
 CLOSING STRATEGIES: Include all 6 strategies with the selection algorithm.
-Sarah picks strategy based on persona detected during DISCOVERY.
+John picks strategy based on persona detected during DISCOVERY.
 
 PROGRAMME DATA: All 4 pathways, exact pricing (£1,500/£1,350 early bird),
 bundles, multi-currency, instalments. Cohort 2 starts 25 April 2026.
@@ -228,7 +228,7 @@ RULES: Never guarantee jobs. Respect "no". Use name 2-3 times. Target 5-7 min.
 Also set:
 - model: "gpt-4o-mini" (fast, cheap, proven on Retell)
 - starting_message with dynamic {{lead_name}} variable
-- speak_during_execution: true (Sarah says "Let me look that up" while tools run)
+- speak_during_execution: true (John says "Let me look that up" while tools run)
 
 Use client.llm.create(). Store the returned llm_id in .env as RETELL_LLM_ID.
 ```
@@ -241,7 +241,7 @@ Time: 1 hour
 ```
 **Prompt for Claude Code:**
 ```
-Add custom functions to the Retell LLM. These are tools Sarah can invoke.
+Add custom functions to the Retell LLM. These are tools John can invoke.
 
 Functions to create:
 
@@ -294,7 +294,7 @@ Using the Retell Python SDK:
 
 2. Create the agent:
    client.agent.create(
-       agent_name="Sarah - Cloudboosta Cold Caller",
+       agent_name="John - Cloudboosta Cold Caller",
        response_engine={"type": "retell-llm", "llm_id": RETELL_LLM_ID},
        voice_id=<selected British female voice>,
        language="en-GB",
@@ -503,7 +503,7 @@ Time: 4-6 hours
 **Prompt for Claude Code:**
 ```
 Using the GSD skill for production-grade quality, build a React dashboard
-for the Sarah voice agent. This is a single-page application with 3 tabs:
+for the John voice agent. This is a single-page application with 3 tabs:
 
 TAB 1: LIVE VIEW
 - Current active call card: lead name, phone, duration timer, strategy being used
@@ -555,7 +555,7 @@ Create a comprehensive test script that:
 1. Insert a test lead into Supabase with your phone number
 2. Set status to 'queued'
 3. Trigger the auto-dialer manually (POST /dialer/start)
-4. Verify: Sarah calls your phone within 2 minutes
+4. Verify: John calls your phone within 2 minutes
 5. Answer and test: greeting, discovery questions, programme recommendation,
    objection handling (say "it's too expensive"), closing
 6. Hang up → verify:

@@ -37,14 +37,14 @@ llm = client.llm.create(
         "speak_during_execution": True,
         "speak_after_execution": True,
     }],
-    starting_message="Hi {{lead_name}}, this is Sarah calling from Cloudboosta. I help professionals transition into cloud and DevOps careers. Do you have 2 minutes for a quick chat?",
+    starting_message="Hi {{lead_name}}, this is John calling from Cloudboosta. I help professionals transition into cloud and DevOps careers. Do you have 2 minutes for a quick chat?",
 )
 ```
 
 ### Create Agent
 ```python
 agent = client.agent.create(
-    agent_name="Sarah - Cloudboosta",
+    agent_name="John - Cloudboosta",
     response_engine={"type": "retell-llm", "llm_id": llm.llm_id},
     voice_id="<british_female_voice_id>",
     language="en-GB",
@@ -287,7 +287,7 @@ resend.api_key = os.environ["RESEND_API_KEY"]
 
 def send_payment_email(lead_name: str, lead_email: str, programme: str):
     resend.Emails.send({
-        "from": "Sarah <sarah@cloudboosta.co.uk>",
+        "from": "John <john@cloudboosta.co.uk>",
         "to": lead_email,
         "subject": f"Cloudboosta — Payment Details for {programme}",
         "html": f"<p>Hi {lead_name},</p><p>Thank you for your interest in {programme}...</p>",
