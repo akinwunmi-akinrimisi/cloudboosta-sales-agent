@@ -311,3 +311,126 @@ RESEND_API_KEY=
 WEBHOOK_BASE_URL=https://your-endpoint.com
 N8N_BASE_URL=https://n8n.srv1297445.hstgr.cloud
 ```
+
+---
+
+## OPENCLAW / EVOLUTION API PATTERNS
+
+### Send WhatsApp Message
+```python
+import httpx
+
+OPENCLAW_URL = os.environ["OPENCLAW_API_URL"]
+OPENCLAW_KEY = os.environ["OPENCLAW_API_KEY"]
+INSTANCE = "cloudboosta"
+
+async def send_whatsapp(phone: str, text: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{OPENCLAW_URL}/message/sendText/{INSTANCE}",
+            headers={"apikey": OPENCLAW_KEY},
+            json={"number": phone.replace("+", ""), "text": text},
+        )
+        response.raise_for_status()
+        return response.json()
+```
+
+### Check WhatsApp Registration
+```python
+async def check_whatsapp_number(phone: str) -> bool:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{OPENCLAW_URL}/chat/whatsappNumbers/{INSTANCE}",
+            headers={"apikey": OPENCLAW_KEY},
+            json={"numbers": [phone.replace("+", "")]},
+        )
+        data = response.json()
+        return bool(data and data[0].get("exists", False))
+```
+
+### Receive WhatsApp Webhook
+```python
+# OpenClaw sends webhooks on incoming messages:
+# Extract phone: strip @s.whatsapp.net, prepend +
+phone = "+" + data["key"]["remoteJid"].split("@")[0]
+text = data["message"].get("conversation", "")
+```
+
+---
+
+## CAL.COM API PATTERNS
+
+### Get Available Slots
+```python
+CAL_URL = os.environ["CAL_COM_URL"]
+CAL_KEY = os.environ["CAL_COM_API_KEY"]
+
+async def get_available_slots(date: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{CAL_URL}/api/v1/slots/available",
+            headers={"Authorization": f"Bearer {CAL_KEY}"},
+            params={"startTime": f"{date}T00:00:00Z", "endTime": f"{date}T23:59:59Z"},
+        )
+        return response.json()
+```
+
+---
+
+## AI DATETIME PARSING PATTERN
+
+For n8n: Parse free-text time into ISO DateTime using OpenRouter (Claude Haiku):
+
+System prompt: "You are a datetime parser. Extract date and time from a lead's message about scheduling a phone call. Today is {{now}}. Return JSON: {\"datetime\": \"ISO-8601\", \"confidence\": \"high|medium|low\"}"
+
+Examples:
+- "Tuesday 3pm" → {"datetime": "2026-04-01T15:00:00+01:00", "confidence": "high"}
+- "next week sometime" → {"datetime": null, "confidence": "low"}
+
+---
+
+## TIMEZONE DERIVATION PATTERN
+
+```python
+COUNTRY_CODE_TO_TIMEZONE = {
+    "44": "Europe/London", "234": "Africa/Lagos", "1": "America/New_York",
+    "353": "Europe/Dublin", "233": "Africa/Accra", "254": "Africa/Nairobi",
+    "27": "Africa/Johannesburg", "49": "Europe/Berlin", "33": "Europe/Paris",
+    "971": "Asia/Dubai", "91": "Asia/Kolkata",
+}
+
+def derive_timezone(phone: str) -> str:
+    phone = phone.lstrip("+")
+    for code, tz in sorted(COUNTRY_CODE_TO_TIMEZONE.items(), key=lambda x: -len(x[0])):
+        if phone.startswith(code):
+            return tz
+    return "UTC"
+```
+
+---
+
+## CONTEXT INJECTION PATTERN
+
+```python
+async def build_call_context(supabase, lead_id: str) -> dict:
+    lead = supabase.table("leads").select("*").eq("id", lead_id).single().execute()
+    calls = supabase.table("call_logs").select("*").eq("lead_id", lead_id).order("started_at", desc=True).limit(5).execute()
+
+    previous_summaries = []
+    for c in (calls.data or []):
+        previous_summaries.append({
+            "date": c.get("started_at", "")[:10],
+            "summary": c.get("summary", ""),
+            "programme": c.get("programme_recommended", ""),
+            "outcome": c.get("outcome", ""),
+        })
+
+    return {
+        "lead_name": lead.data.get("name", ""),
+        "lead_email": lead.data.get("email", ""),
+        "has_email": str(bool(lead.data.get("email"))).lower(),
+        "contact_method": lead.data.get("contact_method", "cold_call"),
+        "previous_calls": json.dumps(previous_summaries) if previous_summaries else "[]",
+        "is_follow_up": str(len(previous_summaries) > 0).lower(),
+    }
+```
