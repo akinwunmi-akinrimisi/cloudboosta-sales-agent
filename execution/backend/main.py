@@ -752,12 +752,88 @@ async def dashboard_pipeline(request: Request, _token: str = Depends(verify_bear
 @limiter.limit("60/minute")
 async def dashboard_strategy(request: Request, _token: str = Depends(verify_bearer_token)):
     """Strategy performance data from the strategy_performance view."""
+    from datetime import date as date_cls
+
     result = (
         supabase.table("strategy_performance")
         .select("*")
         .execute()
     )
-    return {"strategies": result.data or []}
+
+    # --- daily_outcomes: last 14 days ---
+    fourteen_days_ago = (date_cls.today() - timedelta(days=14)).isoformat()
+    daily_result = (
+        supabase.table("call_logs")
+        .select("created_at, outcome")
+        .gte("created_at", fourteen_days_ago)
+        .execute()
+    )
+    daily_rows = daily_result.data or []
+
+    # Group by date string (YYYY-MM-DD), count each outcome bucket
+    daily_map: dict[str, dict] = {}
+    for row in daily_rows:
+        raw_ts = row.get("created_at") or ""
+        day = raw_ts[:10]  # YYYY-MM-DD
+        if not day:
+            continue
+        if day not in daily_map:
+            daily_map[day] = {
+                "date": day,
+                "committed": 0,
+                "follow_up": 0,
+                "declined": 0,
+                "no_answer": 0,
+                "other": 0,
+            }
+        outcome = (row.get("outcome") or "").lower()
+        if outcome in ("committed",):
+            daily_map[day]["committed"] += 1
+        elif outcome in ("follow_up", "follow up"):
+            daily_map[day]["follow_up"] += 1
+        elif outcome in ("declined",):
+            daily_map[day]["declined"] += 1
+        elif outcome in ("no_answer", "no answer"):
+            daily_map[day]["no_answer"] += 1
+        elif outcome:
+            daily_map[day]["other"] += 1
+
+    daily_outcomes = sorted(daily_map.values(), key=lambda x: x["date"])
+
+    # --- persona_performance: conversion rate by persona ---
+    persona_result = (
+        supabase.table("call_logs")
+        .select("detected_persona, outcome")
+        .not_.is_("detected_persona", "null")
+        .execute()
+    )
+    persona_rows = persona_result.data or []
+
+    persona_map: dict[str, dict] = {}
+    for row in persona_rows:
+        persona = row.get("detected_persona") or ""
+        if not persona:
+            continue
+        if persona not in persona_map:
+            persona_map[persona] = {"persona": persona, "total_calls": 0, "committed_count": 0}
+        persona_map[persona]["total_calls"] += 1
+        if (row.get("outcome") or "").lower() == "committed":
+            persona_map[persona]["committed_count"] += 1
+
+    persona_performance = []
+    for p in persona_map.values():
+        total = p["total_calls"]
+        committed = p["committed_count"]
+        p["conversion_rate"] = round(committed / total * 100, 1) if total > 0 else 0.0
+        persona_performance.append(p)
+
+    persona_performance.sort(key=lambda x: x["conversion_rate"], reverse=True)
+
+    return {
+        "strategies": result.data or [],
+        "daily_outcomes": daily_outcomes,
+        "persona_performance": persona_performance,
+    }
 
 
 @app.get("/api/dashboard/command-centre")
@@ -973,8 +1049,113 @@ async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = De
         .order("started_at", desc=True)
         .execute()
     )
+    calls = calls_result.data or []
 
-    return {"lead": lead_result.data[0], "calls": calls_result.data or []}
+    # Compute call stats
+    total_calls = len(calls)
+    total_duration = sum(c.get("duration_seconds") or 0 for c in calls)
+    objections_seen = list(set(
+        c.get("closing_strategy_used")
+        for c in calls
+        if c.get("closing_strategy_used")
+    ))
+
+    return {
+        "lead": lead_result.data[0],
+        "calls": calls,
+        "call_stats": {
+            "total_calls": total_calls,
+            "total_duration_seconds": total_duration,
+            "objections_seen": objections_seen,
+        },
+    }
+
+
+@app.post("/api/dashboard/call-now/{lead_id}")
+@limiter.limit("1/2minutes")
+@limiter.limit("200/day")
+async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
+    """Trigger an outbound call to a lead directly from the dashboard."""
+    lead = (
+        supabase.table("leads")
+        .select("*")
+        .eq("id", lead_id)
+        .single()
+        .execute()
+    )
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    lead_data = lead.data
+
+    # Active call guard
+    if await is_call_active():
+        raise HTTPException(status_code=409, detail="Another call is already active")
+
+    # Do-not-contact / declined guard
+    if lead_data["status"] in ("do_not_contact", "declined"):
+        raise HTTPException(status_code=403, detail="Lead is do-not-contact or declined")
+
+    # Phone safety check
+    if not is_safe_destination(lead_data["phone"]):
+        raise HTTPException(status_code=403, detail="Blocked destination")
+
+    # Daily call limit
+    if not await check_daily_limit():
+        raise HTTPException(status_code=429, detail="Daily call limit reached")
+
+    # Determine call type and webinar context
+    call_context = determine_call_type(lead_data)
+    call_type = call_context["call_type"]
+    webinar = call_context["webinar"]
+    is_returning = call_context["is_returning"]
+
+    # Pull previous call context for returning leads
+    previous_notes = ""
+    if is_returning:
+        prev_calls = (
+            supabase.table("call_logs")
+            .select("summary, outcome, detected_persona, closing_strategy_used")
+            .eq("lead_id", lead_id)
+            .order("ended_at", desc=True)
+            .limit(3)
+            .execute()
+        )
+        if prev_calls.data:
+            notes_parts = []
+            for pc in prev_calls.data:
+                if pc.get("summary"):
+                    notes_parts.append(pc["summary"])
+            previous_notes = " | ".join(notes_parts)
+
+    dynamic_vars = {
+        "lead_name": lead_data["name"],
+        "lead_location": lead_data.get("location", "unknown"),
+        "lead_email": lead_data.get("email", ""),
+        "call_type": call_type,
+        "is_returning_lead": "yes" if is_returning else "no",
+        "webinar_date": webinar["date_iso"] if webinar else "",
+        "webinar_topic": webinar["topic"] if webinar else "",
+        "webinar_summary": webinar["summary"] if webinar else "",
+        "webinars_invited": ",".join(lead_data.get("webinars_invited") or []),
+        "previous_call_notes": previous_notes,
+        "detected_persona": lead_data.get("detected_persona", ""),
+        "programme_recommended": lead_data.get("programme_recommended", ""),
+    }
+
+    from_number = os.environ.get("TWILIO_PHONE_NUMBER", "+17404943597")
+
+    call = retell_client.call.create_phone_call(
+        from_number=from_number,
+        to_number=lead_data["phone"],
+        metadata={"lead_id": lead_id},
+        retell_llm_dynamic_variables=dynamic_vars,
+    )
+
+    # Update lead status
+    supabase.table("leads").update({"status": "calling"}).eq("id", lead_id).execute()
+
+    logger.info("call-now: call initiated %s -> %s", call.call_id, lead_data["phone"][:4] + "****")
+    return {"call_id": call.call_id, "status": "calling"}
 
 
 # ---------------------------------------------------------------------------
