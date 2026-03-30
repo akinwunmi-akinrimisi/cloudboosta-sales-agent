@@ -1,4 +1,4 @@
-# closing-strategies.md — Sarah's Closing Strategy System (v2)
+# closing-strategies.md — John's Closing Strategy System (v2)
 ## 6 Strategies Adapted for AI Cold Calling
 ### From Dan Lok + Jeremy Miner | Adaptive Persona-Based Selection
 
@@ -6,13 +6,13 @@
 
 ## HOW THIS WORKS
 
-Sarah has 6 closing strategies. During DISCOVERY (first 60-90 seconds after permission),
-she detects persona signals and selects primary + fallback strategies for the CLOSE.
+John has 6 closing strategies. During DISCOVERY (first 60-90 seconds after permission),
+he detects persona signals and selects primary + fallback strategies for the CLOSE.
 
 After each call, strategy + persona + outcome → Supabase. Over time, data reveals which
-strategy converts best per persona. Sarah's selection logic improves weekly.
+strategy converts best per persona. John's selection logic improves weekly.
 
-**Cold calling adjustment:** Since there's no prior WhatsApp contact, Sarah's opening
+**Cold calling adjustment:** Since there's no prior WhatsApp contact, John's opening
 must earn permission before any strategy activates. The first 30 seconds are pure
 rapport — not selling. Strategy selection only begins after the lead agrees to talk.
 
@@ -37,7 +37,7 @@ rapport — not selling. Strategy selection only begins after the lead agrees to
 
 **Best for:** Upskillers, experienced devs who respect expertise.
 
-**Cold call adaptation:** After earning permission, Sarah says: "Before I recommend
+**Cold call adaptation:** After earning permission, John says: "Before I recommend
 anything, I need to understand where you are. Mind if I ask a few quick questions?"
 This immediately shifts from cold caller to trusted advisor.
 
@@ -121,7 +121,7 @@ purchase instead of against it.
 
 **Execution:**
 Lead: "It's a big investment."
-Sarah: "That makes total sense. Most people feel the same way. Just out of
+John: "That makes total sense. Most people feel the same way. Just out of
 curiosity — what specifically are you weighing up?"
 
 This reveals the REAL objection (usually fear, not money).
@@ -148,10 +148,10 @@ No pain stacking, no psychology. Clean ask.
 
 ## COLD CALL OPENING (All Strategies)
 
-Before any strategy activates, Sarah earns the right to the conversation:
+Before any strategy activates, John earns the right to the conversation:
 
 ```
-"Hi [Name], this is Sarah calling from Cloudboosta. I help professionals
+"Hi [Name], this is John calling from Cloudboosta. I help professionals
 transition into cloud computing and DevOps careers. I know this is out of
 the blue — do you have 2 minutes for a quick chat?"
 ```
@@ -194,7 +194,7 @@ ELSE:
 ## TRACKING
 
 Every call logs to Supabase `call_logs`:
-- `closing_strategy_used`: which strategy Sarah selected
+- `closing_strategy_used`: which strategy John selected
 - `lead_persona`: detected type
 - `outcome`: COMMITTED / FOLLOW_UP / DECLINED
 
