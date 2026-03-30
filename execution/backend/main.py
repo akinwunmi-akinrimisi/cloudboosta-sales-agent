@@ -624,6 +624,24 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
     webinar = call_context["webinar"]
     is_returning = call_context["is_returning"]
 
+    # Pull previous call context for returning leads
+    previous_notes = ""
+    if is_returning:
+        prev_calls = (
+            supabase.table("call_logs")
+            .select("summary, outcome, detected_persona, closing_strategy_used")
+            .eq("lead_id", str(req.lead_id))
+            .order("ended_at", desc=True)
+            .limit(3)
+            .execute()
+        )
+        if prev_calls.data:
+            notes_parts = []
+            for pc in prev_calls.data:
+                if pc.get("summary"):
+                    notes_parts.append(pc["summary"])
+            previous_notes = " | ".join(notes_parts)
+
     dynamic_vars = {
         "lead_name": lead_data["name"],
         "lead_location": lead_data.get("location", "unknown"),
@@ -634,10 +652,13 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
         "webinar_topic": webinar["topic"] if webinar else "",
         "webinar_summary": webinar["summary"] if webinar else "",
         "webinars_invited": ",".join(lead_data.get("webinars_invited") or []),
+        "previous_call_notes": previous_notes,
+        "detected_persona": lead_data.get("detected_persona", ""),
+        "programme_recommended": lead_data.get("programme_recommended", ""),
     }
 
     call = retell_client.call.create_phone_call(
-        from_number="+17405085360",
+        from_number=os.environ.get("TWILIO_PHONE_NUMBER", "+17404943597"),
         to_number=lead_data["phone"],
         metadata={"lead_id": str(req.lead_id)},
         retell_llm_dynamic_variables=dynamic_vars,
