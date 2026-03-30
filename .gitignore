@@ -27,9 +27,13 @@ dashboard/dist/
 dashboard/build/
 .next/
 
-# IDE
+# IDE & Tooling
 .vscode/
 .idea/
+.agents/
+.qoder/
+.superpowers/
+.claude/skills/
 *.swp
 *.swo
 *~
