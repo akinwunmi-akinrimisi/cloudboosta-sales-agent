@@ -760,6 +760,191 @@ async def dashboard_strategy(request: Request, _token: str = Depends(verify_bear
     return {"strategies": result.data or []}
 
 
+@app.get("/api/dashboard/command-centre")
+@limiter.limit("60/minute")
+async def dashboard_command_centre(request: Request, _token: str = Depends(verify_bearer_token)):
+    """Single endpoint returning all data needed for the command centre home view."""
+
+    # ------------------------------------------------------------------ stats
+    try:
+        total_leads_result = supabase.table("leads").select("id", count="exact").execute()
+        total_leads = total_leads_result.count or 0
+
+        queued_result = supabase.table("leads").select("id", count="exact").eq("status", "queued").execute()
+        queued_count = queued_result.count or 0
+
+        todays_calls_result = supabase.table("todays_calls").select("outcome").execute()
+        todays_calls_data = todays_calls_result.data or []
+        todays_calls_count = len(todays_calls_data)
+        connected_count = sum(1 for r in todays_calls_data if r.get("outcome") is not None)
+        committed_count = sum(1 for r in todays_calls_data if r.get("outcome") == "committed")
+        conversion_rate = round(committed_count / connected_count * 100, 1) if connected_count > 0 else 0.0
+
+        stats = {
+            "total_leads": total_leads,
+            "queued": queued_count,
+            "todays_calls": todays_calls_count,
+            "connected": connected_count,
+            "committed": committed_count,
+            "conversion_rate": conversion_rate,
+        }
+    except Exception as exc:
+        logger.error("command_centre: stats query error: %s", exc, exc_info=True)
+        stats = {
+            "total_leads": 0,
+            "queued": 0,
+            "todays_calls": 0,
+            "connected": 0,
+            "committed": 0,
+            "conversion_rate": 0.0,
+        }
+
+    # --------------------------------------------------------------- active_call
+    try:
+        active_result = (
+            supabase.table("leads")
+            .select("id, name, phone, status, programme_recommended, last_strategy_used, last_call_at, detected_persona")
+            .in_("status", ["calling", "in_call"])
+            .limit(1)
+            .execute()
+        )
+        active_call = active_result.data[0] if active_result.data else None
+    except Exception as exc:
+        logger.error("command_centre: active_call query error: %s", exc, exc_info=True)
+        active_call = None
+
+    # ------------------------------------------------------------------- queue
+    try:
+        queue_result = (
+            supabase.table("leads")
+            .select("id, name, phone, priority, retry_count, next_call_type, next_call_at, status")
+            .in_("status", ["queued", "new"])
+            .order("priority", desc=True)
+            .order("created_at", desc=False)
+            .limit(10)
+            .execute()
+        )
+        queue = queue_result.data or []
+    except Exception as exc:
+        logger.error("command_centre: queue query error: %s", exc, exc_info=True)
+        queue = []
+
+    # ------------------------------------------------------------------ funnel
+    try:
+        all_statuses_result = supabase.table("leads").select("status").execute()
+        all_statuses = all_statuses_result.data or []
+
+        funnel = {
+            "new": sum(1 for r in all_statuses if r.get("status") == "new"),
+            "queued": sum(1 for r in all_statuses if r.get("status") == "queued"),
+            "in_progress": sum(1 for r in all_statuses if r.get("status") in ("calling", "in_call")),
+            "follow_up": sum(1 for r in all_statuses if r.get("status") == "follow_up"),
+            "committed": sum(1 for r in all_statuses if r.get("status") in ("committed", "payment_sent")),
+            "closed": sum(1 for r in all_statuses if r.get("status") in ("declined", "not_qualified", "do_not_contact", "failed")),
+        }
+    except Exception as exc:
+        logger.error("command_centre: funnel query error: %s", exc, exc_info=True)
+        funnel = {"new": 0, "queued": 0, "in_progress": 0, "follow_up": 0, "committed": 0, "closed": 0}
+
+    # ---------------------------------------------------------------- activity
+    try:
+        pipeline_logs_result = (
+            supabase.table("pipeline_logs")
+            .select("lead_id, event, details, created_at")
+            .order("created_at", desc=True)
+            .limit(15)
+            .execute()
+        )
+        pipeline_logs = pipeline_logs_result.data or []
+
+        call_logs_result = (
+            supabase.table("call_logs")
+            .select("lead_id, duration_seconds, outcome, started_at")
+            .order("started_at", desc=True)
+            .limit(15)
+            .execute()
+        )
+        call_logs = call_logs_result.data or []
+
+        # Collect all lead_ids needed for name lookup
+        lead_ids_needed = set()
+        for row in pipeline_logs:
+            if row.get("lead_id"):
+                lead_ids_needed.add(row["lead_id"])
+        for row in call_logs:
+            if row.get("lead_id"):
+                lead_ids_needed.add(row["lead_id"])
+
+        # Bulk lookup lead names
+        lead_name_map: dict[str, str] = {}
+        if lead_ids_needed:
+            names_result = (
+                supabase.table("leads")
+                .select("id, name")
+                .in_("id", list(lead_ids_needed))
+                .execute()
+            )
+            for row in (names_result.data or []):
+                lead_name_map[row["id"]] = row.get("name", "Unknown")
+
+        # Build activity items
+        activity_items = []
+        for row in pipeline_logs:
+            detail = row.get("event", "")
+            if row.get("details"):
+                detail = f"{detail}: {row['details']}"
+            activity_items.append({
+                "type": "status_change",
+                "lead_name": lead_name_map.get(row.get("lead_id", ""), "Unknown"),
+                "detail": detail,
+                "timestamp": row.get("created_at"),
+            })
+        for row in call_logs:
+            duration = row.get("duration_seconds")
+            outcome = row.get("outcome", "")
+            dur_str = f"{int(duration)}s" if duration is not None else "unknown duration"
+            detail = f"{dur_str} — {outcome}" if outcome else dur_str
+            activity_items.append({
+                "type": "call",
+                "lead_name": lead_name_map.get(row.get("lead_id", ""), "Unknown"),
+                "detail": detail,
+                "timestamp": row.get("started_at"),
+            })
+
+        # Sort merged list by timestamp DESC, take top 20
+        activity_items.sort(
+            key=lambda x: x["timestamp"] or "",
+            reverse=True,
+        )
+        activity = activity_items[:20]
+    except Exception as exc:
+        logger.error("command_centre: activity query error: %s", exc, exc_info=True)
+        activity = []
+
+    # ------------------------------------------------------------- recent_calls
+    try:
+        recent_calls_result = (
+            supabase.table("todays_calls")
+            .select("*")
+            .order("started_at", desc=True)
+            .limit(15)
+            .execute()
+        )
+        recent_calls = recent_calls_result.data or []
+    except Exception as exc:
+        logger.error("command_centre: recent_calls query error: %s", exc, exc_info=True)
+        recent_calls = []
+
+    return {
+        "stats": stats,
+        "active_call": active_call,
+        "queue": queue,
+        "funnel": funnel,
+        "activity": activity,
+        "recent_calls": recent_calls,
+    }
+
+
 @app.get("/api/dashboard/lead/{lead_id}")
 @limiter.limit("60/minute")
 async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
