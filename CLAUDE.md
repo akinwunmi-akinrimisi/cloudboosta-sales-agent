@@ -18,6 +18,8 @@ Retell handles all of that.
 **DO write:** Retell SDK configuration, webhook endpoints, Supabase queries,
 n8n workflows, auto-dialer logic, and a React dashboard.
 
+v3.0 adds multi-channel pre-contact outreach. Before cold calling, John sends intro messages via WhatsApp (OpenClaw) and email (Resend) with a Cal.com booking link. Leads who book or reply are called at their preferred time. Leads who don't respond within 48h are cold-called directly.
+
 ---
 
 ## SKILLS
@@ -69,10 +71,12 @@ sarah-retell-project/
 │   │   ├── src/App.jsx
 │   │   ├── src/components/
 │   │   └── package.json
-│   └── n8n/                    # Workflow JSON exports
-│       ├── auto-dialer.json
-│       ├── post-call-handler.json
-│       └── lead-import.json
+│   ├── n8n/                    # Workflow JSON exports
+│   │   ├── auto-dialer.json
+│   │   ├── post-call-handler.json
+│   │   └── lead-import.json
+│   ├── cal-com/               # Cal.com Docker config + setup scripts
+│   └── outreach/              # Email templates + WhatsApp message templates
 ```
 
 ---
@@ -95,6 +99,21 @@ sarah-retell-project/
 - OpenClaw is NOT used in this project
 - Email sending uses Resend API (for payment emails post-call)
 - All messaging happens through the voice call itself
+
+### Multi-Channel Outreach
+- OpenClaw/Evolution API is on VPS #2 (Hostinger). Already running.
+- Cal.com will be self-hosted on VPS. Docker deployment.
+- Email outreach uses Resend API — not OpenClaw.
+- WhatsApp outreach uses OpenClaw — not Twilio WhatsApp.
+- Before sending WhatsApp, ALWAYS check if number is registered on WhatsApp via OpenClaw's number check API.
+
+### Call Memory
+- Before EVERY call to an existing lead, retrieve previous call_logs from Supabase and inject summaries into Retell dynamic variables.
+- John must NEVER treat a returning lead as a first-time contact.
+
+### Email Handling
+- If lead's email exists in Supabase, John NEVER asks for it on the call.
+- When asking a lead to spell their email on a call, NEVER use NATO alphabet. Use natural language only.
 
 ---
 
@@ -138,6 +157,18 @@ curl -X POST http://localhost:8000/dialer/start \
 
 # Run dashboard dev server
 cd execution/dashboard && npm run dev
+
+# Test OpenClaw WhatsApp connection
+curl -X POST $OPENCLAW_API_URL/message/sendText \
+  -H "apikey: $OPENCLAW_API_KEY" \
+  -d '{"number": "YOUR_NUMBER", "text": "Test from John agent"}'
+
+# Test Cal.com API
+curl -H "Authorization: Bearer $CAL_COM_API_KEY" \
+  "$CAL_COM_URL/api/v1/availability"
+
+# Test context retrieval for a lead
+curl http://localhost:8000/api/lead-context/TEST_LEAD_UUID
 ```
 
 
