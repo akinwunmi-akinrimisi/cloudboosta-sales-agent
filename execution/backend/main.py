@@ -1081,7 +1081,7 @@ async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = De
 
 
 @app.post("/api/dashboard/call-now/{lead_id}")
-@limiter.limit("1/2minutes")
+@limiter.limit("5/minute")
 @limiter.limit("200/day")
 async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
     """Trigger an outbound call to a lead directly from the dashboard."""
