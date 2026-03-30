@@ -113,3 +113,53 @@ export function formatTime(isoString) {
     return "";
   }
 }
+
+export const POLL_COMMAND = 5000;
+
+export const FUNNEL_STAGES = [
+  { key: "new", label: "New", color: "#3b82f6" },
+  { key: "queued", label: "Queued", color: "#8b5cf6" },
+  { key: "in_progress", label: "In Progress", color: "#f97316" },
+  { key: "follow_up", label: "Follow Up", color: "#60a5fa" },
+  { key: "committed", label: "Committed", color: "#22c55e" },
+  { key: "closed", label: "Closed", color: "#52525b" },
+];
+
+export const STATUS_COLORS = {
+  new: "bg-blue-500/15 border-blue-500/30 text-blue-500",
+  queued: "bg-violet-500/15 border-violet-500/30 text-violet-500",
+  calling: "bg-orange-500/15 border-orange-500/30 text-orange-500",
+  in_call: "bg-orange-500/15 border-orange-500/30 text-orange-500",
+  follow_up: "bg-blue-400/15 border-blue-400/30 text-blue-400",
+  committed: "bg-green-500/15 border-green-500/30 text-green-500",
+  declined: "bg-red-500/15 border-red-500/30 text-red-500",
+  not_qualified: "bg-zinc-500/15 border-zinc-500/30 text-zinc-400",
+  payment_sent: "bg-green-500/15 border-green-500/30 text-green-500",
+};
+
+export function formatRelativeTime(isoString) {
+  if (!isoString) return "";
+  try {
+    const diff = Date.now() - new Date(isoString).getTime();
+    if (diff < 0) return "just now";
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch {
+    return "";
+  }
+}
+
+export function formatDateTime(isoString) {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    return d.toLocaleDateString([], { month: "short", day: "numeric" }) + ", " + formatTime(isoString);
+  } catch {
+    return "";
+  }
+}

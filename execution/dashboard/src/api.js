@@ -51,3 +51,36 @@ export async function apiFetch(path) {
 
   return res.json();
 }
+
+/**
+ * Authenticated POST request to a dashboard API endpoint.
+ *
+ * @param {string} path - Path segment appended to /api/dashboard (e.g. "/call/stop").
+ * @param {object} body - JSON body to send with the request.
+ * @returns {Promise<object>} Parsed JSON response.
+ * @throws {Error} On non-2xx responses (except 401 which triggers reload).
+ */
+export async function apiPost(path, body = {}) {
+  const token = getToken();
+  const res = await fetch(`/api/dashboard${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    window.location.reload();
+    return;
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `API error: ${res.status}`);
+  }
+
+  return res.json();
+}
