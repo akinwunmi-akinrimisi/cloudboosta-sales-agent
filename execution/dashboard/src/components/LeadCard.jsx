@@ -1,22 +1,5 @@
-import { maskPhone } from "../constants";
+import { maskPhone, formatRelativeTime } from "../constants";
 import OutcomeBadge from "./OutcomeBadge";
-
-function relativeTime(isoString) {
-  if (!isoString) return "";
-  try {
-    const diff = Date.now() - new Date(isoString).getTime();
-    if (diff < 0) return "just now";
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    return `${days}d ago`;
-  } catch {
-    return "";
-  }
-}
 
 export default function LeadCard({ lead, onClick }) {
   return (
@@ -32,9 +15,25 @@ export default function LeadCard({ lead, onClick }) {
         {maskPhone(lead.phone)}
       </p>
 
+      {/* Programme + Persona badges */}
+      {(lead.programme_recommended || lead.detected_persona) && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {lead.programme_recommended && (
+            <span className="inline-flex items-center rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 px-1.5 py-0.5 text-xs font-mono truncate max-w-[140px]">
+              {lead.programme_recommended}
+            </span>
+          )}
+          {lead.detected_persona && (
+            <span className="inline-flex items-center rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-400 px-1.5 py-0.5 text-xs font-mono">
+              {lead.detected_persona.replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mt-2">
         <span className="text-xs text-zinc-600 font-mono">
-          {relativeTime(lead.updated_at)}
+          {formatRelativeTime(lead.updated_at)}
         </span>
         {lead.retry_count > 0 && (
           <span className="inline-flex items-center rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-500 px-1.5 text-xs font-mono">
