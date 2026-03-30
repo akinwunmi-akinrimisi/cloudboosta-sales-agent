@@ -31,7 +31,7 @@ All work must:
 - All programme data comes from the knowledge base — John never fabricates details.
 - Every call must end with a classification: COMMITTED, FOLLOW_UP, or DECLINED.
 - FOLLOW_UP must have a specific date/time locked in.
-- **John's name is John.** All documentation uses John consistently.
+- **John's name is John.** Not Sarah. Update all references.
 - Do not rewrite or regenerate this file unless explicitly instructed.
 
 ---
@@ -309,7 +309,7 @@ OPEN → DISCOVERY → QUALIFY → BRIDGE → PRESENT → HANDLE OBJECTIONS → 
 6 strategies from Dan Lok + Jeremy Miner. Selected based on persona detected during DISCOVERY.
 Strategy + persona + outcome logged per call. Weekly analysis reveals what works.
 
-See: `closing-strategies.md` (John's Closing Strategy System)
+See: `closing-strategies.md` (update all "Sarah" references to "John")
 
 ---
 
@@ -396,7 +396,7 @@ cloudboosta-sales-agent/
 ├── CLAUDE.md                   ← Claude Code instructions
 ├── security.md                 ← Security controls
 ├── implementation.md           ← Phased build plan
-├── closing-strategies.md       ← 6 strategies (John's Closing Strategy System)
+├── closing-strategies.md       ← 6 strategies (John, not Sarah)
 ├── skills.md                   ← Technical patterns
 ├── skills.sh                   ← Environment validation
 ├── leads.md                    ← Lead management reference
