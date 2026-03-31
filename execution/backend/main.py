@@ -34,6 +34,7 @@ load_dotenv()
 from retell_config import retell_client
 from supabase_client import supabase
 from tools import execute_tool, COUNTRY_CURRENCY_MAP, DEFAULT_CURRENCY
+from timezone_util import derive_timezone
 from dialer import (
     should_dial_now,
     get_next_lead,
