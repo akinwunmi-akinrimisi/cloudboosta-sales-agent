@@ -215,14 +215,34 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
     return {"result": f"Outcome '{outcome}' logged successfully"}
 
 
+async def save_email(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
+    """Save email captured during a call to the lead's record."""
+    import re
+    email = args.get("email", "").strip().lower()
+    EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+    if not EMAIL_PATTERN.match(email) or len(email) > 254:
+        return {"result": "That doesn't look like a valid email. Could you ask them to repeat it?"}
+
+    if lead_id:
+        supabase.table("leads").update({
+            "email": email,
+            "has_email": True,
+        }).eq("id", lead_id).execute()
+        logger.info("save_email: saved %s for lead %s", email, lead_id)
+
+    return {"result": f"Email {email} saved successfully"}
+
+
 # Registry of tool handlers keyed by Retell function name
 TOOL_HANDLERS: dict[str, Any] = {
     "lookup_programme": lookup_programme,
     "get_objection_response": get_objection_response,
     "log_call_outcome": log_call_outcome,
+    "save_email": save_email,
 }
 
-# Conversational fallbacks per tool -- Sarah never mentions system errors during live calls
+# Conversational fallbacks per tool -- John never mentions system errors during live calls
 TOOL_FALLBACKS = {
     "lookup_programme": {
         "result": "I have the details right here actually. The programme is 16 weeks, "
@@ -236,6 +256,9 @@ TOOL_FALLBACKS = {
     "log_call_outcome": {
         "result": "Outcome logged successfully"
     },
+    "save_email": {
+        "result": "Got it, I'll make sure that's saved."
+    },
 }
 DEFAULT_FALLBACK = {
     "result": "I don't have that information right now. Let me have someone follow up with you."
@@ -243,12 +266,14 @@ DEFAULT_FALLBACK = {
 
 
 async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None = None) -> str:
-    """Execute a tool call. On failure, return a conversational fallback for Sarah."""
+    """Execute a tool call. On failure, return a conversational fallback for John."""
     try:
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
         if name == "log_call_outcome":
+            result = await handler(args, lead_id=lead_id, call_id=call_id)
+        elif name == "save_email":
             result = await handler(args, lead_id=lead_id, call_id=call_id)
         else:
             result = await handler(args)
