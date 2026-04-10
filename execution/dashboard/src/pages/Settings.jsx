@@ -34,7 +34,7 @@ const DAYS = [
 
 const SAMPLE_DATA = {
   first_name: "John Doe",
-  booking_link: "https://cal.example.com",
+  booking_link: "https://cal.srv1297445.hstgr.cloud/akinwunmi/cloudboosta-advisory-call",
 };
 
 const INPUT_CLS =
@@ -177,14 +177,14 @@ function GeneralTab() {
         <label className={LABEL_CLS}>Daily Call Cap</label>
         <input
           type="number"
-          min="1"
+          min="0"
           className={INPUT_CLS}
           value={form.daily_call_cap}
           onChange={(e) => handleChange("daily_call_cap", e.target.value)}
-          placeholder="e.g. 100"
+          placeholder="0"
         />
         <p className="mt-1 text-xs text-zinc-600 font-mono">
-          Maximum number of outbound calls per day.
+          {Number(form.daily_call_cap) === 0 ? "Unlimited — no daily cap on outbound calls." : "Maximum number of outbound calls per day."}
         </p>
       </div>
 
@@ -212,7 +212,7 @@ function GeneralTab() {
           className={INPUT_CLS}
           value={form.cal_booking_link}
           onChange={(e) => handleChange("cal_booking_link", e.target.value)}
-          placeholder="https://cal.example.com/john"
+          placeholder="https://cal.srv1297445.hstgr.cloud/akinwunmi/cloudboosta-advisory-call/john"
         />
         <p className="mt-1 text-xs text-zinc-600 font-mono">
           Shared in outreach emails and WhatsApp messages.
