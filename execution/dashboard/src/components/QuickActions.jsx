@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiPost } from "../api";
 
 export default function QuickActions({ leadId, leadStatus, onRefresh }) {
+  const navigate = useNavigate();
   const [calling, setCalling] = useState(false);
   const [error, setError] = useState(null);
 
@@ -61,12 +63,11 @@ export default function QuickActions({ leadId, leadStatus, onRefresh }) {
           )}
         </button>
 
-        {/* Schedule Follow-up — coming soon */}
+        {/* Schedule Follow-up — navigates to follow-ups page */}
         <button
           type="button"
-          disabled
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-500/10 border border-blue-500/20 text-blue-700 cursor-not-allowed transition-colors"
-          title="Coming soon"
+          onClick={() => navigate("/follow-ups")}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/40 transition-colors focus:outline-none"
         >
           <svg
             className="w-4 h-4"
@@ -78,15 +79,19 @@ export default function QuickActions({ leadId, leadStatus, onRefresh }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           Schedule Follow-up
-          <span className="ml-auto text-[10px] font-mono text-blue-800/60">soon</span>
         </button>
 
-        {/* Add Note — coming soon */}
+        {/* Add Note — navigates to lead detail Notes tab */}
         <button
           type="button"
-          disabled
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-zinc-500/10 border border-zinc-500/20 text-zinc-600 cursor-not-allowed transition-colors"
-          title="Coming soon"
+          onClick={() => {
+            if (leadId) {
+              navigate(`/leads/${leadId}?tab=notes`);
+            } else {
+              navigate("/leads");
+            }
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-zinc-500/10 border border-zinc-500/20 text-zinc-400 hover:bg-zinc-500/20 hover:border-zinc-500/40 transition-colors focus:outline-none"
         >
           <svg
             className="w-4 h-4"
@@ -98,7 +103,6 @@ export default function QuickActions({ leadId, leadStatus, onRefresh }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
           Add Note
-          <span className="ml-auto text-[10px] font-mono text-zinc-700/60">soon</span>
         </button>
       </div>
 

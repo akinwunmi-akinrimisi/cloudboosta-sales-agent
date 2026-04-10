@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, UserPlus, X } from "lucide-react";
-import { apiFetch, apiUpload } from "../api";
+import { apiFetch, apiPost, apiUpload } from "../api";
 import DataTable from "../components/DataTable";
 import FilterBar from "../components/FilterBar";
 import StatusBadge from "../components/StatusBadge";
@@ -97,6 +97,134 @@ function ImportResultCard({ result, onDismiss }) {
   );
 }
 
+function AddLeadModal({ onClose, onSuccess }) {
+  const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", email: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState(null);
+
+  function handleChange(e) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.phone.trim()) {
+      setFormError("Phone number is required.");
+      return;
+    }
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await apiPost("/leads", {
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || undefined,
+      });
+      onSuccess();
+    } catch (err) {
+      setFormError(err.message || "Failed to add lead.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="glass-card w-full max-w-md p-6 space-y-5 mx-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-zinc-100">Add Lead</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-none"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-mono text-zinc-500 mb-1">First Name</label>
+              <input
+                type="text"
+                name="first_name"
+                value={form.first_name}
+                onChange={handleChange}
+                placeholder="Jane"
+                className="w-full bg-zinc-800/60 border border-glass-border rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-500 mb-1">Last Name</label>
+              <input
+                type="text"
+                name="last_name"
+                value={form.last_name}
+                onChange={handleChange}
+                placeholder="Smith"
+                className="w-full bg-zinc-800/60 border border-glass-border rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-zinc-500 mb-1">
+              Phone <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              placeholder="+447911123456"
+              className="w-full bg-zinc-800/60 border border-glass-border rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 font-mono focus:outline-none focus:border-orange-500/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono text-zinc-500 mb-1">Email <span className="text-zinc-600">(optional)</span></label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="jane@example.com"
+              className="w-full bg-zinc-800/60 border border-glass-border rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500/50 transition-colors"
+            />
+          </div>
+
+          {formError && (
+            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              {formError}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-xs font-mono font-medium text-zinc-400 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors focus:outline-none"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 py-2 rounded-lg text-xs font-mono font-medium text-orange-400 bg-orange-500/15 border border-orange-500/30 hover:bg-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none"
+            >
+              {submitting ? "Adding…" : "Add Lead"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Leads() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -113,6 +241,7 @@ export default function Leads() {
   const [error, setError] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -241,19 +370,29 @@ export default function Leads() {
           {importing ? "Importing…" : "Import CSV"}
         </button>
 
-        {/* Add Lead (placeholder) */}
+        {/* Add Lead */}
         <button
           type="button"
-          disabled
-          title="Coming soon"
+          onClick={() => setShowAddModal(true)}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-mono font-medium transition-colors
-            bg-zinc-800 border border-zinc-700 text-zinc-500
-            opacity-50 cursor-not-allowed"
+            bg-orange-500/15 border border-orange-500/30 text-orange-400
+            hover:bg-orange-500/25"
         >
           <UserPlus className="w-3.5 h-3.5" />
           Add Lead
         </button>
       </FilterBar>
+
+      {/* Add Lead Modal */}
+      {showAddModal && (
+        <AddLeadModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={async () => {
+            setShowAddModal(false);
+            await fetchLeads();
+          }}
+        />
+      )}
 
       {/* Import Result Banner */}
       <ImportResultCard

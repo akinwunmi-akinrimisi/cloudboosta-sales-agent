@@ -71,6 +71,9 @@ function Chip({ label }) {
 function FollowUpCard({ item, urgency }) {
   const navigate = useNavigate();
   const config = URGENCY_CONFIG[urgency];
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newDateTime, setNewDateTime] = useState("");
+  const [rescheduleNote, setRescheduleNote] = useState(null);
 
   const displayName =
     item.name ||
@@ -137,7 +140,7 @@ function FollowUpCard({ item, urgency }) {
 
         <button
           type="button"
-          onClick={() => console.log("Reschedule", item.id)}
+          onClick={() => { setRescheduling((v) => !v); setRescheduleNote(null); }}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors
             bg-amber-500/15 border border-amber-500/30 text-amber-400
             hover:bg-amber-500/25 active:scale-95"
@@ -156,6 +159,50 @@ function FollowUpCard({ item, urgency }) {
           View Lead
         </button>
       </div>
+
+      {/* Inline reschedule picker */}
+      {rescheduling && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-700/50 pt-3">
+          <input
+            type="datetime-local"
+            value={newDateTime}
+            onChange={(e) => { setNewDateTime(e.target.value); setRescheduleNote(null); }}
+            className="bg-zinc-800/70 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 font-mono focus:outline-none focus:border-amber-500/50 transition-colors"
+          />
+          <button
+            type="button"
+            disabled={!newDateTime}
+            onClick={() => {
+              if (!newDateTime) return;
+              const formatted = new Date(newDateTime).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              });
+              setRescheduleNote(`Selected: ${formatted} — PUT /leads/:id endpoint required to save.`);
+              setRescheduling(false);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors
+              bg-amber-500/15 border border-amber-500/30 text-amber-400
+              hover:bg-amber-500/25 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Confirm
+          </button>
+          <button
+            type="button"
+            onClick={() => { setRescheduling(false); setRescheduleNote(null); }}
+            className="text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Reschedule note */}
+      {rescheduleNote && (
+        <p className="mt-2 text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 font-mono">
+          {rescheduleNote}
+        </p>
+      )}
     </div>
   );
 }

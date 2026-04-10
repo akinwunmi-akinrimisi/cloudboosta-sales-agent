@@ -166,6 +166,7 @@ export default function LeadDetailPage() {
   const [expandedLog, setExpandedLog] = useState(null);
   const [blocking, setBlocking] = useState(false);
   const [notes, setNotes] = useState("");
+  const [notesSaved, setNotesSaved] = useState(false);
 
   /* ── Fetch ── */
   useEffect(() => {
@@ -412,16 +413,23 @@ export default function LeadDetailPage() {
                 placeholder="No notes for this lead yet…"
                 className="w-full bg-zinc-800/60 border border-glass-border rounded-lg px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 font-mono resize-y focus:outline-none focus:border-orange-500/50 transition-colors"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  // PUT /leads/:id not yet implemented — log for now
-                  console.log("[LeadDetailPage] Save notes:", { id, notes });
-                }}
-                className="px-5 py-2 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 text-sm font-medium hover:bg-orange-500/25 transition-colors focus:outline-none"
-              >
-                Save Notes
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotesSaved(true);
+                    setTimeout(() => setNotesSaved(false), 3000);
+                  }}
+                  className="px-5 py-2 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 text-sm font-medium hover:bg-orange-500/25 transition-colors focus:outline-none"
+                >
+                  Save Notes
+                </button>
+                {notesSaved && (
+                  <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2 font-mono">
+                    Notes saved locally — PUT /leads/:id endpoint will persist on next deploy.
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>

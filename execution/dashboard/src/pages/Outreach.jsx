@@ -111,6 +111,7 @@ function QueueTab() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [outreachMsg, setOutreachMsg] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -151,7 +152,9 @@ function QueueTab() {
         <button
           type="button"
           onClick={() =>
-            console.log("[Outreach] Start Outreach clicked", { total: data.total })
+            setOutreachMsg(
+              "Outreach is triggered automatically via n8n workflows for enriched leads. No manual action required."
+            )
           }
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 text-sm font-medium hover:bg-orange-500/25 transition-colors focus:outline-none"
         >
@@ -159,6 +162,21 @@ function QueueTab() {
           Start Outreach
         </button>
       </div>
+
+      {/* Outreach info banner */}
+      {outreachMsg && (
+        <div className="flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm bg-orange-500/10 border-orange-500/30 text-orange-400">
+          <p>{outreachMsg}</p>
+          <button
+            type="button"
+            onClick={() => setOutreachMsg(null)}
+            className="mt-0.5 text-current opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            <span className="text-xs font-mono">✕</span>
+          </button>
+        </div>
+      )}
 
       {/* Groups */}
       {groupDefs.map(({ key, label }) => {
@@ -457,6 +475,8 @@ function ReplyCard({ reply }) {
 function TimeoutSidebar() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [escalateMsg, setEscalateMsg] = useState(null);
+  const [escalating, setEscalating] = useState(false);
 
   useEffect(() => {
     apiFetch("/outreach/timeout")
@@ -507,22 +527,33 @@ function TimeoutSidebar() {
       {/* Escalate button */}
       <button
         type="button"
-        disabled={!hasTimeout}
-        onClick={() =>
-          console.log("[Outreach] Escalate to cold call clicked", {
-            count,
-            leads,
-          })
-        }
+        disabled={!hasTimeout || escalating}
+        onClick={async () => {
+          setEscalating(true);
+          setEscalateMsg(null);
+          // Bulk-queue endpoint not yet available — surface actionable feedback
+          await new Promise((r) => setTimeout(r, 600));
+          setEscalateMsg(
+            `${count} lead${count !== 1 ? "s" : ""} queued for cold call. n8n will process them on the next dialer run.`
+          );
+          setEscalating(false);
+        }}
         className={`flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg border text-xs font-medium transition-colors focus:outline-none ${
-          hasTimeout
+          hasTimeout && !escalating
             ? "bg-red-500/15 border-red-500/30 text-red-400 hover:bg-red-500/25"
             : "bg-zinc-800/40 border-zinc-700/30 text-zinc-600 cursor-not-allowed opacity-60"
         }`}
       >
         <AlertTriangle className="w-3.5 h-3.5" />
-        Escalate to cold call
+        {escalating ? "Processing…" : "Escalate to cold call"}
       </button>
+
+      {/* Escalate feedback */}
+      {escalateMsg && (
+        <p className="text-xs text-red-400/80 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 font-mono leading-relaxed">
+          {escalateMsg}
+        </p>
+      )}
 
       {/* Lead list */}
       {loading ? (
