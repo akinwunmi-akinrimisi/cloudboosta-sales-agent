@@ -4,6 +4,7 @@ import { getToken } from "./api";
 import Layout from "./Layout";
 import Login from "./components/Login";
 import Home from "./pages/Home";
+import Leads from "./pages/Leads";
 
 function Placeholder({ name }) {
   return (
@@ -31,7 +32,7 @@ export default function App() {
         }
       >
         <Route index element={<Home />} />
-        <Route path="leads" element={<Placeholder name="Leads" />} />
+        <Route path="leads" element={<Leads />} />
         <Route path="leads/:id" element={<Placeholder name="Lead Detail" />} />
         <Route path="pipeline" element={<Placeholder name="Pipeline" />} />
         <Route path="outreach" element={<Placeholder name="Outreach" />} />
