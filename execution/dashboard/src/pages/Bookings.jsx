@@ -7,11 +7,155 @@ import EmptyState from "../components/EmptyState";
 import { List, CalendarDays } from "lucide-react";
 import { formatDateTime } from "../constants";
 
-function CalendarPlaceholder() {
+function CalendarView({ bookings }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  // Build calendar grid
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startPad = (firstDay.getDay() + 6) % 7; // Monday start
+  const totalDays = lastDay.getDate();
+
+  // Map bookings to dates
+  const bookingsByDate = {};
+  for (const b of bookings) {
+    if (b.call_scheduled_at) {
+      const dateKey = b.call_scheduled_at.slice(0, 10); // YYYY-MM-DD
+      if (!bookingsByDate[dateKey]) bookingsByDate[dateKey] = [];
+      bookingsByDate[dateKey].push(b);
+    }
+  }
+
+  // Build cells array
+  const cells = [];
+  // Previous month padding
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
+  for (let i = startPad - 1; i >= 0; i--) {
+    cells.push({ day: prevMonthLastDay - i, current: false, dateKey: null });
+  }
+  // Current month
+  for (let d = 1; d <= totalDays; d++) {
+    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    cells.push({ day: d, current: true, dateKey, bookings: bookingsByDate[dateKey] || [] });
+  }
+  // Next month padding
+  const remaining = 7 - (cells.length % 7);
+  if (remaining < 7) {
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, current: false, dateKey: null });
+    }
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const monthName = currentDate.toLocaleDateString("en", { month: "long", year: "numeric" });
+  const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  // Selected day bookings
+  const selectedBookings = selectedDay ? (bookingsByDate[selectedDay] || []) : [];
+
   return (
-    <div className="glass-card flex flex-col items-center justify-center py-20 px-8">
-      <CalendarDays className="w-12 h-12 text-zinc-600 mb-4" />
-      <p className="text-sm text-zinc-500 font-mono">Calendar view — coming in Phase 3</p>
+    <div className="glass-card p-6">
+      {/* Nav */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+          className="px-3 py-1.5 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] transition-colors"
+        >
+          ← Prev
+        </button>
+        <h3 className="text-sm font-semibold text-zinc-200">{monthName}</h3>
+        <button
+          onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+          className="px-3 py-1.5 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] transition-colors"
+        >
+          Next →
+        </button>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {DAY_LABELS.map((d) => (
+          <div key={d} className="text-center text-[11px] font-mono text-zinc-600 py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((cell, i) => {
+          const isToday = cell.dateKey === today;
+          const hasBookings = cell.bookings && cell.bookings.length > 0;
+          const isSelected = cell.dateKey === selectedDay;
+
+          return (
+            <button
+              key={i}
+              onClick={() =>
+                cell.current &&
+                cell.dateKey &&
+                setSelectedDay(cell.dateKey === selectedDay ? null : cell.dateKey)
+              }
+              disabled={!cell.current}
+              className={`relative h-10 rounded-lg text-sm transition-colors ${
+                !cell.current
+                  ? "text-zinc-700 cursor-default"
+                  : isSelected
+                  ? "bg-orange-500/20 border border-orange-500/40 text-orange-400"
+                  : isToday
+                  ? "ring-1 ring-orange-500/50 text-zinc-100"
+                  : "text-zinc-400 hover:bg-white/[0.04]"
+              }`}
+            >
+              {cell.day}
+              {hasBookings && (
+                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected day bookings */}
+      {selectedDay && (
+        <div className="mt-4 p-4 rounded-lg bg-zinc-800/50 border border-white/[0.06]">
+          <h4 className="text-[11px] font-mono uppercase tracking-widest text-zinc-500 mb-3">
+            Bookings for{" "}
+            {new Date(selectedDay + "T00:00:00").toLocaleDateString("en", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
+          </h4>
+          {selectedBookings.length === 0 ? (
+            <p className="text-sm text-zinc-500">No bookings on this day</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedBookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/60 border border-white/[0.06]"
+                >
+                  <div>
+                    <p className="text-sm text-zinc-200 font-medium">{b.name}</p>
+                    <p className="text-xs text-zinc-500 font-mono">{b.email || b.phone}</p>
+                  </div>
+                  <p className="text-xs text-zinc-400 font-mono">
+                    {new Date(b.call_scheduled_at).toLocaleTimeString("en", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -220,7 +364,7 @@ export default function Bookings() {
       {view === "list" ? (
         <BookingsTable bookings={bookings} loading={loading} />
       ) : (
-        <CalendarPlaceholder />
+        <CalendarView bookings={bookings} />
       )}
     </div>
   );
