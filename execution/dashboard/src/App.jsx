@@ -14,6 +14,7 @@ import Bookings from "./pages/Bookings";
 import Analytics from "./pages/Analytics";
 import Committed from "./pages/Committed";
 import Enrolled from "./pages/Enrolled";
+import Settings from "./pages/Settings";
 
 function Placeholder({ name }) {
   return (
@@ -54,7 +55,7 @@ export default function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="activity" element={<Placeholder name="Activity" />} />
         <Route path="errors" element={<Placeholder name="Errors" />} />
-        <Route path="settings" element={<Placeholder name="Settings" />} />
+        <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
