@@ -43,7 +43,6 @@ from dialer import (
     get_batch_leads,
     MAX_CONCURRENT_CALLS,
     can_dial_next,
-    check_daily_limit,
 )
 from webinar_schedule import determine_call_type
 
@@ -594,7 +593,6 @@ async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
 # ---- Initiate outbound call ----
 @app.post("/retell/initiate-call")
 @limiter.limit("1/2minutes")
-@limiter.limit("200/day")
 async def initiate_call(request: Request, req: InitiateCallRequest, _token: str = Depends(verify_bearer_token)):
     lead = (
         supabase.table("leads")
@@ -618,9 +616,6 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
 
     if not is_safe_destination(lead_data["phone"]):
         raise HTTPException(status_code=403, detail="Blocked destination")
-
-    if not await check_daily_limit():
-        raise HTTPException(status_code=429, detail="Daily call limit reached")
 
     # SDK 5.x: Phone number's outbound_agents binding determines the agent.
     # No agent_id parameter -- removed in SDK 5.x.
@@ -1088,7 +1083,6 @@ async def dashboard_lead_detail(request: Request, lead_id: str, _token: str = De
 
 @app.post("/api/dashboard/call-now/{lead_id}")
 @limiter.limit("5/minute")
-@limiter.limit("200/day")
 async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_bearer_token)):
     """Trigger an outbound call to a lead directly from the dashboard."""
     lead = (
@@ -1113,10 +1107,6 @@ async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_
     # Phone safety check
     if not is_safe_destination(lead_data["phone"]):
         raise HTTPException(status_code=403, detail="Blocked destination")
-
-    # Daily call limit
-    if not await check_daily_limit():
-        raise HTTPException(status_code=429, detail="Daily call limit reached")
 
     # Determine call type and webinar context
     call_context = determine_call_type(lead_data)

@@ -568,7 +568,7 @@ async def dialer_status(request: Request, _t: str = Depends(verify_token)):
         "schedule": schedule,
         "next_lead": next_lead,
         "calls_today": today_calls.count or 0,
-        "calls_remaining": 200 - (today_calls.count or 0),
+        "calls_remaining": None,  # no daily cap
         "active_calls": active_count,
         "max_concurrent": 18,
     }
@@ -954,7 +954,7 @@ async def error_resolve(request: Request, error_id: str, _t: str = Depends(verif
 async def get_settings(request: Request, _t: str = Depends(verify_token)):
     """Get all configurable settings."""
     return {
-        "daily_call_cap": int(os.environ.get("DAILY_CALL_CAP", "200")),
+        "daily_call_cap": int(os.environ.get("DAILY_CALL_CAP", "0")),  # 0 = unlimited
         "dialer_rate_limit": int(os.environ.get("DIALER_RATE_LIMIT", "30")),
         "cal_booking_link": os.environ.get("CAL_BOOKING_LINK", ""),
         "warm_transfer_number": os.environ.get("WARM_TRANSFER_NUMBER", "+447592233052"),

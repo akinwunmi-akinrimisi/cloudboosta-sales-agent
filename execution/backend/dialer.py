@@ -44,7 +44,6 @@ def is_in_business_hours(timezone_str: str, start_hour: int = 9, end_hour: int =
 
 
 MAX_CONCURRENT_CALLS = int(os.environ.get("MAX_CONCURRENT_CALLS", "18"))
-MAX_DAILY_CALLS = 200
 
 
 async def should_dial_now() -> bool:
@@ -143,17 +142,6 @@ async def can_dial_next() -> bool:
     elapsed = (datetime.utcnow() - parse_dt(last.data[0]["started_at"]).replace(tzinfo=None)).total_seconds()
     return elapsed >= MIN_CALL_INTERVAL_SECONDS
 
-
-async def check_daily_limit() -> bool:
-    """Check if daily call limit has been reached."""
-    today = datetime.utcnow().date().isoformat()
-    result = (
-        supabase.table("call_logs")
-        .select("id", count="exact")
-        .gte("started_at", today)
-        .execute()
-    )
-    return (result.count or 0) < MAX_DAILY_CALLS
 
 
 async def get_batch_leads(count: int = 5) -> list:
