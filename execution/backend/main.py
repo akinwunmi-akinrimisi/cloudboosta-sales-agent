@@ -54,6 +54,7 @@ logger = logging.getLogger("sarah")
 # App
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Sarah — Cloudboosta Sales Agent", version="0.1.0")
+from dashboard_routes import router as dashboard_v2_router
 
 # ---------------------------------------------------------------------------
 # Rate limiting (slowapi)
@@ -61,6 +62,7 @@ app = FastAPI(title="Sarah — Cloudboosta Sales Agent", version="0.1.0")
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.include_router(dashboard_v2_router)
 
 DASHBOARD_SECRET_KEY = os.environ.get("DASHBOARD_SECRET_KEY", "")
 WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
