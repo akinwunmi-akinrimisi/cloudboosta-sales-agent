@@ -130,6 +130,20 @@ async def leads_retries(request: Request, _t: str = Depends(verify_token)):
     return {"retries": result.data or []}
 
 
+@router.get("/leads/enrolled")
+@limiter.limit("20/minute")
+async def leads_enrolled(request: Request, _t: str = Depends(verify_token)):
+    """All enrolled leads with payment details."""
+    result = (
+        supabase.table("leads")
+        .select("id, name, first_name, last_name, phone, email, programme_recommended, notes, updated_at")
+        .eq("status", "enrolled")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return {"leads": result.data or []}
+
+
 @router.get("/leads/{lead_id}")
 @limiter.limit("60/minute")
 async def lead_detail(request: Request, lead_id: str, _t: str = Depends(verify_token)):
@@ -411,6 +425,82 @@ async def analytics_today(request: Request, _t: str = Depends(verify_token)):
     }
 
 
+@router.get("/analytics/strategies")
+@limiter.limit("10/minute")
+async def analytics_strategies(request: Request, _t: str = Depends(verify_token)):
+    """Strategy performance from strategy_performance view."""
+    result = supabase.table("strategy_performance").select("*").execute()
+    return {"strategies": result.data or []}
+
+
+@router.get("/analytics/heatmap")
+@limiter.limit("10/minute")
+async def analytics_heatmap(request: Request, _t: str = Depends(verify_token)):
+    """Strategy x persona heatmap from strategy_persona_heatmap view."""
+    result = supabase.table("strategy_persona_heatmap").select("*").execute()
+    return {"cells": result.data or []}
+
+
+@router.get("/analytics/trends")
+@limiter.limit("10/minute")
+async def analytics_trends(request: Request, _t: str = Depends(verify_token)):
+    """Daily trends (last 30 days) from daily_trends view."""
+    result = supabase.table("daily_trends").select("*").execute()
+    return {"trends": result.data or []}
+
+
+@router.get("/analytics/objections")
+@limiter.limit("10/minute")
+async def analytics_objections(request: Request, _t: str = Depends(verify_token)):
+    """Objection frequency from objection_frequency view."""
+    result = supabase.table("objection_frequency").select("*").execute()
+    return {"objections": result.data or []}
+
+
+@router.get("/analytics/funnel")
+@limiter.limit("10/minute")
+async def analytics_funnel(request: Request, _t: str = Depends(verify_token)):
+    """Full funnel conversion from funnel_conversion view."""
+    result = supabase.table("funnel_conversion").select("*").execute()
+    if result.data:
+        return result.data[0]
+    return {
+        "total_imported": 0, "enriched": 0, "outreach_sent": 0,
+        "responded": 0, "booked_or_called": 0, "calls_completed": 0,
+        "committed": 0, "enrolled": 0,
+    }
+
+
+@router.get("/analytics/revenue")
+@limiter.limit("10/minute")
+async def analytics_revenue(request: Request, _t: str = Depends(verify_token)):
+    """Revenue tracking — potential vs confirmed."""
+    # Committed leads (potential revenue)
+    committed_result = (
+        supabase.table("leads")
+        .select("id, programme_recommended")
+        .in_("status", ["committed", "payment_pending"])
+        .execute()
+    )
+    # Enrolled leads (confirmed revenue)
+    enrolled_result = (
+        supabase.table("leads")
+        .select("id, programme_recommended")
+        .eq("status", "enrolled")
+        .execute()
+    )
+
+    # Simple revenue estimate: count * average programme price
+    # In production this would join with pricing table
+    committed_count = len(committed_result.data or [])
+    enrolled_count = len(enrolled_result.data or [])
+
+    return {
+        "potential": {"count": committed_count, "estimated_revenue": committed_count * 2500},
+        "confirmed": {"count": enrolled_count, "estimated_revenue": enrolled_count * 2500},
+    }
+
+
 # ===================================================================
 # MODULE 3: CALL OPERATIONS
 # ===================================================================
@@ -539,6 +629,137 @@ async def call_detail(request: Request, call_id: str, _t: str = Depends(verify_t
     if not result.data:
         raise HTTPException(status_code=404, detail="Call not found")
     return result.data[0]
+
+
+# ===================================================================
+# MODULE 5: POST-CALL
+# ===================================================================
+
+@router.get("/post-call/emails")
+@limiter.limit("20/minute")
+async def post_call_emails(request: Request, _t: str = Depends(verify_token)):
+    """Payment emails sent, per lead."""
+    result = (
+        supabase.table("pipeline_logs")
+        .select("lead_id, details, created_at, status")
+        .ilike("event", "%email%payment%")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    logs = result.data or []
+
+    # Enrich with lead names
+    lead_ids = list(set(l["lead_id"] for l in logs if l.get("lead_id")))
+    lead_map = {}
+    if lead_ids:
+        names_result = (
+            supabase.table("leads")
+            .select("id, name, email, programme_recommended")
+            .in_("id", lead_ids)
+            .execute()
+        )
+        for row in (names_result.data or []):
+            lead_map[row["id"]] = row
+
+    emails = []
+    for log in logs:
+        lead = lead_map.get(log.get("lead_id"), {})
+        details = log.get("details") or {}
+        emails.append({
+            "lead_id": log.get("lead_id"),
+            "lead_name": lead.get("name", "Unknown"),
+            "lead_email": lead.get("email", ""),
+            "programme": lead.get("programme_recommended", ""),
+            "sent_at": log.get("created_at"),
+            "delivery_status": details.get("delivery_status", "sent"),
+            "status": log.get("status", "success"),
+        })
+
+    return {"emails": emails}
+
+
+@router.get("/post-call/whatsapp")
+@limiter.limit("20/minute")
+async def post_call_whatsapp(request: Request, _t: str = Depends(verify_token)):
+    """Post-call WhatsApp messages sent."""
+    result = (
+        supabase.table("pipeline_logs")
+        .select("lead_id, details, created_at, status")
+        .ilike("event", "%whatsapp%post%")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    logs = result.data or []
+
+    lead_ids = list(set(l["lead_id"] for l in logs if l.get("lead_id")))
+    lead_map = {}
+    if lead_ids:
+        names_result = (
+            supabase.table("leads")
+            .select("id, name, phone")
+            .in_("id", lead_ids)
+            .execute()
+        )
+        for row in (names_result.data or []):
+            lead_map[row["id"]] = row
+
+    messages = []
+    for log in logs:
+        lead = lead_map.get(log.get("lead_id"), {})
+        details = log.get("details") or {}
+        messages.append({
+            "lead_id": log.get("lead_id"),
+            "lead_name": lead.get("name", "Unknown"),
+            "lead_phone": lead.get("phone", ""),
+            "sent_at": log.get("created_at"),
+            "delivery_status": details.get("delivery_status", "sent"),
+            "message_preview": (details.get("message", ""))[:100],
+        })
+
+    return {"messages": messages}
+
+
+@router.put("/leads/{lead_id}/payment")
+@limiter.limit("10/minute")
+async def lead_payment(request: Request, lead_id: str, _t: str = Depends(verify_token)):
+    """Mark lead as paid and move to enrolled."""
+    body = await request.json()
+    amount = body.get("amount")
+    currency = body.get("currency", "GBP")
+    payment_date = body.get("payment_date")
+    notes = body.get("notes", "")
+
+    lead = supabase.table("leads").select("id, status").eq("id", lead_id).limit(1).execute()
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    current_status = lead.data[0]["status"]
+    if current_status not in ("committed", "payment_pending"):
+        raise HTTPException(status_code=400, detail=f"Lead status is {current_status}, expected committed or payment_pending")
+
+    # Move to payment_pending first if needed, then to enrolled
+    if current_status == "committed":
+        supabase.table("leads").update({"status": "payment_pending"}).eq("id", lead_id).execute()
+
+    supabase.table("leads").update({
+        "status": "enrolled",
+        "notes": f"Payment: {amount} {currency} on {payment_date}. {notes}".strip(),
+    }).eq("id", lead_id).execute()
+
+    # Log the payment event
+    supabase.table("pipeline_logs").insert({
+        "lead_id": lead_id,
+        "component": "dashboard",
+        "event": "payment_received",
+        "details": {
+            "amount": amount,
+            "currency": currency,
+            "payment_date": payment_date,
+            "notes": notes,
+        },
+    }).execute()
+
+    return {"status": "enrolled", "lead_id": lead_id}
 
 
 # ===================================================================
