@@ -114,6 +114,22 @@ async def leads_blocked(request: Request, _t: str = Depends(verify_token)):
     return {"leads": result.data or []}
 
 
+@router.get("/leads/follow-ups")
+@limiter.limit("20/minute")
+async def leads_follow_ups(request: Request, _t: str = Depends(verify_token)):
+    """Follow-up queue from follow_up_queue view."""
+    result = supabase.table("follow_up_queue").select("*").execute()
+    return {"follow_ups": result.data or []}
+
+
+@router.get("/leads/retries")
+@limiter.limit("20/minute")
+async def leads_retries(request: Request, _t: str = Depends(verify_token)):
+    """Retry queue from retry_queue view."""
+    result = supabase.table("retry_queue").select("*").execute()
+    return {"retries": result.data or []}
+
+
 @router.get("/leads/{lead_id}")
 @limiter.limit("60/minute")
 async def lead_detail(request: Request, lead_id: str, _t: str = Depends(verify_token)):
@@ -243,6 +259,141 @@ async def lead_unblock(request: Request, lead_id: str, _t: str = Depends(verify_
 
 
 # ===================================================================
+# MODULE 2: OUTREACH MANAGEMENT
+# ===================================================================
+
+@router.get("/outreach/queue")
+@limiter.limit("20/minute")
+async def outreach_queue(request: Request, _t: str = Depends(verify_token)):
+    """Leads pending outreach, grouped by channel capability."""
+    result = (
+        supabase.table("leads")
+        .select("id, name, first_name, last_name, phone, email, has_email, has_whatsapp, status")
+        .eq("status", "enriched")
+        .order("created_at", desc=False)
+        .execute()
+    )
+    leads = result.data or []
+
+    both = [l for l in leads if l.get("has_email") and l.get("has_whatsapp")]
+    email_only = [l for l in leads if l.get("has_email") and not l.get("has_whatsapp")]
+    whatsapp_only = [l for l in leads if l.get("has_whatsapp") and not l.get("has_email")]
+
+    return {
+        "total": len(leads),
+        "groups": {
+            "email_and_whatsapp": {"count": len(both), "leads": both},
+            "email_only": {"count": len(email_only), "leads": email_only},
+            "whatsapp_only": {"count": len(whatsapp_only), "leads": whatsapp_only},
+        },
+    }
+
+
+@router.get("/outreach/log")
+@limiter.limit("20/minute")
+async def outreach_log(
+    request: Request,
+    _t: str = Depends(verify_token),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    channel: Optional[str] = None,
+    lead_id: Optional[str] = None,
+):
+    """Outreach delivery log from outreach_log view."""
+    query = supabase.table("outreach_log").select("*", count="exact")
+    if channel:
+        query = query.eq("channel", channel)
+    if lead_id:
+        query = query.eq("lead_id", lead_id)
+    query = query.order("created_at", desc=True)
+    offset = (page - 1) * per_page
+    query = query.range(offset, offset + per_page - 1)
+    result = query.execute()
+    return {
+        "logs": result.data or [],
+        "total": result.count or 0,
+        "page": page,
+        "per_page": per_page,
+    }
+
+
+@router.get("/outreach/replies")
+@limiter.limit("30/minute")
+async def outreach_replies(request: Request, _t: str = Depends(verify_token)):
+    """Recent WhatsApp replies with parsed datetime."""
+    result = (
+        supabase.table("pipeline_logs")
+        .select("lead_id, details, created_at")
+        .ilike("event", "%reply%")
+        .order("created_at", desc=True)
+        .limit(50)
+        .execute()
+    )
+    logs = result.data or []
+
+    # Enrich with lead names
+    lead_ids = list(set(l["lead_id"] for l in logs if l.get("lead_id")))
+    lead_map = {}
+    if lead_ids:
+        names_result = (
+            supabase.table("leads")
+            .select("id, name, phone")
+            .in_("id", lead_ids)
+            .execute()
+        )
+        for row in (names_result.data or []):
+            lead_map[row["id"]] = row
+
+    replies = []
+    for log in logs:
+        lead = lead_map.get(log.get("lead_id"), {})
+        details = log.get("details") or {}
+        replies.append({
+            "lead_id": log.get("lead_id"),
+            "lead_name": lead.get("name", "Unknown"),
+            "lead_phone": lead.get("phone", ""),
+            "message": details.get("message", ""),
+            "parsed_datetime": details.get("parsed_datetime"),
+            "confidence": details.get("confidence", "none"),
+            "created_at": log.get("created_at"),
+        })
+
+    return {"replies": replies}
+
+
+@router.get("/outreach/timeout")
+@limiter.limit("20/minute")
+async def outreach_timeout(request: Request, _t: str = Depends(verify_token)):
+    """Leads where outreach sent >48h ago with no response."""
+    from datetime import datetime, timedelta, timezone
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+
+    result = (
+        supabase.table("leads")
+        .select("id, name, first_name, last_name, phone, email, status, updated_at")
+        .eq("status", "outreach_sent")
+        .lt("updated_at", cutoff)
+        .order("updated_at", desc=False)
+        .execute()
+    )
+    return {"leads": result.data or [], "count": len(result.data or [])}
+
+
+@router.get("/bookings")
+@limiter.limit("20/minute")
+async def bookings_list(request: Request, _t: str = Depends(verify_token)):
+    """Cal.com bookings matched to leads."""
+    result = (
+        supabase.table("leads")
+        .select("id, name, first_name, last_name, phone, email, status, call_scheduled_at")
+        .eq("status", "call_scheduled")
+        .order("call_scheduled_at", desc=False)
+        .execute()
+    )
+    return {"bookings": result.data or []}
+
+
+# ===================================================================
 # MODULE 4: ANALYTICS
 # ===================================================================
 
@@ -357,6 +508,21 @@ async def calls_list(
         "page": page,
         "per_page": per_page,
     }
+
+
+@router.get("/calls/transfers")
+@limiter.limit("10/minute")
+async def calls_transfers(request: Request, _t: str = Depends(verify_token)):
+    """Calls where warm transfer was executed."""
+    result = (
+        supabase.table("call_logs")
+        .select("id, lead_id, started_at, duration_seconds, outcome, closing_strategy_used, summary")
+        .ilike("summary", "%transfer%")
+        .order("started_at", desc=True)
+        .limit(50)
+        .execute()
+    )
+    return {"transfers": result.data or []}
 
 
 @router.get("/calls/{call_id}")
