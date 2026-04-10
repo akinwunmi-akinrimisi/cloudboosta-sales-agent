@@ -25,6 +25,7 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(window.innerWidth < 1200);
   const [callActive, setCallActive] = useState(false);
   const [dialerRunning, setDialerRunning] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
 
   // Responsive sidebar
   useEffect(() => {
@@ -48,6 +49,10 @@ export default function Layout() {
         const dialerData = await apiFetch("/dialer/status");
         if (mounted) setDialerRunning(!!dialerData?.running);
       } catch {}
+      try {
+        const errData = await apiFetch("/errors");
+        if (mounted) setErrorCount(errData?.unresolved_count || 0);
+      } catch {}
     }
 
     poll();
@@ -61,7 +66,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-base overflow-hidden">
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} errorCount={errorCount} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar title={title} dialerRunning={dialerRunning} callActive={callActive} />
         <main className="flex-1 overflow-y-auto p-6">
