@@ -781,6 +781,58 @@ async def lead_payment(request: Request, lead_id: str, _t: str = Depends(verify_
 # MODULE 6: SYSTEM
 # ===================================================================
 
+@router.get("/email-template/{pathway}")
+@limiter.limit("30/minute")
+async def get_email_template(request: Request, pathway: str, first_name: str = Query("there"), _t: str = Depends(verify_token)):
+    """Return rendered HTML payment email template for a pathway."""
+
+    TEMPLATE_MAP = {
+        "cloud_computing": "cloud-computing-8wk.html",
+        "cloud-computing": "cloud-computing-8wk.html",
+        "Cloud Computing": "cloud-computing-8wk.html",
+        "Cloud Computing (8wk)": "cloud-computing-8wk.html",
+        "zero_to_cloud_devops": "zero-to-cloud-devops-16wk.html",
+        "zero-to-cloud-devops": "zero-to-cloud-devops-16wk.html",
+        "Zero to Cloud DevOps": "zero-to-cloud-devops-16wk.html",
+        "Zero to Cloud DevOps (16wk)": "zero-to-cloud-devops-16wk.html",
+        "three_pathways": "three-pathways-24wk.html",
+        "3_pathways": "three-pathways-24wk.html",
+        "3 Learning Pathways": "three-pathways-24wk.html",
+        "3 Learning Pathways (24wk)": "three-pathways-24wk.html",
+        "zero_to_devops_pro": "zero-to-devops-pro-32wk.html",
+        "zero-to-devops-pro": "zero-to-devops-pro-32wk.html",
+        "Zero to DevOps Pro": "zero-to-devops-pro-32wk.html",
+        "Zero to DevOps Pro (32wk)": "zero-to-devops-pro-32wk.html",
+    }
+
+    filename = TEMPLATE_MAP.get(pathway)
+    if not filename:
+        # Try fuzzy match
+        pathway_lower = pathway.lower().replace(" ", "_").replace("-", "_")
+        for key, val in TEMPLATE_MAP.items():
+            if key.lower().replace(" ", "_").replace("-", "_") == pathway_lower:
+                filename = val
+                break
+
+    if not filename:
+        # Default to 16-week (most popular)
+        filename = "zero-to-cloud-devops-16wk.html"
+
+    template_dir = os.path.join(os.path.dirname(__file__), "outreach", "payment-emails")
+    template_path = os.path.join(template_dir, filename)
+
+    if not os.path.isfile(template_path):
+        raise HTTPException(status_code=404, detail=f"Template not found: {filename}")
+
+    with open(template_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # Replace merge tags
+    html = html.replace("{{first_name}}", first_name)
+
+    return {"html": html, "template": filename, "pathway": pathway}
+
+
 @router.get("/health/services")
 @limiter.limit("10/minute")
 async def health_services(request: Request, _t: str = Depends(verify_token)):
