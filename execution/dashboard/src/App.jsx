@@ -11,6 +11,9 @@ import Calls from "./pages/Calls";
 import FollowUps from "./pages/FollowUps";
 import Outreach from "./pages/Outreach";
 import Bookings from "./pages/Bookings";
+import Analytics from "./pages/Analytics";
+import Committed from "./pages/Committed";
+import Enrolled from "./pages/Enrolled";
 
 function Placeholder({ name }) {
   return (
@@ -46,9 +49,9 @@ export default function App() {
         <Route path="calls" element={<Calls />} />
         <Route path="calls/:id" element={<Placeholder name="Call Detail" />} />
         <Route path="follow-ups" element={<FollowUps />} />
-        <Route path="committed" element={<Placeholder name="Committed" />} />
-        <Route path="enrolled" element={<Placeholder name="Enrolled" />} />
-        <Route path="analytics" element={<Placeholder name="Analytics" />} />
+        <Route path="committed" element={<Committed />} />
+        <Route path="enrolled" element={<Enrolled />} />
+        <Route path="analytics" element={<Analytics />} />
         <Route path="activity" element={<Placeholder name="Activity" />} />
         <Route path="errors" element={<Placeholder name="Errors" />} />
         <Route path="settings" element={<Placeholder name="Settings" />} />
