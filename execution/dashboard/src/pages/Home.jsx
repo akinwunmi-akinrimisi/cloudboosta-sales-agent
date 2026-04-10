@@ -21,7 +21,7 @@ const STAT_DEFS = [
   { key: "bookings_today",     label: "Bookings",         color: "text-orange-400" },
 ];
 
-const SERVICE_NAMES = ["supabase", "retell", "n8n", "openclaw", "calcom"];
+const SERVICE_NAMES = ["supabase", "retell", "n8n", "evolution", "calcom"];
 
 function ServicePill({ name, status }) {
   const up = status === "up";

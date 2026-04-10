@@ -6,7 +6,7 @@ and update_llm.py. Keeping definitions here ensures they stay in sync.
 
 
 def build_tool_definitions(webhook_url: str) -> list[dict]:
-    """Return the 4 custom tool definitions for John's Retell LLM.
+    """Return the 5 custom tool definitions for John's Retell LLM.
 
     Args:
         webhook_url: Full URL for the tool call webhook
@@ -240,6 +240,47 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                 "type": "object",
                 "required": [],
                 "properties": {},
+            },
+        },
+        # --- Tool 5: transfer_call ---
+        {
+            "type": "custom",
+            "name": "transfer_call",
+            "description": (
+                "Transfer the call to a human advisor. Use ONLY when: "
+                "1) The lead explicitly asks to speak to a person, "
+                "2) The lead is highly interested but has complex questions you cannot answer, "
+                "3) The lead is ready to commit and wants personal reassurance. "
+                "Before transferring, say: 'Let me connect you with one of our advisors "
+                "right now. I'll briefly fill them in on what we've discussed.' "
+                "Stay on the line briefly to provide handoff context."
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": True,
+            "execution_message_description": "Connecting you now, one moment.",
+            "speak_after_execution": False,
+            "timeout_ms": 15000,
+            "parameters": {
+                "type": "object",
+                "required": ["reason"],
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "description": (
+                            "Brief reason for transfer: 'lead_requested_human', "
+                            "'complex_questions', 'ready_to_commit', 'escalation'."
+                        ),
+                    },
+                    "context_summary": {
+                        "type": "string",
+                        "description": (
+                            "Brief summary for the human advisor: lead name, "
+                            "what was discussed, programme interested in, "
+                            "any objections raised."
+                        ),
+                    },
+                },
             },
         },
     ]

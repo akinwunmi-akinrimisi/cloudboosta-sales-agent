@@ -802,18 +802,20 @@ async def health_services(request: Request, _t: str = Depends(verify_token)):
     else:
         checks["n8n"] = "unknown"
 
-    # OpenClaw
-    openclaw_url = os.environ.get("OPENCLAW_API_URL", "")
-    if openclaw_url:
+    # Evolution API (WhatsApp)
+    evolution_url = os.environ.get("EVOLUTION_URL", "")
+    if evolution_url:
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                r = await client.get(openclaw_url.rstrip("/") + "/instance/connectionState",
-                                     headers={"apikey": os.environ.get("OPENCLAW_API_KEY", "")})
-                checks["openclaw"] = "up" if r.status_code == 200 else "down"
+                r = await client.get(
+                    evolution_url.rstrip("/") + "/instance/connectionState/cloudboosta",
+                    headers={"apikey": os.environ.get("EVOLUTION_API_KEY", "")},
+                )
+                checks["evolution"] = "up" if r.status_code == 200 else "down"
         except Exception:
-            checks["openclaw"] = "down"
+            checks["evolution"] = "down"
     else:
-        checks["openclaw"] = "unknown"
+        checks["evolution"] = "unknown"
 
     # Cal.com
     cal_url = os.environ.get("CAL_COM_URL", "")

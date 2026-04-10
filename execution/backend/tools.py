@@ -234,6 +234,34 @@ async def save_email(args: dict, lead_id: str | None = None, call_id: str = "") 
     return {"result": f"Email {email} saved successfully"}
 
 
+async def transfer_call(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
+    """Initiate warm transfer to human advisor."""
+    reason = args.get("reason", "unknown")
+    context = args.get("context_summary", "")
+
+    # Log the transfer
+    if lead_id:
+        supabase.table("pipeline_logs").insert({
+            "lead_id": lead_id,
+            "component": "retell",
+            "event": "warm_transfer_initiated",
+            "details": {
+                "reason": reason,
+                "context": context,
+                "transfer_number": "+447592233052",
+                "call_id": call_id,
+            },
+        }).execute()
+
+    logger.info("transfer_call: %s for lead %s (reason: %s)", call_id, lead_id, reason)
+
+    return {
+        "status": "transferring",
+        "transfer_number": "+447592233052",
+        "message": "Connecting to advisor now.",
+    }
+
+
 async def get_lead_context(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
     """Retrieve previous call history for a returning lead from Supabase."""
     logger.info("get_lead_context called: lead_id=%s call_id=%s", lead_id, call_id)
@@ -275,6 +303,7 @@ TOOL_HANDLERS: dict[str, Any] = {
     "log_call_outcome": log_call_outcome,
     "save_email": save_email,
     "get_lead_context": get_lead_context,
+    "transfer_call": transfer_call,
 }
 
 # Conversational fallbacks per tool -- John never mentions system errors during live calls
@@ -298,6 +327,10 @@ TOOL_FALLBACKS = {
         "previous_calls": [],
         "is_first_call": True,
     },
+    "transfer_call": {
+        "status": "transfer_failed",
+        "message": "I'm going to have someone from our team follow up with you directly.",
+    },
 }
 DEFAULT_FALLBACK = {
     "result": "I don't have that information right now. Let me have someone follow up with you."
@@ -310,7 +343,7 @@ async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None 
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        if name in ("log_call_outcome", "save_email", "get_lead_context"):
+        if name in ("log_call_outcome", "save_email", "get_lead_context", "transfer_call"):
             result = await handler(args, lead_id=lead_id, call_id=call_id)
         else:
             result = await handler(args)
