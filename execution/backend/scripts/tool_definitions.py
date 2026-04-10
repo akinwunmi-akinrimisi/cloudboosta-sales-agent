@@ -1,4 +1,4 @@
-"""Shared Retell LLM tool definitions for Sarah.
+"""Shared Retell LLM tool definitions for John.
 
 Single source of truth for custom tool schemas used by create_llm.py
 and update_llm.py. Keeping definitions here ensures they stay in sync.
@@ -6,7 +6,7 @@ and update_llm.py. Keeping definitions here ensures they stay in sync.
 
 
 def build_tool_definitions(webhook_url: str) -> list[dict]:
-    """Return the 3 custom tool definitions for Sarah's Retell LLM.
+    """Return the 4 custom tool definitions for John's Retell LLM.
 
     Args:
         webhook_url: Full URL for the tool call webhook
@@ -218,6 +218,28 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                         ),
                     },
                 },
+            },
+        },
+        # --- Tool 4: get_lead_context ---
+        {
+            "type": "custom",
+            "name": "get_lead_context",
+            "description": (
+                "Retrieve previous call history for this lead. Call this at the "
+                "START of every call to a returning lead (when is_returning_lead "
+                "is 'yes' in dynamic variables). Returns summaries of previous "
+                "calls including what was discussed, objections raised, and "
+                "strategy used. Use this to personalize the conversation."
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": False,
+            "speak_after_execution": False,
+            "timeout_ms": 10000,
+            "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {},
             },
         },
     ]

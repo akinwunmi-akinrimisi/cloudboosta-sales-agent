@@ -174,7 +174,7 @@ class ToolCallPayload(BaseModel):
     @field_validator("name")
     @classmethod
     def valid_function_name(cls, v):
-        allowed = {"lookup_programme", "get_objection_response", "log_call_outcome", "save_email"}
+        allowed = {"lookup_programme", "get_objection_response", "log_call_outcome", "save_email", "get_lead_context"}
         if v not in allowed:
             raise ValueError(f"Unknown function: {v}")
         return v

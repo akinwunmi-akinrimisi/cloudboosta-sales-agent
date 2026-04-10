@@ -234,12 +234,47 @@ async def save_email(args: dict, lead_id: str | None = None, call_id: str = "") 
     return {"result": f"Email {email} saved successfully"}
 
 
+async def get_lead_context(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
+    """Retrieve previous call history for a returning lead from Supabase."""
+    logger.info("get_lead_context called: lead_id=%s call_id=%s", lead_id, call_id)
+
+    if not lead_id:
+        return {"previous_calls": [], "is_first_call": True}
+
+    result = (
+        supabase.table("call_logs")
+        .select("started_at, duration_seconds, summary, closing_strategy_used, detected_persona, outcome, objections_raised")
+        .eq("lead_id", lead_id)
+        .order("started_at", desc=True)
+        .limit(5)
+        .execute()
+    )
+
+    if not result.data:
+        return {"previous_calls": [], "is_first_call": True}
+
+    previous_calls = [
+        {
+            "date": row.get("started_at", ""),
+            "duration": row.get("duration_seconds", 0),
+            "summary": row.get("summary", ""),
+            "programme_discussed": row.get("programme_recommended", ""),
+            "objections": row.get("objections_raised", ""),
+            "strategy_used": row.get("closing_strategy_used", ""),
+        }
+        for row in result.data
+    ]
+
+    return {"previous_calls": previous_calls, "is_first_call": False}
+
+
 # Registry of tool handlers keyed by Retell function name
 TOOL_HANDLERS: dict[str, Any] = {
     "lookup_programme": lookup_programme,
     "get_objection_response": get_objection_response,
     "log_call_outcome": log_call_outcome,
     "save_email": save_email,
+    "get_lead_context": get_lead_context,
 }
 
 # Conversational fallbacks per tool -- John never mentions system errors during live calls
@@ -259,6 +294,10 @@ TOOL_FALLBACKS = {
     "save_email": {
         "result": "Got it, I'll make sure that's saved."
     },
+    "get_lead_context": {
+        "previous_calls": [],
+        "is_first_call": True,
+    },
 }
 DEFAULT_FALLBACK = {
     "result": "I don't have that information right now. Let me have someone follow up with you."
@@ -271,9 +310,7 @@ async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None 
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        if name == "log_call_outcome":
-            result = await handler(args, lead_id=lead_id, call_id=call_id)
-        elif name == "save_email":
+        if name in ("log_call_outcome", "save_email", "get_lead_context"):
             result = await handler(args, lead_id=lead_id, call_id=call_id)
         else:
             result = await handler(args)
