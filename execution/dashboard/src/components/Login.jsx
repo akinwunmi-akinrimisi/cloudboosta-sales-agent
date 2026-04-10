@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { legacyFetch as apiFetch, setToken, clearToken } from "../api";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import { setToken, clearToken } from "../api";
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const [token, setTokenValue] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -15,11 +19,20 @@ export default function Login({ onLogin }) {
 
     setLoading(true);
     setError("");
-    setToken(token.trim());
 
     try {
-      await apiFetch("/live");
-      onLogin();
+      setToken(token.trim());
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token.trim()}`,
+        },
+        body: JSON.stringify({ token: token.trim() }),
+      });
+      if (!res.ok) throw new Error("Invalid token");
+      login(token.trim());
+      navigate("/");
     } catch {
       clearToken();
       setError("Invalid token");
@@ -33,26 +46,17 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen flex items-center justify-center bg-base px-4">
       <div className="w-full max-w-sm">
         <div className="glass-card p-8">
-          {/* Branding */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 mb-4">
-              <span className="text-white text-lg font-bold">S</span>
+              <span className="text-white text-lg font-bold">J</span>
             </div>
-            <h1 className="text-xl font-semibold text-zinc-50">
-              Sarah Dashboard
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">
-              Cloudboosta Sales Agent
-            </p>
+            <h1 className="text-xl font-semibold text-zinc-50">John CRM</h1>
+            <p className="mt-1 text-sm text-zinc-500">Cloudboosta Sales Agent</p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label
-                htmlFor="token"
-                className="label-mono block mb-2"
-              >
+              <label htmlFor="token" className="label-mono block mb-2">
                 API Token
               </label>
               <input
@@ -67,9 +71,7 @@ export default function Login({ onLogin }) {
             </div>
 
             {error && (
-              <p className="text-red-400 text-sm font-mono" role="alert">
-                {error}
-              </p>
+              <p className="text-red-400 text-sm font-mono" role="alert">{error}</p>
             )}
 
             <button
@@ -81,7 +83,6 @@ export default function Login({ onLogin }) {
             </button>
           </form>
         </div>
-
         <p className="mt-4 text-center text-xs text-zinc-600">
           Token is stored locally and sent as a bearer header.
         </p>
