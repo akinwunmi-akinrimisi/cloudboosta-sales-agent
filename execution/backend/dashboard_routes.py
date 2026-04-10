@@ -9,6 +9,7 @@ import io
 import logging
 import os
 import re
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -840,3 +841,228 @@ async def auth_login(request: Request):
     if token != DASHBOARD_SECRET_KEY:
         raise HTTPException(status_code=401, detail="Invalid token")
     return {"authenticated": True}
+
+
+@router.get("/pipeline/log")
+@limiter.limit("20/minute")
+async def pipeline_log(
+    request: Request,
+    _t: str = Depends(verify_token),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    component: Optional[str] = None,
+    event: Optional[str] = None,
+    lead_id: Optional[str] = None,
+):
+    """Paginated pipeline activity log."""
+    query = supabase.table("pipeline_logs").select("*", count="exact")
+    if component:
+        query = query.eq("component", component)
+    if event:
+        query = query.ilike("event", f"%{event}%")
+    if lead_id:
+        query = query.eq("lead_id", lead_id)
+    query = query.order("created_at", desc=True)
+    offset = (page - 1) * per_page
+    query = query.range(offset, offset + per_page - 1)
+    result = query.execute()
+
+    # Enrich with lead names
+    logs = result.data or []
+    lead_ids = list(set(l["lead_id"] for l in logs if l.get("lead_id")))
+    lead_map = {}
+    if lead_ids:
+        names_result = supabase.table("leads").select("id, name").in_("id", lead_ids).execute()
+        for row in (names_result.data or []):
+            lead_map[row["id"]] = row.get("name", "Unknown")
+
+    for log in logs:
+        log["lead_name"] = lead_map.get(log.get("lead_id"), None)
+
+    return {"logs": logs, "total": result.count or 0, "page": page, "per_page": per_page}
+
+
+@router.get("/errors")
+@limiter.limit("20/minute")
+async def errors_list(request: Request, _t: str = Depends(verify_token)):
+    """Error log — pipeline_logs where status='error'."""
+    result = (
+        supabase.table("pipeline_logs")
+        .select("*", count="exact")
+        .eq("status", "error")
+        .order("created_at", desc=True)
+        .limit(100)
+        .execute()
+    )
+    logs = result.data or []
+
+    # Enrich with lead names
+    lead_ids = list(set(l["lead_id"] for l in logs if l.get("lead_id")))
+    lead_map = {}
+    if lead_ids:
+        names_result = supabase.table("leads").select("id, name").in_("id", lead_ids).execute()
+        for row in (names_result.data or []):
+            lead_map[row["id"]] = row.get("name", "Unknown")
+
+    for log in logs:
+        log["lead_name"] = lead_map.get(log.get("lead_id"), None)
+
+    unresolved = [l for l in logs if l.get("details", {}).get("resolved") != True]
+    resolved = [l for l in logs if l.get("details", {}).get("resolved") == True]
+
+    return {
+        "errors": unresolved + resolved,
+        "unresolved_count": len(unresolved),
+        "total": result.count or 0,
+    }
+
+
+@router.post("/errors/{error_id}/resolve")
+@limiter.limit("10/minute")
+async def error_resolve(request: Request, error_id: str, _t: str = Depends(verify_token)):
+    """Mark an error as resolved."""
+    log = supabase.table("pipeline_logs").select("id, details").eq("id", error_id).limit(1).execute()
+    if not log.data:
+        raise HTTPException(status_code=404, detail="Error not found")
+
+    details = log.data[0].get("details") or {}
+    details["resolved"] = True
+    details["resolved_at"] = datetime.now(timezone.utc).isoformat()
+
+    supabase.table("pipeline_logs").update({"details": details}).eq("id", error_id).execute()
+    return {"status": "resolved"}
+
+
+@router.get("/settings")
+@limiter.limit("10/minute")
+async def get_settings(request: Request, _t: str = Depends(verify_token)):
+    """Get all configurable settings."""
+    return {
+        "daily_call_cap": int(os.environ.get("DAILY_CALL_CAP", "200")),
+        "dialer_rate_limit": int(os.environ.get("DIALER_RATE_LIMIT", "30")),
+        "cal_booking_link": os.environ.get("CAL_BOOKING_LINK", ""),
+        "warm_transfer_number": os.environ.get("WARM_TRANSFER_NUMBER", "+447592233052"),
+        "timeout_hours": int(os.environ.get("OUTREACH_TIMEOUT_HOURS", "48")),
+    }
+
+
+@router.put("/settings")
+@limiter.limit("5/minute")
+async def update_settings(request: Request, _t: str = Depends(verify_token)):
+    """Update settings. Note: env-based settings require restart."""
+    body = await request.json()
+    # For v1, log the settings change but note that env-based settings
+    # require a server restart to take effect
+    logger.info("Settings update requested: %s", body)
+    return {"status": "acknowledged", "note": "Server restart required for env-based settings"}
+
+
+@router.get("/schedules")
+@limiter.limit("10/minute")
+async def schedules_list(request: Request, _t: str = Depends(verify_token)):
+    """All dial schedules."""
+    result = supabase.table("dial_schedules").select("*").order("created_at", desc=True).execute()
+    return {"schedules": result.data or []}
+
+
+@router.post("/schedules")
+@limiter.limit("5/minute")
+async def schedule_create(request: Request, _t: str = Depends(verify_token)):
+    """Create a new dial schedule."""
+    body = await request.json()
+    result = supabase.table("dial_schedules").insert({
+        "name": body.get("name", "New Schedule"),
+        "start_time": body.get("start_time", "09:00"),
+        "end_time": body.get("end_time", "18:00"),
+        "timezone": body.get("timezone", "Europe/London"),
+        "days_of_week": body.get("days_of_week", [1, 2, 3, 4, 5]),
+        "is_active": body.get("is_active", True),
+    }).execute()
+    return {"schedule": result.data[0] if result.data else None}
+
+
+@router.put("/schedules/{schedule_id}")
+@limiter.limit("5/minute")
+async def schedule_update(request: Request, schedule_id: str, _t: str = Depends(verify_token)):
+    """Update a dial schedule."""
+    body = await request.json()
+    result = (
+        supabase.table("dial_schedules")
+        .update(body)
+        .eq("id", schedule_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    return {"schedule": result.data[0]}
+
+
+@router.delete("/schedules/{schedule_id}")
+@limiter.limit("5/minute")
+async def schedule_delete(request: Request, schedule_id: str, _t: str = Depends(verify_token)):
+    """Soft-delete a schedule (set is_active=false)."""
+    result = (
+        supabase.table("dial_schedules")
+        .update({"is_active": False})
+        .eq("id", schedule_id)
+        .execute()
+    )
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    return {"status": "deactivated"}
+
+
+@router.get("/templates")
+@limiter.limit("10/minute")
+async def get_templates(request: Request, _t: str = Depends(verify_token)):
+    """Get message templates (placeholder — returns defaults)."""
+    return {
+        "whatsapp_template": "Hi {first_name}, this is John from Cloudboosta. We help professionals transition into cloud and DevOps careers. I'd love to chat about your goals — book a time here: {booking_link}",
+        "email_subject": "Cloudboosta — Your Cloud Career Path",
+        "email_body": "Hi {first_name},\n\nI'm John from Cloudboosta. We specialise in helping professionals like you break into cloud and DevOps.\n\nI'd love to have a quick chat about your career goals. Book a convenient time here: {booking_link}\n\nBest,\nJohn",
+    }
+
+
+@router.put("/templates")
+@limiter.limit("5/minute")
+async def update_templates(request: Request, _t: str = Depends(verify_token)):
+    """Update message templates (placeholder — logs and acknowledges)."""
+    body = await request.json()
+    logger.info("Templates update: %s", {k: v[:50] + "..." for k, v in body.items()})
+    return {"status": "acknowledged"}
+
+
+@router.get("/analytics/costs")
+@limiter.limit("10/minute")
+async def analytics_costs(request: Request, _t: str = Depends(verify_token)):
+    """Estimated costs by component."""
+    # Count this month's usage
+    month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0).isoformat()
+
+    calls_result = (
+        supabase.table("call_logs")
+        .select("duration_seconds, call_cost", count="exact")
+        .gte("started_at", month_start)
+        .execute()
+    )
+    calls = calls_result.data or []
+    total_minutes = sum((c.get("duration_seconds") or 0) / 60 for c in calls)
+    total_call_cost = sum(float(c.get("call_cost") or 0) for c in calls)
+
+    outreach_result = (
+        supabase.table("pipeline_logs")
+        .select("id", count="exact")
+        .ilike("event", "%outreach%")
+        .gte("created_at", month_start)
+        .execute()
+    )
+
+    return {
+        "components": [
+            {"name": "Retell", "unit": "minutes", "unit_cost": 0.07, "usage": round(total_minutes, 1), "total": round(total_call_cost or total_minutes * 0.07, 2)},
+            {"name": "OpenClaw", "unit": "messages", "unit_cost": 0, "usage": outreach_result.count or 0, "total": 0, "note": "Self-hosted (free)"},
+            {"name": "Resend", "unit": "emails", "unit_cost": 0.001, "usage": 0, "total": 0},
+            {"name": "Twilio", "unit": "minutes", "unit_cost": 0.015, "usage": round(total_minutes, 1), "total": round(total_minutes * 0.015, 2)},
+        ],
+        "total_estimated": round((total_call_cost or total_minutes * 0.07) + total_minutes * 0.015, 2),
+    }
