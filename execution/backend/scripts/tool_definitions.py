@@ -6,7 +6,7 @@ and update_llm.py. Keeping definitions here ensures they stay in sync.
 
 
 def build_tool_definitions(webhook_url: str) -> list[dict]:
-    """Return the 5 custom tool definitions for John's Retell LLM.
+    """Return the 6 custom tool definitions for John's Retell LLM.
 
     Args:
         webhook_url: Full URL for the tool call webhook
@@ -279,6 +279,42 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                             "what was discussed, programme interested in, "
                             "any objections raised."
                         ),
+                    },
+                },
+            },
+        },
+        # --- Tool 6: send_brochure ---
+        {
+            "type": "custom",
+            "name": "send_brochure",
+            "description": (
+                "Send the programme brochure, pricing details, and webinar link "
+                "to the lead's email. Call this when the lead asks to receive "
+                "details, the brochure, or payment information. Requires the "
+                "lead's email — if you don't have it, ask for it and call "
+                "save_email first, then call send_brochure."
+            ),
+            "url": webhook_url,
+            "method": "POST",
+            "speak_during_execution": True,
+            "execution_message_description": "I'll send that over to you right now.",
+            "speak_after_execution": True,
+            "timeout_ms": 10000,
+            "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                    "programme": {
+                        "type": "string",
+                        "description": (
+                            "Which programme details to send. One of: "
+                            "cloud_computing, advanced_devops, platform_engineering, "
+                            "sre, all. Defaults to 'all' if unsure."
+                        ),
+                    },
+                    "include_webinar_link": {
+                        "type": "boolean",
+                        "description": "Whether to include the webinar link. Default true.",
                     },
                 },
             },

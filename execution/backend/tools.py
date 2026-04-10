@@ -262,6 +262,51 @@ async def transfer_call(args: dict, lead_id: str | None = None, call_id: str = "
     }
 
 
+async def send_brochure(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
+    """Send programme brochure and details to lead's email."""
+    programme = args.get("programme", "all")
+    include_webinar = args.get("include_webinar_link", True)
+
+    if not lead_id:
+        return {"status": "error", "message": "No lead ID available"}
+
+    # Get lead's email
+    lead_result = (
+        supabase.table("leads")
+        .select("email, name")
+        .eq("id", lead_id)
+        .limit(1)
+        .execute()
+    )
+    if not lead_result.data or not lead_result.data[0].get("email"):
+        return {"status": "error", "message": "No email on file for this lead. Ask the lead for their email first."}
+
+    lead = lead_result.data[0]
+    email = lead["email"]
+    name = lead.get("name", "there")
+
+    # Log the brochure send request to pipeline
+    supabase.table("pipeline_logs").insert({
+        "lead_id": lead_id,
+        "component": "retell",
+        "event": "brochure_requested",
+        "details": {
+            "programme": programme,
+            "include_webinar": include_webinar,
+            "email": email,
+            "call_id": call_id,
+        },
+    }).execute()
+
+    logger.info("send_brochure: queued for %s (%s), programme=%s", name, email, programme)
+
+    return {
+        "status": "queued",
+        "message": f"Brochure and details will be sent to {email} after this call.",
+        "email": email,
+    }
+
+
 async def get_lead_context(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
     """Retrieve previous call history for a returning lead from Supabase."""
     logger.info("get_lead_context called: lead_id=%s call_id=%s", lead_id, call_id)
@@ -304,6 +349,7 @@ TOOL_HANDLERS: dict[str, Any] = {
     "save_email": save_email,
     "get_lead_context": get_lead_context,
     "transfer_call": transfer_call,
+    "send_brochure": send_brochure,
 }
 
 # Conversational fallbacks per tool -- John never mentions system errors during live calls
@@ -331,6 +377,10 @@ TOOL_FALLBACKS = {
         "status": "transfer_failed",
         "message": "I'm going to have someone from our team follow up with you directly.",
     },
+    "send_brochure": {
+        "status": "queued",
+        "message": "I'll make sure we get those details sent over to you after the call.",
+    },
 }
 DEFAULT_FALLBACK = {
     "result": "I don't have that information right now. Let me have someone follow up with you."
@@ -343,7 +393,7 @@ async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None 
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        if name in ("log_call_outcome", "save_email", "get_lead_context", "transfer_call"):
+        if name in ("log_call_outcome", "save_email", "get_lead_context", "transfer_call", "send_brochure"):
             result = await handler(args, lead_id=lead_id, call_id=call_id)
         else:
             result = await handler(args)
