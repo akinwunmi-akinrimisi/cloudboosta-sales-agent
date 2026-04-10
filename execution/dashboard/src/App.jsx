@@ -9,6 +9,8 @@ import LeadDetailPage from "./pages/LeadDetailPage";
 import PipelinePage from "./pages/PipelinePage";
 import Calls from "./pages/Calls";
 import FollowUps from "./pages/FollowUps";
+import Outreach from "./pages/Outreach";
+import Bookings from "./pages/Bookings";
 
 function Placeholder({ name }) {
   return (
@@ -39,8 +41,8 @@ export default function App() {
         <Route path="leads" element={<Leads />} />
         <Route path="leads/:id" element={<LeadDetailPage />} />
         <Route path="pipeline" element={<PipelinePage />} />
-        <Route path="outreach" element={<Placeholder name="Outreach" />} />
-        <Route path="bookings" element={<Placeholder name="Bookings" />} />
+        <Route path="outreach" element={<Outreach />} />
+        <Route path="bookings" element={<Bookings />} />
         <Route path="calls" element={<Calls />} />
         <Route path="calls/:id" element={<Placeholder name="Call Detail" />} />
         <Route path="follow-ups" element={<FollowUps />} />
