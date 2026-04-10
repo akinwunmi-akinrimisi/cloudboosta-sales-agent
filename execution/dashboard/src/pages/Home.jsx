@@ -90,7 +90,7 @@ function DialerControls({ status, loading, onStart, onPause, onStop }) {
           {status.next_lead && (
             <div className="col-span-2">
               <p className="label-mono mb-0.5">Next Lead</p>
-              <p className="text-zinc-400 text-xs truncate">{status.next_lead}</p>
+              <p className="text-zinc-400 text-xs truncate">{status.next_lead.name} — {status.next_lead.phone}</p>
             </div>
           )}
         </div>
