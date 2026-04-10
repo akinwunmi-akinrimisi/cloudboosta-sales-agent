@@ -5,6 +5,8 @@ import Layout from "./Layout";
 import Login from "./components/Login";
 import Home from "./pages/Home";
 import Leads from "./pages/Leads";
+import LeadDetailPage from "./pages/LeadDetailPage";
+import PipelinePage from "./pages/PipelinePage";
 
 function Placeholder({ name }) {
   return (
@@ -33,8 +35,8 @@ export default function App() {
       >
         <Route index element={<Home />} />
         <Route path="leads" element={<Leads />} />
-        <Route path="leads/:id" element={<Placeholder name="Lead Detail" />} />
-        <Route path="pipeline" element={<Placeholder name="Pipeline" />} />
+        <Route path="leads/:id" element={<LeadDetailPage />} />
+        <Route path="pipeline" element={<PipelinePage />} />
         <Route path="outreach" element={<Placeholder name="Outreach" />} />
         <Route path="bookings" element={<Placeholder name="Bookings" />} />
         <Route path="calls" element={<Placeholder name="Calls" />} />
