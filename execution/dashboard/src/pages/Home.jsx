@@ -85,7 +85,7 @@ function DialerControls({ status, loading, onStart, onPause, onStop }) {
           </div>
           <div>
             <p className="label-mono mb-0.5">Remaining</p>
-            <p className="text-zinc-200 font-semibold tabular-nums">{status.calls_remaining ?? "—"}</p>
+            <p className="text-zinc-200 font-semibold tabular-nums">{status.calls_remaining != null ? status.calls_remaining : "∞"}</p>
           </div>
           <div>
             <p className="label-mono mb-0.5">Active Calls</p>
