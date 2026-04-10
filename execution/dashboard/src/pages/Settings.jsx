@@ -34,7 +34,7 @@ const DAYS = [
 
 const SAMPLE_DATA = {
   first_name: "John Doe",
-  booking_link: "https://cal.srv1297445.hstgr.cloud/akinwunmi/cloudboosta-advisory-call",
+  booking_link: "https://cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call",
 };
 
 const INPUT_CLS =
@@ -212,7 +212,7 @@ function GeneralTab() {
           className={INPUT_CLS}
           value={form.cal_booking_link}
           onChange={(e) => handleChange("cal_booking_link", e.target.value)}
-          placeholder="https://cal.srv1297445.hstgr.cloud/akinwunmi/cloudboosta-advisory-call/john"
+          placeholder="https://cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call/john"
         />
         <p className="mt-1 text-xs text-zinc-600 font-mono">
           Shared in outreach emails and WhatsApp messages.
