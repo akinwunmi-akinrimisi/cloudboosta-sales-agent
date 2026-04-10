@@ -509,15 +509,18 @@ async def analytics_revenue(request: Request, _t: str = Depends(verify_token)):
 @router.get("/calls/live")
 @limiter.limit("60/minute")
 async def calls_live(request: Request, _t: str = Depends(verify_token)):
-    """Currently active call (if any)."""
+    """Currently active calls."""
     result = (
         supabase.table("leads")
         .select("id, name, first_name, last_name, phone, status, programme_recommended, last_strategy_used, last_call_at, detected_persona")
         .in_("status", ["calling", "in_call"])
-        .limit(1)
         .execute()
     )
-    return {"active_call": result.data[0] if result.data else None}
+    return {
+        "active_calls": result.data or [],
+        "active_call": result.data[0] if result.data else None,  # backward compat
+        "count": len(result.data or []),
+    }
 
 
 @router.get("/dialer/status")
@@ -551,12 +554,23 @@ async def dialer_status(request: Request, _t: str = Depends(verify_token)):
     )
     schedule = schedule_result.data[0] if schedule_result.data else None
 
+    # Active call count
+    active_result = (
+        supabase.table("leads")
+        .select("id", count="exact")
+        .in_("status", ["calling", "in_call"])
+        .execute()
+    )
+    active_count = active_result.count or 0
+
     return {
         "running": False,
         "schedule": schedule,
         "next_lead": next_lead,
         "calls_today": today_calls.count or 0,
         "calls_remaining": 200 - (today_calls.count or 0),
+        "active_calls": active_count,
+        "max_concurrent": 18,
     }
 
 

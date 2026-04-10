@@ -8,6 +8,7 @@ Controls the scheduled outbound calling loop:
 """
 
 import logging
+import os
 from datetime import datetime, time, timedelta
 
 import pytz
@@ -42,7 +43,7 @@ def is_in_business_hours(timezone_str: str, start_hour: int = 9, end_hour: int =
         return True
 
 
-MAX_CONCURRENT_CALLS = 1
+MAX_CONCURRENT_CALLS = int(os.environ.get("MAX_CONCURRENT_CALLS", "18"))
 MAX_DAILY_CALLS = 200
 
 
@@ -108,16 +109,21 @@ async def get_next_lead() -> dict | None:
     return None
 
 
-async def is_call_active() -> bool:
-    """Check if there is already a call in progress."""
+async def count_active_calls() -> int:
+    """Count currently active calls (status calling or in_call)."""
     result = (
         supabase.table("leads")
-        .select("id")
+        .select("id", count="exact")
         .in_("status", ["calling", "in_call"])
-        .limit(1)
         .execute()
     )
-    return len(result.data) > 0
+    return result.count or 0
+
+
+async def can_start_more_calls() -> bool:
+    """Check if we can start more concurrent calls."""
+    active = await count_active_calls()
+    return active < MAX_CONCURRENT_CALLS
 
 
 async def can_dial_next() -> bool:
@@ -148,3 +154,25 @@ async def check_daily_limit() -> bool:
         .execute()
     )
     return (result.count or 0) < MAX_DAILY_CALLS
+
+
+async def get_batch_leads(count: int = 5) -> list:
+    """Get multiple leads for batch dialing."""
+    leads = []
+    # Scan more candidates than needed (some may be outside business hours)
+    candidates = (
+        supabase.table("leads")
+        .select("*")
+        .eq("status", "queued")
+        .order("priority", desc=True)
+        .order("created_at", desc=False)
+        .limit(count * 3)
+        .execute()
+    )
+    for lead in (candidates.data or []):
+        tz = lead.get("timezone") or derive_timezone(lead.get("phone", ""))
+        if is_in_business_hours(tz):
+            leads.append(lead)
+            if len(leads) >= count:
+                break
+    return leads

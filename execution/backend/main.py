@@ -38,7 +38,10 @@ from timezone_util import derive_timezone
 from dialer import (
     should_dial_now,
     get_next_lead,
-    is_call_active,
+    count_active_calls,
+    can_start_more_calls,
+    get_batch_leads,
+    MAX_CONCURRENT_CALLS,
     can_dial_next,
     check_daily_limit,
 )
@@ -606,8 +609,8 @@ async def initiate_call(request: Request, req: InitiateCallRequest, _token: str 
     lead_data = lead.data
 
     # Active call guard -- prevent concurrent calls
-    if await is_call_active():
-        raise HTTPException(status_code=409, detail="Another call is already active")
+    if not await can_start_more_calls():
+        raise HTTPException(status_code=409, detail="Maximum concurrent calls reached")
 
     # Safety checks
     if lead_data["status"] == "do_not_contact":
@@ -1100,8 +1103,8 @@ async def call_now(request: Request, lead_id: str, _token: str = Depends(verify_
     lead_data = lead.data
 
     # Active call guard
-    if await is_call_active():
-        raise HTTPException(status_code=409, detail="Another call is already active")
+    if not await can_start_more_calls():
+        raise HTTPException(status_code=409, detail="Maximum concurrent calls reached")
 
     # Do-not-contact / declined guard
     if lead_data["status"] == "do_not_contact":

@@ -87,6 +87,21 @@ function DialerControls({ status, loading, onStart, onPause, onStop }) {
             <p className="label-mono mb-0.5">Remaining</p>
             <p className="text-zinc-200 font-semibold tabular-nums">{status.calls_remaining ?? "—"}</p>
           </div>
+          <div>
+            <p className="label-mono mb-0.5">Active Calls</p>
+            <p className="text-orange-400 font-semibold tabular-nums">
+              {status.active_calls ?? 0}
+              <span className="text-zinc-600 font-normal"> / {status.max_concurrent ?? 18}</span>
+            </p>
+          </div>
+          <div>
+            <p className="label-mono mb-0.5">Slots Free</p>
+            <p className="text-zinc-200 font-semibold tabular-nums">
+              {status.max_concurrent != null && status.active_calls != null
+                ? status.max_concurrent - status.active_calls
+                : "—"}
+            </p>
+          </div>
           {status.next_lead && (
             <div className="col-span-2">
               <p className="label-mono mb-0.5">Next Lead</p>
@@ -135,57 +150,78 @@ function DialerControls({ status, loading, onStart, onPause, onStop }) {
   );
 }
 
+function LiveCallCard({ call }) {
+  const displayName = call.first_name
+    ? `${call.first_name} ${call.last_name || ""}`.trim()
+    : call.name || "Unknown";
+
+  return (
+    <div className="glass-card p-4 border-orange-500/30 shadow-lg shadow-orange-500/5">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75 animate-ping" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" style={{ boxShadow: "0 0 6px #22c55e" }} />
+        </span>
+        <span className="label-mono text-orange-500 text-[11px]">
+          {call.status === "in_call" ? "In Call" : "Connecting"}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <p className="label-mono mb-0.5">Lead</p>
+          <p className="text-zinc-100 font-semibold truncate">{displayName}</p>
+        </div>
+        <div>
+          <p className="label-mono mb-0.5">Phone</p>
+          <p className="text-zinc-400 font-mono">{call.phone}</p>
+        </div>
+        {call.programme_recommended && (
+          <div className="col-span-2">
+            <p className="label-mono mb-0.5">Programme</p>
+            <p className="text-zinc-300 truncate">{call.programme_recommended}</p>
+          </div>
+        )}
+        {call.detected_persona && (
+          <div className="col-span-2">
+            <p className="label-mono mb-0.5">Persona</p>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-violet-500/15 border border-violet-500/30 text-violet-400">
+              {call.detected_persona}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LiveCallPanel({ activeCall, loading }) {
   if (loading) return <SkeletonCard className="min-h-[120px]" />;
 
-  if (!activeCall) {
+  const calls = Array.isArray(activeCall) ? activeCall : (activeCall ? [activeCall] : []);
+
+  if (calls.length === 0) {
     return (
       <div className="glass-card p-5 flex items-center justify-center min-h-[120px]">
         <div className="flex items-center gap-2 text-zinc-600">
           <Phone className="w-4 h-4" />
-          <span className="text-sm">No active call</span>
+          <span className="text-sm">No active calls</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="glass-card p-5 border-orange-500/30 shadow-lg shadow-orange-500/5">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="relative flex h-2.5 w-2.5">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75 animate-ping" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" style={{ boxShadow: "0 0 8px #22c55e" }} />
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="label-mono text-orange-500">Live Calls</span>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono bg-orange-500/15 border border-orange-500/30 text-orange-400">
+          {calls.length} active
         </span>
-        <span className="label-mono text-orange-500">Live Call</span>
       </div>
-
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        {activeCall.lead_name && (
-          <div>
-            <p className="label-mono mb-0.5">Lead</p>
-            <p className="text-zinc-100 font-semibold truncate">{activeCall.lead_name}</p>
-          </div>
-        )}
-        {activeCall.phone && (
-          <div>
-            <p className="label-mono mb-0.5">Phone</p>
-            <p className="text-zinc-400 font-mono text-xs">{activeCall.phone}</p>
-          </div>
-        )}
-        {activeCall.started_at && (
-          <div>
-            <p className="label-mono mb-0.5">Started</p>
-            <p className="text-zinc-300 tabular-nums">{formatTime(activeCall.started_at)}</p>
-          </div>
-        )}
-        {activeCall.duration_sec != null && (
-          <div>
-            <p className="label-mono mb-0.5">Duration</p>
-            <p className="text-zinc-100 font-mono font-semibold tabular-nums">
-              {formatDuration(activeCall.duration_sec)}
-            </p>
-          </div>
-        )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {calls.map((call) => (
+          <LiveCallCard key={call.id} call={call} />
+        ))}
       </div>
     </div>
   );
@@ -273,7 +309,7 @@ function RecentCallsSection({ calls, loading }) {
 
 export default function Home() {
   const [stats, setStats]           = useState(null);
-  const [activeCall, setActiveCall] = useState(null);
+  const [activeCall, setActiveCall] = useState([]);
   const [dialerStatus, setDialerStatus] = useState(null);
   const [health, setHealth]         = useState(null);
   const [calls, setCalls]           = useState(null);
@@ -295,7 +331,7 @@ export default function Home() {
         setStats(todayData.value);
       }
       if (liveData.status === "fulfilled" && liveData.value) {
-        setActiveCall(liveData.value.active_call ?? null);
+        setActiveCall(liveData.value.active_calls || []);
       }
       if (dialerData.status === "fulfilled" && dialerData.value) {
         setDialerStatus(dialerData.value);
