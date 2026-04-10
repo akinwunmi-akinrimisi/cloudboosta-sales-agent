@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { apiFetch } from "../api";
+import { legacyFetch as apiFetch } from "../api";
 import { POLL_COMMAND } from "../constants";
 import { useInterval } from "../hooks/useInterval";
 import StatCard from "./StatCard";

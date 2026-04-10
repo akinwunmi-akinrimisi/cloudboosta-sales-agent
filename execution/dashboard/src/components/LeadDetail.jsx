@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { apiFetch } from "../api";
+import { legacyFetch as apiFetch } from "../api";
 import {
   maskPhone,
   formatDuration,

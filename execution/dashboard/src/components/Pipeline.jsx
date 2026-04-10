@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { apiFetch } from "../api";
+import { legacyFetch as apiFetch } from "../api";
 import { useInterval } from "../hooks/useInterval";
 import { KANBAN_COLUMNS, POLL_PIPELINE } from "../constants";
 import KanbanColumn from "./KanbanColumn";

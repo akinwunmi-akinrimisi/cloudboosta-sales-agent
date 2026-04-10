@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   ResponsiveContainer, Cell, Legend,
 } from "recharts";
-import { apiFetch } from "../api";
+import { legacyFetch as apiFetch } from "../api";
 import { useInterval } from "../hooks/useInterval";
 import { POLL_STRATEGY } from "../constants";
 import EmptyState from "./EmptyState";

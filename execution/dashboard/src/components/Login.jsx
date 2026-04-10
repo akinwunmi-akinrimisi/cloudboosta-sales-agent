@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { apiFetch, setToken, clearToken } from "../api";
+import { legacyFetch as apiFetch, setToken, clearToken } from "../api";
 
 export default function Login({ onLogin }) {
   const [token, setTokenValue] = useState("");
