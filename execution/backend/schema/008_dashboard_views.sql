@@ -20,7 +20,7 @@
 
 -- Fast date-bucketing for daily/hourly trend queries
 CREATE INDEX IF NOT EXISTS idx_call_logs_date
-    ON call_logs ((started_at::DATE));
+    ON call_logs (started_at);
 
 -- Fast outcome filtering (committed, follow_up, declined, no_answer, etc.)
 CREATE INDEX IF NOT EXISTS idx_call_logs_outcome
@@ -138,6 +138,7 @@ ORDER BY lifecycle_order;
 -- Gives a clear read on which strategy works best for each persona type.
 -- ============================================================================
 
+DROP VIEW IF EXISTS strategy_performance CASCADE;
 CREATE OR REPLACE VIEW strategy_performance AS
 SELECT
     closing_strategy_used                                           AS strategy,
