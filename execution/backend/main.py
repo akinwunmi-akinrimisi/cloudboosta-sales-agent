@@ -96,7 +96,7 @@ app.add_middleware(
         "https://sarah-api.srv1297445.hstgr.cloud",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
