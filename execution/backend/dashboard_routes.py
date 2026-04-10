@@ -4,10 +4,13 @@ All endpoints require Bearer token matching DASHBOARD_SECRET_KEY.
 Organized by module: leads, outreach, calls, analytics, post-call, system.
 """
 
+import csv
+import io
 import logging
 import os
+import re
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -40,6 +43,203 @@ async def verify_token(
 # Rate limiter
 # ---------------------------------------------------------------------------
 limiter = Limiter(key_func=get_remote_address)
+
+
+# ===================================================================
+# MODULE 1: LEAD MANAGEMENT
+# ===================================================================
+
+@router.get("/leads")
+@limiter.limit("30/minute")
+async def leads_list(
+    request: Request,
+    _t: str = Depends(verify_token),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(25, ge=1, le=100),
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    has_email: Optional[bool] = None,
+    has_whatsapp: Optional[bool] = None,
+    sort_by: str = Query("created_at"),
+    sort_order: str = Query("desc"),
+):
+    """Paginated lead list with search and filters."""
+    query = supabase.table("leads").select(
+        "id, name, first_name, last_name, phone, email, status, has_email, has_whatsapp, "
+        "timezone, detected_persona, programme_recommended, last_call_at, source, created_at",
+        count="exact",
+    )
+    if status:
+        query = query.eq("status", status)
+    if search:
+        query = query.or_(f"name.ilike.%{search}%,phone.ilike.%{search}%,email.ilike.%{search}%")
+    if has_email is not None:
+        query = query.eq("has_email", has_email)
+    if has_whatsapp is not None:
+        query = query.eq("has_whatsapp", has_whatsapp)
+
+    desc = sort_order == "desc"
+    query = query.order(sort_by, desc=desc)
+    offset = (page - 1) * per_page
+    query = query.range(offset, offset + per_page - 1)
+    result = query.execute()
+
+    return {
+        "leads": result.data or [],
+        "total": result.count or 0,
+        "page": page,
+        "per_page": per_page,
+    }
+
+
+@router.get("/leads/by-status")
+@limiter.limit("20/minute")
+async def leads_by_status(request: Request, _t: str = Depends(verify_token)):
+    """Lead counts by status for pipeline kanban."""
+    result = supabase.table("leads_by_status").select("*").execute()
+    return {"statuses": result.data or []}
+
+
+@router.get("/leads/blocked")
+@limiter.limit("20/minute")
+async def leads_blocked(request: Request, _t: str = Depends(verify_token)):
+    """All leads with do_not_contact status."""
+    result = (
+        supabase.table("leads")
+        .select("id, name, first_name, last_name, phone, email, updated_at, notes")
+        .eq("status", "do_not_contact")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return {"leads": result.data or []}
+
+
+@router.get("/leads/{lead_id}")
+@limiter.limit("60/minute")
+async def lead_detail(request: Request, lead_id: str, _t: str = Depends(verify_token)):
+    """Full lead record with call history and pipeline logs."""
+    lead_result = (
+        supabase.table("leads")
+        .select("*")
+        .eq("id", lead_id)
+        .limit(1)
+        .execute()
+    )
+    if not lead_result.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    calls_result = (
+        supabase.table("call_logs")
+        .select("*")
+        .eq("lead_id", lead_id)
+        .order("started_at", desc=True)
+        .execute()
+    )
+
+    pipeline_result = (
+        supabase.table("pipeline_logs")
+        .select("*")
+        .eq("lead_id", lead_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+    return {
+        "lead": lead_result.data[0],
+        "calls": calls_result.data or [],
+        "pipeline_logs": pipeline_result.data or [],
+    }
+
+
+@router.post("/leads/import")
+@limiter.limit("5/minute")
+async def leads_import(request: Request, file: UploadFile = File(...), _t: str = Depends(verify_token)):
+    """Import leads from CSV file."""
+    if not file.filename.endswith((".csv", ".CSV")):
+        raise HTTPException(status_code=400, detail="Only CSV files accepted")
+
+    content = await file.read()
+    text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    imported = 0
+    duplicates = 0
+    errors = []
+    phone_pattern = re.compile(r'^\+[1-9]\d{6,14}$')
+
+    for i, row in enumerate(reader, start=2):
+        name = (row.get("name") or row.get("Name") or "").strip()
+        phone = (row.get("phone") or row.get("Phone") or "").strip()
+        email = (row.get("email") or row.get("Email") or "").strip() or None
+
+        if not phone:
+            errors.append({"row": i, "error": "Missing phone number"})
+            continue
+
+        if not phone_pattern.match(phone):
+            errors.append({"row": i, "error": f"Invalid phone format: {phone}"})
+            continue
+
+        first_name = name.split(" ")[0] if name else ""
+        last_name = " ".join(name.split(" ")[1:]) if " " in name else ""
+
+        try:
+            supabase.table("leads").insert({
+                "name": name or first_name,
+                "first_name": first_name,
+                "last_name": last_name,
+                "phone": phone,
+                "email": email,
+                "has_email": bool(email),
+                "source": "csv_import",
+            }).execute()
+            imported += 1
+        except Exception as e:
+            err_str = str(e)
+            if "duplicate" in err_str.lower() or "unique" in err_str.lower():
+                duplicates += 1
+            else:
+                errors.append({"row": i, "error": err_str[:200]})
+
+    return {
+        "imported": imported,
+        "duplicates": duplicates,
+        "errors": len(errors),
+        "error_details": errors[:50],
+    }
+
+
+@router.post("/leads/{lead_id}/block")
+@limiter.limit("10/minute")
+async def lead_block(request: Request, lead_id: str, _t: str = Depends(verify_token)):
+    """Set lead status to do_not_contact."""
+    body = await request.json()
+    reason = body.get("reason", "Blocked from dashboard")
+
+    lead = supabase.table("leads").select("id, status").eq("id", lead_id).limit(1).execute()
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    supabase.table("leads").update({
+        "status": "do_not_contact",
+        "notes": reason,
+    }).eq("id", lead_id).execute()
+
+    return {"status": "blocked"}
+
+
+@router.post("/leads/{lead_id}/unblock")
+@limiter.limit("5/minute")
+async def lead_unblock(request: Request, lead_id: str, _t: str = Depends(verify_token)):
+    """Remove do_not_contact status, set to new."""
+    lead = supabase.table("leads").select("id, status").eq("id", lead_id).limit(1).execute()
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    if lead.data[0]["status"] != "do_not_contact":
+        raise HTTPException(status_code=400, detail="Lead is not blocked")
+
+    supabase.table("leads").update({"status": "new"}).eq("id", lead_id).execute()
+    return {"status": "unblocked"}
 
 
 # ===================================================================
