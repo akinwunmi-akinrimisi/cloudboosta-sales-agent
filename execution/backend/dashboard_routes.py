@@ -18,6 +18,11 @@ from slowapi.util import get_remote_address
 from typing import Optional
 
 from supabase_client import supabase
+from postcall_email import (
+    determine_email_type,
+    generate_email,
+    wrap_email_html,
+)
 
 logger = logging.getLogger("sarah.dashboard")
 
@@ -1034,6 +1039,73 @@ async def error_resolve(request: Request, error_id: str, _t: str = Depends(verif
 
     supabase.table("pipeline_logs").update({"details": details}).eq("id", error_id).execute()
     return {"status": "resolved"}
+
+
+# ---------------------------------------------------------------------------
+# Post-call email generation (called by n8n Post-Call Handler)
+# ---------------------------------------------------------------------------
+@router.post("/postcall-email/generate")
+@limiter.limit("30/minute")
+async def postcall_email_generate(request: Request):
+    """Generate and return a personalised post-call email.
+
+    Called by n8n post-call handler. No auth required (internal network only).
+    Returns: {email_type, subject, html, lead_email} or {skip: true} if no email needed.
+    """
+    body = await request.json()
+    outcome = body.get("outcome", "")
+    lead_id = body.get("lead_id", "")
+    lead_email = body.get("lead_email", "")
+    lead_name = body.get("lead_name", "")
+    call_summary = body.get("call_summary", "")
+    follow_up_date = body.get("follow_up_date")
+
+    # Skip if no email address
+    if not lead_email:
+        return {"skip": True, "reason": "no_email"}
+
+    # Determine email type from outcome
+    email_type = determine_email_type(outcome, follow_up_date)
+    if not email_type:
+        return {"skip": True, "reason": f"no_email_for_outcome_{outcome}"}
+
+    # Generate personalised email via Claude
+    result = await generate_email(
+        email_type=email_type,
+        lead_name=lead_name,
+        call_summary=call_summary,
+        follow_up_date=follow_up_date,
+    )
+
+    if not result:
+        logger.error("Email generation failed for lead %s (type=%s)", lead_id, email_type)
+        return {"skip": True, "reason": "generation_failed"}
+
+    # Wrap in Cloudboosta HTML template
+    first_name = lead_name.split()[0] if lead_name else "there"
+    full_html = wrap_email_html(result["body_html"], first_name)
+
+    # Log to pipeline
+    supabase.table("pipeline_logs").insert({
+        "lead_id": lead_id,
+        "component": "postcall_email",
+        "event": f"email_generated_{email_type}",
+        "details": {
+            "email_type": email_type,
+            "subject": result["subject"],
+            "career_fact": result.get("career_fact", ""),
+            "lead_email": lead_email,
+        },
+    }).execute()
+
+    return {
+        "skip": False,
+        "email_type": email_type,
+        "subject": result["subject"],
+        "html": full_html,
+        "lead_email": lead_email,
+        "lead_name": lead_name,
+    }
 
 
 @router.get("/settings")

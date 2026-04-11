@@ -6,7 +6,7 @@ and update_llm.py. Keeping definitions here ensures they stay in sync.
 
 
 def build_tool_definitions(webhook_url: str) -> list[dict]:
-    """Return the 6 custom tool definitions for John's Retell LLM.
+    """Return the 7 custom tool definitions for John's Retell LLM.
 
     Args:
         webhook_url: Full URL for the tool call webhook
@@ -210,6 +210,15 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                             "ISO format: YYYY-MM-DD. Omit if not applicable."
                         ),
                     },
+                    "preferred_call_time": {
+                        "type": "string",
+                        "description": (
+                            "Lead's preferred time for the advisory call with "
+                            "Akinwunmi. ISO format: YYYY-MM-DDTHH:MM:SS. "
+                            "Set this when the lead agrees to an advisory call "
+                            "and confirms a time slot."
+                        ),
+                    },
                     "summary": {
                         "type": "string",
                         "description": (
@@ -242,42 +251,34 @@ def build_tool_definitions(webhook_url: str) -> list[dict]:
                 "properties": {},
             },
         },
-        # --- Tool 5: transfer_call ---
+        # --- Tool 5: check_advisor_availability ---
         {
             "type": "custom",
-            "name": "transfer_call",
+            "name": "check_advisor_availability",
             "description": (
-                "Transfer the call to a human advisor. Use ONLY when: "
-                "1) The lead explicitly asks to speak to a person, "
-                "2) The lead is highly interested but has complex questions you cannot answer, "
-                "3) The lead is ready to commit and wants personal reassurance. "
-                "Before transferring, say: 'Let me connect you with one of our advisors "
-                "right now. I'll briefly fill them in on what we've discussed.' "
-                "Stay on the line briefly to provide handoff context."
+                "Check Akinwunmi's (senior technical advisor) availability for "
+                "a specific date. Call this when the lead is interested in "
+                "speaking with the advisor and you need to find available time "
+                "slots. Returns a list of available times and the booking link. "
+                "Use the results to suggest times to the lead naturally: "
+                "'Akinwunmi has slots at 10 AM and 2 PM on Tuesday — which works better for you?'"
             ),
             "url": webhook_url,
             "method": "POST",
             "speak_during_execution": True,
-            "execution_message_description": "Connecting you now, one moment.",
-            "speak_after_execution": False,
-            "timeout_ms": 15000,
+            "execution_message_description": "Let me check what times are available.",
+            "speak_after_execution": True,
+            "timeout_ms": 10000,
             "parameters": {
                 "type": "object",
-                "required": ["reason"],
+                "required": ["date"],
                 "properties": {
-                    "reason": {
+                    "date": {
                         "type": "string",
                         "description": (
-                            "Brief reason for transfer: 'lead_requested_human', "
-                            "'complex_questions', 'ready_to_commit', 'escalation'."
-                        ),
-                    },
-                    "context_summary": {
-                        "type": "string",
-                        "description": (
-                            "Brief summary for the human advisor: lead name, "
-                            "what was discussed, programme interested in, "
-                            "any objections raised."
+                            "The date to check availability for in YYYY-MM-DD "
+                            "format. Ask the lead what day works for them first, "
+                            "then check that date."
                         ),
                     },
                 },

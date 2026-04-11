@@ -176,7 +176,7 @@ class ToolCallPayload(BaseModel):
     @field_validator("name")
     @classmethod
     def valid_function_name(cls, v):
-        allowed = {"lookup_programme", "get_objection_response", "log_call_outcome", "save_email", "get_lead_context", "transfer_call", "send_brochure"}
+        allowed = {"lookup_programme", "get_objection_response", "log_call_outcome", "save_email", "get_lead_context", "check_advisor_availability", "send_brochure"}
         if v not in allowed:
             raise ValueError(f"Unknown function: {v}")
         return v
@@ -280,8 +280,8 @@ DISCONNECT_TO_STATUS: dict[str, str | None] = {
 RETRY_ELIGIBLE_STATUSES = {"no_answer", "voicemail", "busy"}
 
 # Outcomes that trigger the n8n post-call workflow (Phase 7 AUTO-02/AUTO-04)
-# Only connected calls where Sarah had a conversation and logged an outcome.
-OUTCOMES_REQUIRING_WORKFLOW = {"committed", "follow_up", "declined"}
+# All outcomes that need post-call processing (emails, advisory booking, etc.)
+OUTCOMES_REQUIRING_WORKFLOW = {"committed", "follow_up", "declined", "not_qualified"}
 
 
 # ---------------------------------------------------------------------------
@@ -476,11 +476,36 @@ async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
                     # Retry requeue for eligible disconnect statuses
                     if mapped_status in RETRY_ELIGIBLE_STATUSES:
                         await handle_retry_requeue(lead_id, mapped_status)
+                        # Trigger missed-call email on FIRST no_answer/voicemail/busy only
+                        lead_info = (
+                            supabase.table("leads")
+                            .select("email, name, retry_count")
+                            .eq("id", lead_id)
+                            .single()
+                            .execute()
+                        )
+                        if lead_info.data and lead_info.data.get("email"):
+                            retry_count = lead_info.data.get("retry_count", 0)
+                            if retry_count <= 1:  # First attempt
+                                missed_payload = {
+                                    "outcome": mapped_status.upper(),
+                                    "lead_id": lead_id,
+                                    "lead_email": lead_info.data["email"],
+                                    "lead_name": lead_info.data.get("name", ""),
+                                    "call_summary": "",
+                                }
+                                background_tasks.add_task(
+                                    trigger_post_call_workflow, missed_payload
+                                )
+                                logger.info(
+                                    "call_ended: queued missed-call email for lead %s (%s)",
+                                    lead_id, mapped_status,
+                                )
                 else:
                     # Connected call -- check if tool already set outcome
                     call_row = (
                         supabase.table("call_logs")
-                        .select("outcome, programme_recommended, follow_up_date")
+                        .select("outcome, programme_recommended, follow_up_date, preferred_call_time, summary")
                         .eq("retell_call_id", call_id)
                         .limit(1)
                         .execute()
@@ -550,6 +575,16 @@ async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
                         # Use the uppercase outcome for n8n Switch node matching
                         n8n_outcome = tool_outcome if tool_outcome else "DECLINED"
 
+                        # Get preferred_call_time and summary from call_logs
+                        preferred_call_time = (
+                            call_row.data[0].get("preferred_call_time")
+                            if call_row.data else None
+                        )
+                        call_summary = (
+                            call_row.data[0].get("summary", "")
+                            if call_row.data else ""
+                        )
+
                         workflow_payload = {
                             "outcome": n8n_outcome,
                             "lead_id": lead_id,
@@ -558,6 +593,8 @@ async def retell_webhook(request: Request, background_tasks: BackgroundTasks):
                             "lead_email": lead_email,
                             "lead_name": lead_name,
                             "follow_up_date": follow_up_date,
+                            "preferred_call_time": preferred_call_time,
+                            "call_summary": call_summary,
                         }
                         background_tasks.add_task(
                             trigger_post_call_workflow, workflow_payload

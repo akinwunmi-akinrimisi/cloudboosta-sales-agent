@@ -6,7 +6,11 @@ and returns a dict that Retell sends back to the LLM.
 
 import json
 import logging
+import os
+from datetime import datetime, timedelta, timezone
 from typing import Any
+
+import httpx
 
 from supabase_client import supabase
 
@@ -140,6 +144,7 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
     call_type = args.get("call_type", "direct_sell")
     webinar_date = args.get("webinar_date", "")
     webinar_attended_str = args.get("webinar_attended", "")
+    preferred_call_time = args.get("preferred_call_time", "")
 
     logger.info(
         "log_call_outcome called: outcome=%s strategy=%s persona=%s call_id=%s lead_id=%s",
@@ -148,7 +153,7 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
 
     # 1. Insert into call_logs FIRST (before lead update, so the row exists
     #    when the pipeline_logs trigger fires on the leads status change).
-    supabase.table("call_logs").insert({
+    call_log_data = {
         "retell_call_id": call_id,
         "lead_id": lead_id,
         "outcome": outcome,
@@ -156,7 +161,10 @@ async def log_call_outcome(args: dict, lead_id: str | None = None, call_id: str 
         "detected_persona": persona,
         "summary": summary,
         "call_type": call_type,
-    }).execute()
+    }
+    if preferred_call_time:
+        call_log_data["preferred_call_time"] = preferred_call_time
+    supabase.table("call_logs").insert(call_log_data).execute()
 
     # 2. Update lead status based on outcome (skip NO_ANSWER -- handled by webhook)
     if lead_id and outcome != "NO_ANSWER":
@@ -234,31 +242,76 @@ async def save_email(args: dict, lead_id: str | None = None, call_id: str = "") 
     return {"result": f"Email {email} saved successfully"}
 
 
-async def transfer_call(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
-    """Initiate warm transfer to human advisor."""
-    reason = args.get("reason", "unknown")
-    context = args.get("context_summary", "")
+async def check_advisor_availability(args: dict, lead_id: str | None = None, call_id: str = "") -> dict:
+    """Check Akinwunmi's Cal.com availability for a given date."""
+    date_str = args.get("date", "")
+    logger.info("check_advisor_availability called: date=%s lead_id=%s", date_str, lead_id)
 
-    # Log the transfer
-    if lead_id:
-        supabase.table("pipeline_logs").insert({
-            "lead_id": lead_id,
-            "component": "retell",
-            "event": "warm_transfer_initiated",
-            "details": {
-                "reason": reason,
-                "context": context,
-                "transfer_number": "+447592233052",
-                "call_id": call_id,
-            },
-        }).execute()
+    cal_url = os.environ.get("CAL_COM_URL", "")
+    cal_key = os.environ.get("CAL_COM_API_KEY", "")
 
-    logger.info("transfer_call: %s for lead %s (reason: %s)", call_id, lead_id, reason)
+    if not date_str:
+        # Default to tomorrow
+        tomorrow = datetime.now(timezone.utc) + timedelta(days=1)
+        date_str = tomorrow.strftime("%Y-%m-%d")
 
+    try:
+        # Query Cal.com availability API via internal Docker network
+        base = cal_url or "http://cal-web:3000"
+        start = f"{date_str}T00:00:00Z"
+        end_date = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        end = f"{end_date}T00:00:00Z"
+
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                f"{base}/api/v1/availability",
+                params={
+                    "username": "cloudboosta",
+                    "dateFrom": start,
+                    "dateTo": end,
+                    "eventTypeId": "4",
+                },
+                headers={"Authorization": f"Bearer {cal_key}"} if cal_key else {},
+            )
+
+        if resp.status_code == 200:
+            data = resp.json()
+            slots = data.get("slots", data.get("busy", []))
+            # Format available times for John to read naturally
+            if isinstance(slots, dict):
+                # slots keyed by date
+                day_slots = slots.get(date_str, [])
+                available = [
+                    datetime.fromisoformat(s["time"].replace("Z", "+00:00")).strftime("%-I:%M %p")
+                    if isinstance(s, dict) else s
+                    for s in day_slots[:8]
+                ]
+            elif isinstance(slots, list):
+                available = [
+                    datetime.fromisoformat(s["time"].replace("Z", "+00:00")).strftime("%-I:%M %p")
+                    if isinstance(s, dict) and "time" in s else str(s)
+                    for s in slots[:8]
+                ]
+            else:
+                available = []
+
+            return {
+                "date": date_str,
+                "available_slots": available if available else ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM"],
+                "booking_link": "https://cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call",
+                "advisor_name": "Akinwunmi",
+            }
+        else:
+            logger.warning("Cal.com API returned %d: %s", resp.status_code, resp.text[:200])
+    except Exception as e:
+        logger.warning("check_advisor_availability failed: %s", e)
+
+    # Fallback: return general business hours
     return {
-        "status": "transferring",
-        "transfer_number": "+447592233052",
-        "message": "Connecting to advisor now.",
+        "date": date_str,
+        "available_slots": ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM"],
+        "booking_link": "https://cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call",
+        "advisor_name": "Akinwunmi",
     }
 
 
@@ -348,7 +401,7 @@ TOOL_HANDLERS: dict[str, Any] = {
     "log_call_outcome": log_call_outcome,
     "save_email": save_email,
     "get_lead_context": get_lead_context,
-    "transfer_call": transfer_call,
+    "check_advisor_availability": check_advisor_availability,
     "send_brochure": send_brochure,
 }
 
@@ -373,9 +426,11 @@ TOOL_FALLBACKS = {
         "previous_calls": [],
         "is_first_call": True,
     },
-    "transfer_call": {
-        "status": "transfer_failed",
-        "message": "I'm going to have someone from our team follow up with you directly.",
+    "check_advisor_availability": {
+        "date": "",
+        "available_slots": ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM"],
+        "booking_link": "https://cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call",
+        "advisor_name": "Akinwunmi",
     },
     "send_brochure": {
         "status": "queued",
@@ -393,7 +448,7 @@ async def execute_tool(name: str, args: dict, call_id: str, lead_id: str | None 
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        if name in ("log_call_outcome", "save_email", "get_lead_context", "transfer_call", "send_brochure"):
+        if name in ("log_call_outcome", "save_email", "get_lead_context", "check_advisor_availability", "send_brochure"):
             result = await handler(args, lead_id=lead_id, call_id=call_id)
         else:
             result = await handler(args)

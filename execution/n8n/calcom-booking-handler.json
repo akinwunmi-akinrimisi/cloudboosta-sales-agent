@@ -1,0 +1,150 @@
+{
+  "name": "Cal.com Booking Handler",
+  "id": "NQJ1eLBYaiOGljyb",
+  "active": true,
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Cal.com Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "cb-calcom-booking",
+        "responseMode": "onReceived",
+        "httpMethod": "POST",
+        "options": {},
+        "multipleMethods": false
+      },
+      "webhookId": "calcom-booking"
+    },
+    {
+      "id": "extract-attendee",
+      "name": "Extract Attendee",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            { "id": "attendee-email", "name": "attendee_email", "value": "={{ $json.body.payload.attendees[0].email }}", "type": "string" },
+            { "id": "attendee-phone", "name": "attendee_phone", "value": "={{ $json.body.payload.attendees[0].phone }}", "type": "string" },
+            { "id": "attendee-name", "name": "attendee_name", "value": "={{ $json.body.payload.attendees[0].name }}", "type": "string" },
+            { "id": "booking-start", "name": "booking_start", "value": "={{ $json.body.payload.startTime }}", "type": "string" },
+            { "id": "booking-title", "name": "booking_title", "value": "={{ $json.body.payload.title }}", "type": "string" }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      }
+    },
+    {
+      "id": "match-lead-code",
+      "name": "Match Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [712, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const phone = $input.first().json.attendee_phone;\nconst email = $input.first().json.attendee_email;\n\nconst filter = `or=(phone.eq.${encodeURIComponent(phone)},email.eq.${encodeURIComponent(email)})`;\nconst url = `http://supabase-kong-1:8000/rest/v1/leads?${filter}&limit=1`;\n\nconst response = await fetch(url, {\n  headers: {\n    'apikey': $env.SUPABASE_SERVICE_ROLE_KEY,\n    'Authorization': `Bearer ${$env.SUPABASE_SERVICE_ROLE_KEY}`,\n    'Content-Type': 'application/json'\n  }\n});\n\nconst leads = await response.json();\n\nif (leads.length > 0) {\n  return [{ json: leads[0] }];\n}\n\nreturn [{ json: {} }];"
+      }
+    },
+    {
+      "id": "check-lead-found",
+      "name": "Lead Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [940, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "lead-exists", "leftValue": "={{ $json.id }}", "rightValue": "", "operator": { "type": "string", "operation": "exists", "singleValue": true } }],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "check-double-booking",
+      "name": "Already Scheduled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1170, 200],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "is-scheduled", "leftValue": "={{ $('Match Lead').item.json.status }}", "rightValue": "call_scheduled", "operator": { "type": "string", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "log-unknown-code",
+      "name": "Log No Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1170, 460],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const booking = $('Extract Attendee').first().json;\nconst baseUrl = 'http://supabase-kong-1:8000/rest/v1';\nconst headers = {\n  'apikey': $env.SUPABASE_SERVICE_ROLE_KEY,\n  'Authorization': `Bearer ${$env.SUPABASE_SERVICE_ROLE_KEY}`,\n  'Content-Type': 'application/json',\n  'Prefer': 'return=representation'\n};\n\nawait fetch(`${baseUrl}/pipeline_logs`, {\n  method: 'POST',\n  headers,\n  body: JSON.stringify({\n    event: 'booking_no_lead_match',\n    component: 'cal_com',\n    details: JSON.stringify({\n      booking_time: booking.booking_start,\n      attendee_email: booking.attendee_email,\n      attendee_name: booking.attendee_name,\n      event_type: booking.booking_title\n    })\n  })\n});\n\nreturn [{ json: { matched: false, email: booking.attendee_email } }];"
+      }
+    },
+    {
+      "id": "log-double-code",
+      "name": "Log Double Booking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 100],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Match Lead').first().json;\nconst booking = $('Extract Attendee').first().json;\nconst baseUrl = 'http://supabase-kong-1:8000/rest/v1';\nconst headers = {\n  'apikey': $env.SUPABASE_SERVICE_ROLE_KEY,\n  'Authorization': `Bearer ${$env.SUPABASE_SERVICE_ROLE_KEY}`,\n  'Content-Type': 'application/json',\n  'Prefer': 'return=representation'\n};\n\nawait fetch(`${baseUrl}/pipeline_logs`, {\n  method: 'POST',\n  headers,\n  body: JSON.stringify({\n    lead_id: lead.id,\n    event: 'double_booking_prevented',\n    component: 'cal_com',\n    details: JSON.stringify({\n      existing_booking: lead.call_scheduled_at,\n      attempted_booking: booking.booking_start,\n      attendee_email: booking.attendee_email,\n      lead_name: lead.name\n    })\n  })\n});\n\nreturn [{ json: { prevented: true, lead_id: lead.id, lead_name: lead.name } }];"
+      }
+    },
+    {
+      "id": "update-lead-code",
+      "name": "Update & Log Booking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Match Lead').first().json;\nconst booking = $('Extract Attendee').first().json;\nconst leadId = lead.id;\nconst baseUrl = 'http://supabase-kong-1:8000/rest/v1';\nconst headers = {\n  'apikey': $env.SUPABASE_SERVICE_ROLE_KEY,\n  'Authorization': `Bearer ${$env.SUPABASE_SERVICE_ROLE_KEY}`,\n  'Content-Type': 'application/json',\n  'Prefer': 'return=representation'\n};\n\n// 1. Update lead status to call_scheduled\nconst updateRes = await fetch(`${baseUrl}/leads?id=eq.${leadId}`, {\n  method: 'PATCH',\n  headers,\n  body: JSON.stringify({\n    status: 'call_scheduled',\n    call_scheduled_at: booking.booking_start\n  })\n});\nconst updated = await updateRes.json();\n\n// 2. Log booking event\nawait fetch(`${baseUrl}/pipeline_logs`, {\n  method: 'POST',\n  headers,\n  body: JSON.stringify({\n    lead_id: leadId,\n    event: 'booking_created',\n    component: 'cal_com',\n    details: JSON.stringify({\n      booking_time: booking.booking_start,\n      attendee_email: booking.attendee_email,\n      event_type: booking.booking_title\n    })\n  })\n});\n\nreturn [{ json: updated[0] || { id: leadId, status: 'call_scheduled' } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Cal.com Webhook": {
+      "main": [[{ "node": "Extract Attendee", "type": "main", "index": 0 }]]
+    },
+    "Extract Attendee": {
+      "main": [[{ "node": "Match Lead", "type": "main", "index": 0 }]]
+    },
+    "Match Lead": {
+      "main": [[{ "node": "Lead Found?", "type": "main", "index": 0 }]]
+    },
+    "Lead Found?": {
+      "main": [
+        [{ "node": "Already Scheduled?", "type": "main", "index": 0 }],
+        [{ "node": "Log No Match", "type": "main", "index": 0 }]
+      ]
+    },
+    "Already Scheduled?": {
+      "main": [
+        [{ "node": "Log Double Booking", "type": "main", "index": 0 }],
+        [{ "node": "Update & Log Booking", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos",
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}
