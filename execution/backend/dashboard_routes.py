@@ -145,6 +145,41 @@ async def leads_enrolled(request: Request, _t: str = Depends(verify_token)):
     return {"leads": result.data or []}
 
 
+@router.get("/leads/{lead_id}/booking-status")
+@limiter.limit("30/minute")
+async def lead_booking_status(request: Request, lead_id: str, _t: str = Depends(verify_token)):
+    """Check if a lead already has a booking scheduled."""
+    lead = (
+        supabase.table("leads")
+        .select("id, name, status, call_scheduled_at")
+        .eq("id", lead_id)
+        .limit(1)
+        .execute()
+    )
+    if not lead.data:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    lead_data = lead.data[0]
+    has_booking = lead_data.get("status") == "call_scheduled" and lead_data.get("call_scheduled_at")
+
+    if has_booking:
+        scheduled_at = lead_data["call_scheduled_at"]
+        try:
+            dt = datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
+            formatted = dt.strftime("%A %d %B at %I:%M %p")
+        except Exception:
+            formatted = scheduled_at
+
+        return {
+            "has_booking": True,
+            "message": f"You've already booked a call for {formatted}. Looking forward to speaking with you then!",
+            "call_scheduled_at": scheduled_at,
+            "formatted_time": formatted,
+        }
+
+    return {"has_booking": False}
+
+
 @router.get("/leads/{lead_id}")
 @limiter.limit("60/minute")
 async def lead_detail(request: Request, lead_id: str, _t: str = Depends(verify_token)):
