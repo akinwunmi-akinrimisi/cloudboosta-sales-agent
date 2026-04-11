@@ -3,95 +3,148 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cloudboosta John Agent — User Journey Map</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<title>Cloudboosta — User Journey Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --navy:#0a1628;--navy-mid:#12253d;--navy-light:#1a3352;
-  --white:#ffffff;--off:#f0f2f5;--ghost:#c8cdd5;
-  --cyan:#38bdf8;--green:#22c55e;--amber:#f59e0b;
-  --red:#ef4444;--purple:#a78bfa;--pink:#f472b6;
-  --font:"DM Sans",system-ui,sans-serif;
-  --mono:"JetBrains Mono",monospace;
+  --navy:#0a1628;--navy2:#0f1d32;--navy3:#152540;--navy4:#1c3050;
+  --white:#ffffff;--off:#e8ecf2;--ghost:#8896a8;--faint:#2a3d56;
+  --cyan:#38bdf8;--green:#34d399;--amber:#fbbf24;--red:#f87171;
+  --purple:#a78bfa;--pink:#f472b6;--blue:#60a5fa;--teal:#2dd4bf;
+  --font:"DM Sans",system-ui,sans-serif;--mono:"JetBrains Mono",monospace;
 }
 html{scroll-behavior:smooth}
 body{background:var(--navy);color:var(--white);font-family:var(--font);line-height:1.6;overflow-x:hidden}
 
-/* ---- NAV ---- */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,22,40,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06);padding:0 2rem;display:flex;align-items:center;height:56px;gap:2rem}
-nav .brand{font-weight:700;font-size:1.05rem;letter-spacing:-.02em}
-nav .brand span{color:var(--ghost);font-weight:400;font-size:.8rem;margin-left:6px}
-nav a{color:var(--ghost);text-decoration:none;font-size:.82rem;font-weight:500;transition:color .2s}
-nav a:hover{color:var(--white)}
-nav .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,22,40,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--faint);height:52px;display:flex;align-items:center;padding:0 2rem;gap:1.5rem}
+nav .brand{font-weight:700;font-size:.95rem;white-space:nowrap}
+nav .brand span{color:var(--ghost);font-weight:400;font-size:.78rem;margin-left:4px}
+nav a{color:var(--ghost);text-decoration:none;font-size:.78rem;font-weight:500;transition:color .2s}
+nav a:hover,nav a.active{color:var(--white)}
+nav .spacer{flex:1}
+nav .live{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,.5);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ---- HERO ---- */
-.hero{padding:7rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;top:-40%;left:-20%;width:140%;height:180%;background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.08) 0%,transparent 60%);pointer-events:none}
-.hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-bottom:1rem}
-.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero p{color:var(--ghost);max-width:640px;margin:0 auto 2rem;font-size:1.05rem}
-.hero .badges{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:.75rem;font-weight:600;font-family:var(--mono);border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
-.badge .d{width:8px;height:8px;border-radius:50%}
+/* HERO */
+.hero{padding:6rem 2rem 2.5rem;text-align:center;position:relative}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 20%,rgba(56,189,248,.06),transparent 65%);pointer-events:none}
+.hero h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;letter-spacing:-.03em;line-height:1.2;margin-bottom:.8rem}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--cyan),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--ghost);max-width:580px;margin:0 auto .8rem;font-size:.92rem}
+.legend{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:1.2rem}
+.legend-item{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-family:var(--mono);color:var(--ghost)}
+.legend-item .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 
-/* ---- SECTIONS ---- */
-section{padding:3rem 2rem;max-width:1200px;margin:0 auto}
-.section-label{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--cyan);margin-bottom:1rem;padding:4px 12px;border-radius:4px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.15)}
-section h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:700;letter-spacing:-.02em;margin-bottom:.6rem}
-section h2 + p{color:var(--ghost);max-width:680px;margin-bottom:2rem;font-size:.95rem}
+/* JUMP LINKS */
+.jump{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:1.5rem auto;max-width:800px}
+.jump a{padding:6px 14px;border-radius:6px;font-size:.72rem;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ghost);border:1px solid var(--faint);background:var(--navy2);text-decoration:none;transition:all .2s}
+.jump a:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(56,189,248,.05)}
 
-/* ---- MERMAID DIAGRAMS ---- */
-.diagram-wrap{background:var(--navy-mid);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:2rem;margin-bottom:2.5rem;overflow-x:auto;position:relative}
-.diagram-wrap::before{content:attr(data-title);position:absolute;top:12px;left:16px;font-family:var(--mono);font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ghost);opacity:.6}
-.diagram-wrap .mermaid{display:flex;justify-content:center}
-.diagram-wrap .mermaid svg{max-width:100%;height:auto!important}
+/* PIPELINE MASTER */
+.pipeline{max-width:800px;margin:0 auto;padding:0 1rem 3rem}
+.stage{position:relative;padding:1.2rem 0}
 
-/* ---- STATE CARDS ---- */
-.state-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin:2rem 0}
-.state-card{background:var(--navy-mid);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.2rem;transition:border-color .2s,transform .2s}
-.state-card:hover{border-color:rgba(56,189,248,.3);transform:translateY(-2px)}
-.state-card .status{font-family:var(--mono);font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;display:flex;align-items:center;gap:6px}
-.state-card .status .d{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.state-card .desc{font-size:.82rem;color:var(--ghost);line-height:1.5}
-.state-card .trans{margin-top:.6rem;font-family:var(--mono);font-size:.68rem;color:rgba(255,255,255,.35)}
+/* Stage header */
+.stage-head{display:flex;align-items:center;gap:10px;margin-bottom:.8rem;cursor:pointer}
+.stage-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.7rem;font-weight:700;flex-shrink:0}
+.stage-title{font-weight:600;font-size:.95rem}
+.stage-sub{color:var(--ghost);font-size:.78rem;margin-left:auto;font-family:var(--mono)}
 
-/* ---- EMAIL TYPE CARDS ---- */
-.email-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin:2rem 0}
-.email-card{background:var(--navy-mid);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.4rem;position:relative;overflow:hidden}
-.email-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
-.email-card.nurture::before{background:var(--green)}
-.email-card.door::before{background:var(--amber)}
-.email-card.thank::before{background:var(--purple)}
-.email-card.missed::before{background:var(--cyan)}
-.email-card.payment::before{background:var(--pink)}
-.email-card h4{font-size:.95rem;margin-bottom:.4rem;font-weight:600}
-.email-card .trigger{font-family:var(--mono);font-size:.7rem;color:var(--cyan);margin-bottom:.6rem}
-.email-card ul{list-style:none;padding:0}
-.email-card li{font-size:.8rem;color:var(--ghost);padding:3px 0 3px 16px;position:relative}
-.email-card li::before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15)}
+/* Connector line between stages */
+.connector{width:2px;height:32px;margin:0 auto;position:relative}
+.connector::before{content:"";position:absolute;left:50%;top:0;width:2px;height:100%;transform:translateX(-50%)}
+.connector.solid::before{background:var(--faint)}
+.connector.dashed::before{background:repeating-linear-gradient(to bottom,var(--faint) 0,var(--faint) 4px,transparent 4px,transparent 8px)}
+.connector .arrow{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--faint)}
 
-/* ---- TOOL TABLE ---- */
-.tool-table{width:100%;border-collapse:separate;border-spacing:0;margin:2rem 0;font-size:.85rem}
-.tool-table th{text-align:left;padding:10px 14px;font-family:var(--mono);font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ghost);border-bottom:1px solid rgba(255,255,255,.08);background:var(--navy-mid)}
-.tool-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
-.tool-table tr:hover td{background:rgba(56,189,248,.03)}
-.tool-table code{font-family:var(--mono);font-size:.78rem;color:var(--cyan);background:rgba(56,189,248,.08);padding:2px 6px;border-radius:3px}
+/* Node rows */
+.node-row{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin:.6rem 0}
+.node{padding:8px 16px;border-radius:8px;font-size:.78rem;font-weight:600;font-family:var(--mono);border:1.5px solid;cursor:pointer;transition:all .25s;position:relative;white-space:nowrap}
+.node:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.node .tip{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--navy);border:1px solid var(--faint);border-radius:8px;padding:10px 14px;font-size:.72rem;font-weight:400;font-family:var(--font);color:var(--off);min-width:200px;max-width:280px;white-space:normal;line-height:1.5;z-index:50;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.node .tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--faint)}
+.node:hover .tip{display:block}
+.node .tip strong{color:var(--white);display:block;margin-bottom:4px}
+.node .tip .trans{color:var(--ghost);font-family:var(--mono);font-size:.65rem;margin-top:6px;padding-top:6px;border-top:1px solid var(--faint)}
 
-/* ---- FOOTER ---- */
-footer{text-align:center;padding:3rem 2rem;border-top:1px solid rgba(255,255,255,.06);margin-top:2rem}
-footer p{color:var(--ghost);font-size:.8rem}
+/* Node colors */
+.n-entry{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.3);color:var(--blue)}
+.n-enrich{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:var(--cyan)}
+.n-outreach{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--teal)}
+.n-schedule{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:var(--cyan)}
+.n-queue{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:var(--white)}
+.n-call{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:var(--amber)}
+.n-connected{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:var(--green)}
+.n-good{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.4);color:var(--green)}
+.n-warm{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:var(--amber)}
+.n-bad{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red)}
+.n-neutral{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.3);color:var(--purple)}
+.n-email{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:var(--pink)}
 
-/* ---- RESPONSIVE ---- */
-@media(max-width:640px){
-  nav{padding:0 1rem;gap:1rem}
-  section{padding:2rem 1rem}
-  .diagram-wrap{padding:1rem .5rem}
-  .hero h1{font-size:1.8rem}
+/* Branch labels */
+.branch-label{font-size:.65rem;font-family:var(--mono);color:var(--ghost);text-align:center;margin:.3rem 0;font-weight:500}
+
+/* Group box */
+.group{background:var(--navy2);border:1px solid var(--faint);border-radius:12px;padding:1rem;margin:.5rem 0;position:relative}
+.group-label{position:absolute;top:-9px;left:16px;background:var(--navy2);padding:0 8px;font-size:.62rem;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ghost)}
+
+/* Splits */
+.split{display:grid;gap:.8rem;margin:.6rem 0}
+.split-2{grid-template-columns:1fr 1fr}
+.split-3{grid-template-columns:1fr 1fr 1fr}
+.split-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.split-col{background:var(--navy2);border:1px solid var(--faint);border-radius:10px;padding:1rem;text-align:center}
+.split-col h4{font-size:.78rem;margin-bottom:.5rem;font-weight:600}
+.split-col .node{margin:.3rem auto;display:inline-flex}
+
+/* Focused detail sections */
+.detail{max-width:800px;margin:0 auto;padding:2rem 1rem}
+.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;cursor:pointer;padding:12px 16px;background:var(--navy2);border:1px solid var(--faint);border-radius:10px;transition:border-color .2s}
+.detail-header:hover{border-color:var(--cyan)}
+.detail-header h3{font-size:.95rem;font-weight:600;flex:1}
+.detail-header .toggle{font-size:1.2rem;color:var(--ghost);transition:transform .3s}
+.detail-header.open .toggle{transform:rotate(180deg)}
+.detail-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.detail-body.open{max-height:3000px}
+.detail-body-inner{padding:1rem 0}
+
+/* Info cards in details */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;margin:.8rem 0}
+.info-card{background:var(--navy3);border:1px solid var(--faint);border-radius:8px;padding:1rem;transition:border-color .2s}
+.info-card:hover{border-color:rgba(56,189,248,.25)}
+.info-card h5{font-size:.78rem;font-weight:600;margin-bottom:.4rem;display:flex;align-items:center;gap:6px}
+.info-card h5 .dot{width:8px;height:8px;border-radius:3px;flex-shrink:0}
+.info-card p{font-size:.75rem;color:var(--ghost);line-height:1.5}
+.info-card .mono{font-family:var(--mono);font-size:.65rem;color:var(--faint);margin-top:.4rem}
+
+/* Process steps */
+.steps{display:flex;flex-direction:column;gap:.4rem;margin:.8rem 0}
+.step{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:var(--navy3);border-radius:6px;font-size:.78rem}
+.step-num{width:22px;height:22px;border-radius:6px;background:var(--navy4);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.65rem;font-weight:700;flex-shrink:0;color:var(--cyan)}
+.step-text{color:var(--off);line-height:1.5}
+.step-text code{font-family:var(--mono);font-size:.72rem;color:var(--cyan);background:rgba(56,189,248,.08);padding:1px 5px;border-radius:3px}
+
+/* Tables */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;margin:.8rem 0;font-size:.78rem}
+.tbl th{text-align:left;padding:8px 12px;font-family:var(--mono);font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ghost);background:var(--navy3);border-bottom:1px solid var(--faint)}
+.tbl th:first-child{border-radius:6px 0 0 0}
+.tbl th:last-child{border-radius:0 6px 0 0}
+.tbl td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--off)}
+.tbl tr:hover td{background:rgba(56,189,248,.02)}
+.tbl code{font-family:var(--mono);font-size:.72rem;color:var(--cyan)}
+
+/* Footer */
+footer{text-align:center;padding:2rem;border-top:1px solid var(--faint);margin-top:2rem}
+footer p{color:var(--ghost);font-size:.75rem}
+
+/* Responsive */
+@media(max-width:700px){
+  .split-2,.split-3,.split-4{grid-template-columns:1fr}
+  nav{gap:.8rem;padding:0 .8rem;overflow-x:auto}
+  .pipeline,.detail{padding:0 .5rem}
 }
 </style>
 </head>
@@ -99,508 +152,562 @@ footer p{color:var(--ghost);font-size:.8rem}
 
 <nav>
   <div class="brand">Cloudboosta <span>Journey Map</span></div>
-  <a href="#overview">Overview</a>
-  <a href="#states">States</a>
-  <a href="#calls">Calls</a>
-  <a href="#emails">Emails</a>
-  <a href="#tools">Tools</a>
-  <div style="flex:1"></div>
-  <div class="dot"></div>
+  <a href="#master">Pipeline</a>
+  <a href="#d-entry">Entry</a>
+  <a href="#d-outreach">Outreach</a>
+  <a href="#d-booking">Booking</a>
+  <a href="#d-calling">Calling</a>
+  <a href="#d-postcall">Post-Call</a>
+  <a href="#d-tools">Tools</a>
+  <div class="spacer"></div>
+  <div class="live"></div>
 </nav>
 
 <!-- HERO -->
 <div class="hero">
-  <h1>John Sales Agent<br><em>End-to-End Journey Map</em></h1>
-  <p>Every path a lead can take through the Cloudboosta system — from first contact to enrolment. Covers all 23 lead statuses, 9 n8n workflows, 6 Retell tools, and 5 post-call email types.</p>
-  <div class="badges">
-    <div class="badge"><div class="d" style="background:var(--green)"></div>23 Lead Statuses</div>
-    <div class="badge"><div class="d" style="background:var(--cyan)"></div>9 n8n Workflows</div>
-    <div class="badge"><div class="d" style="background:var(--purple)"></div>6 Retell Tools</div>
-    <div class="badge"><div class="d" style="background:var(--amber)"></div>5 Email Types</div>
-    <div class="badge"><div class="d" style="background:var(--pink)"></div>Cal.com Booking</div>
+  <h1>John Sales Agent<br><em>End-to-End Journey</em></h1>
+  <p>Every path a lead can take — from first contact to enrolment. Click any status node for details, expand sections below for deep dives.</p>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--blue)"></div>Entry</div>
+    <div class="legend-item"><div class="dot" style="background:var(--cyan)"></div>Enrichment</div>
+    <div class="legend-item"><div class="dot" style="background:var(--teal)"></div>Outreach</div>
+    <div class="legend-item"><div class="dot" style="background:var(--amber)"></div>Calling</div>
+    <div class="legend-item"><div class="dot" style="background:var(--green)"></div>Connected / Success</div>
+    <div class="legend-item"><div class="dot" style="background:var(--red)"></div>Not Connected / Declined</div>
+    <div class="legend-item"><div class="dot" style="background:var(--purple)"></div>Not Qualified</div>
+    <div class="legend-item"><div class="dot" style="background:var(--pink)"></div>Post-Call Email</div>
   </div>
 </div>
 
-<!-- OVERVIEW FLOW -->
-<section id="overview">
-  <div class="section-label">01 — Overview</div>
-  <h2>Complete Lead Lifecycle</h2>
-  <p>From import to enrolment — the full path with every branch and outcome.</p>
+<div class="jump">
+  <a href="#d-entry">Entry</a>
+  <a href="#d-outreach">Outreach</a>
+  <a href="#d-booking">Cal.com Booking</a>
+  <a href="#d-calling">Call Flow</a>
+  <a href="#d-postcall">Post-Call Emails</a>
+  <a href="#d-retry">Retry</a>
+  <a href="#d-advisory">Advisory Call</a>
+  <a href="#d-tools">Tools &amp; Workflows</a>
+</div>
 
-  <div class="diagram-wrap" data-title="Master Flow">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d','clusterBkg':'#12253d','clusterBorder':'#1a3352'}}}%%
-flowchart TD
-    subgraph ENTRY["Lead Entry Points"]
-        CSV["CSV Import"] --> NEW["new"]
-        MANUAL["Manual Add"] --> NEW
-        WEBINAR["Webinar Signup"] --> NEW
-    end
+<!-- ============================================================ -->
+<!-- MASTER PIPELINE -->
+<!-- ============================================================ -->
+<div class="pipeline" id="master">
 
-    subgraph ENRICHMENT["Enrichment Pipeline"]
-        NEW -->|"n8n: every 5min"| ENRICH["enriched"]
-        ENRICH -->|"WhatsApp check + timezone"| ROUTE{"Has contact<br/>method?"}
-    end
-
-    subgraph OUTREACH["Multi-Channel Outreach"]
-        ROUTE -->|"has WhatsApp/email"| OUT_SENT["outreach_sent"]
-        ROUTE -->|"cold call only"| QUEUED["queued"]
-        OUT_SENT -->|"WhatsApp + Email"| WAIT{"Lead<br/>responds?"}
-        WAIT -->|"replies / books"| SCHED["call_scheduled"]
-        WAIT -->|"48h no response"| OUT_NR["outreach_no_response"]
-        OUT_NR -->|"escalate to cold call"| QUEUED
-    end
-
-    subgraph CALCOM["Cal.com Booking"]
-        BOOKING["Cal.com Webhook"] -->|"n8n handler"| MATCH{"Lead<br/>matched?"}
-        MATCH -->|"no match"| LOG_NM["Log: no_lead_match"]
-        MATCH -->|"matched"| DUP{"Already<br/>scheduled?"}
-        DUP -->|"yes"| LOG_DP["Log: double_booking_prevented"]
-        DUP -->|"no + atomic guard"| SCHED
-    end
-
-    subgraph DIALER["Auto-Dialer"]
-        QUEUED -->|"n8n: business hours"| CALLING["calling"]
-        SCHED -->|"at scheduled time"| QUEUED2["queued"] -->|"dialer picks up"| CALLING
-    end
-
-    subgraph CALL["Call Outcomes"]
-        CALLING -->|"connected"| IN_CALL["in_call"]
-        CALLING -->|"no pickup"| NO_ANS["no_answer"]
-        CALLING -->|"voicemail"| VM["voicemail"]
-        CALLING -->|"line busy"| BUSY["busy"]
-
-        IN_CALL -->|"commits!"| COMMITTED["committed"]
-        IN_CALL -->|"interested"| FOLLOW_UP["follow_up"]
-        IN_CALL -->|"says no"| DECLINED["declined"]
-        IN_CALL -->|"not a fit"| NOT_QUAL["not_qualified"]
-    end
-
-    subgraph RETRY["Retry Mechanism"]
-        NO_ANS -->|"retries < max"| QUEUED3["queued"]
-        VM -->|"retries < max"| QUEUED3
-        BUSY -->|"retries < max"| QUEUED3
-        NO_ANS -->|"retries exhausted"| DECLINED
-        VM -->|"retries exhausted"| DECLINED
-    end
-
-    subgraph POSTCALL["Post-Call Actions"]
-        COMMITTED -->|"payment email"| PAY_SENT["payment_sent"]
-        PAY_SENT -->|"payment received"| ENROLLED["enrolled"]
-        FOLLOW_UP -->|"nurture email"| FU_SCHED["follow_up_scheduled"]
-        FU_SCHED -->|"date arrives"| QUEUED4["queued"]
-        DECLINED -->|"door-open email"| DECLINED
-        NOT_QUAL -->|"thank-you email"| NOT_QUAL
-        NO_ANS -->|"missed-call email"| NO_ANS
-    end
-
-    subgraph ADVISORY["Advisory Call"]
-        IN_CALL -->|"wants to talk to advisor"| CHECK_AV["check_advisor_availability"]
-        CHECK_AV -->|"lead picks time"| LOG_TIME["log preferred_call_time"]
-        LOG_TIME -->|"post-call handler"| BOOK_CAL["Book via Cal.com API"]
-    end
-
-    style ENTRY fill:#12253d,stroke:#1a3352
-    style ENRICHMENT fill:#12253d,stroke:#1a3352
-    style OUTREACH fill:#12253d,stroke:#1a3352
-    style CALCOM fill:#12253d,stroke:#1a3352
-    style DIALER fill:#12253d,stroke:#1a3352
-    style CALL fill:#12253d,stroke:#1a3352
-    style RETRY fill:#12253d,stroke:#1a3352
-    style POSTCALL fill:#12253d,stroke:#1a3352
-    style ADVISORY fill:#12253d,stroke:#1a3352
-
-    style COMMITTED fill:#22c55e,stroke:#16a34a,color:#fff
-    style ENROLLED fill:#22c55e,stroke:#16a34a,color:#fff
-    style DECLINED fill:#ef4444,stroke:#dc2626,color:#fff
-    style NOT_QUAL fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    style SCHED fill:#38bdf8,stroke:#0ea5e9,color:#fff
-    style FOLLOW_UP fill:#f59e0b,stroke:#d97706,color:#fff
-    </pre>
-  </div>
-</section>
-
-<!-- STATE MACHINE -->
-<section id="states">
-  <div class="section-label">02 — State Machine</div>
-  <h2>All 23 Lead Statuses</h2>
-  <p>Every status a lead can have and its valid transitions. The state machine is enforced by a PostgreSQL trigger — invalid transitions are rejected.</p>
-
-  <div class="diagram-wrap" data-title="State Transitions">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d'}}}%%
-stateDiagram-v2
-    [*] --> new
-    new --> enriched
-    new --> queued
-    new --> call_scheduled
-    new --> failed
-
-    enriched --> outreach_sent
-    enriched --> queued
-    enriched --> call_scheduled
-
-    outreach_sent --> outreach_no_response
-    outreach_sent --> call_scheduled
-    outreach_sent --> queued
-
-    outreach_no_response --> queued
-    outreach_no_response --> call_scheduled
-
-    call_scheduled --> queued
-
-    queued --> calling
-    queued --> call_scheduled
-
-    calling --> in_call
-    calling --> no_answer
-    calling --> voicemail
-    calling --> busy
-    calling --> failed
-    calling --> invalid_number
-
-    in_call --> committed
-    in_call --> follow_up
-    in_call --> follow_up_scheduled
-    in_call --> declined
-    in_call --> not_qualified
-
-    committed --> payment_pending
-    committed --> payment_sent
-    payment_pending --> enrolled
-
-    follow_up --> queued
-    follow_up --> follow_up_scheduled
-    follow_up --> call_scheduled
-    follow_up_scheduled --> queued
-    follow_up_scheduled --> call_scheduled
-
-    no_answer --> queued
-    no_answer --> declined
-    no_answer --> exhausted
-    no_answer --> call_scheduled
-    voicemail --> queued
-    voicemail --> declined
-    voicemail --> exhausted
-    voicemail --> call_scheduled
-    busy --> queued
-    busy --> declined
-    busy --> exhausted
-    busy --> call_scheduled
-    </pre>
-  </div>
-
-  <div class="state-grid">
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--ghost)"></div>new</div><div class="desc">Just imported. No enrichment yet.</div><div class="trans">&#8594; enriched, queued, call_scheduled, failed</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--cyan)"></div>enriched</div><div class="desc">WhatsApp checked, timezone derived.</div><div class="trans">&#8594; outreach_sent, queued, call_scheduled</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--cyan)"></div>outreach_sent</div><div class="desc">WhatsApp + email outreach delivered.</div><div class="trans">&#8594; outreach_no_response, call_scheduled, queued</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--amber)"></div>outreach_no_response</div><div class="desc">48h passed, no reply.</div><div class="trans">&#8594; queued, call_scheduled</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--cyan)"></div>call_scheduled</div><div class="desc">Cal.com booking confirmed.</div><div class="trans">&#8594; queued</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--white)"></div>queued</div><div class="desc">Ready for auto-dialer to pick up.</div><div class="trans">&#8594; calling, call_scheduled</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--amber)"></div>calling</div><div class="desc">Retell dialling the lead now.</div><div class="trans">&#8594; in_call, no_answer, voicemail, busy, failed</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--green)"></div>in_call</div><div class="desc">John is speaking with the lead.</div><div class="trans">&#8594; committed, follow_up, declined, not_qualified</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--green)"></div>committed</div><div class="desc">Lead agreed to enrol!</div><div class="trans">&#8594; payment_pending, payment_sent</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--amber)"></div>follow_up</div><div class="desc">Interested but needs time.</div><div class="trans">&#8594; queued, follow_up_scheduled, call_scheduled</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--red)"></div>declined</div><div class="desc">Said no. Door-open email sent.</div><div class="trans">Terminal state</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--purple)"></div>not_qualified</div><div class="desc">Not a fit for current programmes.</div><div class="trans">Terminal state</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--red)"></div>no_answer</div><div class="desc">Call not picked up.</div><div class="trans">&#8594; queued (retry), declined, exhausted</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--red)"></div>voicemail</div><div class="desc">Went to voicemail.</div><div class="trans">&#8594; queued (retry), declined, exhausted</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--pink)"></div>payment_sent</div><div class="desc">Payment details emailed.</div><div class="trans">Awaiting payment proof</div></div>
-    <div class="state-card"><div class="status"><div class="d" style="background:var(--green)"></div>enrolled</div><div class="desc">Payment confirmed. Welcome aboard!</div><div class="trans">Terminal state (success)</div></div>
-  </div>
-</section>
-
-<!-- CALL FLOW -->
-<section id="calls">
-  <div class="section-label">03 — Call Flow</div>
-  <h2>What Happens During a Call</h2>
-  <p>John's conversation flow — from greeting to outcome logging. Every call follows this pattern.</p>
-
-  <div class="diagram-wrap" data-title="Call Conversation Flow">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d'}}}%%
-flowchart TD
-    START["Call Connected"] --> CTX{"Returning<br/>lead?"}
-    CTX -->|"yes"| GET_CTX["get_lead_context<br/>Load previous calls"]
-    CTX -->|"no"| GREET["Greeting + Intro"]
-    GET_CTX --> GREET
-
-    GREET --> DISCOVER["Discovery<br/>Background, goals, situation"]
-
-    DISCOVER --> GATE1{"Gate 1:<br/>Qualification"}
-    GATE1 -->|"Profile A/B/C"| LOOKUP["lookup_programme<br/>Get pricing + testimonial"]
-    GATE1 -->|"Not a fit"| NQ_END["Log NOT_QUALIFIED"]
-
-    LOOKUP --> PRESENT["Present Solution<br/>Programme + pricing + testimonial"]
-
-    PRESENT --> OBJECTION{"Objections<br/>raised?"}
-    OBJECTION -->|"yes"| HANDLE["get_objection_response<br/>Multi-layer scripts"]
-    OBJECTION -->|"no objections"| CLOSE
-    HANDLE --> CLOSE{"Closing<br/>attempt"}
-
-    CLOSE -->|"commits"| EMAIL_CHK{"Has<br/>email?"}
-    EMAIL_CHK -->|"no"| SAVE_EMAIL["save_email<br/>Collect on call"]
-    EMAIL_CHK -->|"yes"| COMMIT_LOG["Log COMMITTED"]
-    SAVE_EMAIL --> COMMIT_LOG
-
-    CLOSE -->|"needs time"| FU_LOG["Log FOLLOW_UP<br/>+ follow_up_date"]
-
-    CLOSE -->|"wants advisor"| ADV["check_advisor_availability<br/>Find Akinwunmi's slots"]
-    ADV --> CONFIRM["Confirm time with lead"]
-    CONFIRM --> ADV_LOG["Log FOLLOW_UP<br/>+ preferred_call_time"]
-
-    CLOSE -->|"declines"| DEC_LOG["Log DECLINED"]
-    CLOSE -->|"not interested at all"| NQ_END
-
-    style COMMIT_LOG fill:#22c55e,stroke:#16a34a,color:#fff
-    style FU_LOG fill:#f59e0b,stroke:#d97706,color:#fff
-    style ADV_LOG fill:#38bdf8,stroke:#0ea5e9,color:#fff
-    style DEC_LOG fill:#ef4444,stroke:#dc2626,color:#fff
-    style NQ_END fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    </pre>
-  </div>
-
-  <div class="diagram-wrap" data-title="Post-Call Processing">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d'}}}%%
-flowchart LR
-    WEBHOOK["Retell call_ended<br/>webhook"] --> PAYLOAD["Build payload:<br/>outcome, lead_id, email,<br/>call_summary, preferred_time"]
-    PAYLOAD --> N8N["n8n Post-Call Handler"]
-
-    N8N --> IS_COM{"Committed?"}
-    IS_COM -->|"yes"| PAY["Build Payment Email<br/>Bank details by currency"]
-    IS_COM -->|"no"| GEN["Generate AI Email<br/>Claude API"]
-
-    PAY --> SEND_PAY["Send via Resend"]
-    SEND_PAY --> UPDATE["Update lead:<br/>payment_sent"]
-
-    GEN --> TYPE{"Email type?"}
-    TYPE -->|"FOLLOW_UP + date"| NURTURE_S["nurture_scheduled"]
-    TYPE -->|"FOLLOW_UP"| NURTURE["nurture"]
-    TYPE -->|"DECLINED"| DOOR["door_open"]
-    TYPE -->|"NOT_QUALIFIED"| THANK["thank_you"]
-    TYPE -->|"NO_ANSWER / VM"| MISSED["missed_call"]
-
-    NURTURE_S --> SEND["Send via Resend"]
-    NURTURE --> SEND
-    DOOR --> SEND
-    THANK --> SEND
-    MISSED --> SEND
-
-    GEN --> BOOK{"preferred_call_time<br/>set?"}
-    BOOK -->|"yes"| CAL_BOOK["Book advisory call<br/>via Cal.com API"]
-
-    style PAY fill:#f472b6,stroke:#ec4899,color:#fff
-    style NURTURE_S fill:#22c55e,stroke:#16a34a,color:#fff
-    style NURTURE fill:#22c55e,stroke:#16a34a,color:#fff
-    style DOOR fill:#f59e0b,stroke:#d97706,color:#fff
-    style THANK fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    style MISSED fill:#38bdf8,stroke:#0ea5e9,color:#fff
-    </pre>
-  </div>
-</section>
-
-<!-- EMAILS -->
-<section id="emails">
-  <div class="section-label">04 — Post-Call Emails</div>
-  <h2>5 AI-Generated Email Types</h2>
-  <p>Every email is personalised by Claude using the call transcript. Each type has a distinct tone, content strategy, and included elements.</p>
-
-  <div class="email-grid">
-    <div class="email-card nurture">
-      <h4>Nurture Email</h4>
-      <div class="trigger">Trigger: FOLLOW_UP (no date)</div>
-      <ul>
-        <li>Personalised opening from call summary</li>
-        <li>Relevant career fact with urgency context</li>
-        <li>Upcoming webinar details + link</li>
-        <li>Brochure link (bit.ly/CBA-Brochure2026)</li>
-        <li>"Looking forward to having you onboard" close</li>
-        <li>Encouragement to pursue cloud career</li>
-      </ul>
+  <!-- STAGE 1: ENTRY -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(96,165,250,.15);color:var(--blue)">01</div>
+      <div class="stage-title">Lead Entry</div>
+      <div class="stage-sub">3 sources</div>
     </div>
-    <div class="email-card nurture">
-      <h4>Nurture + Scheduled</h4>
-      <div class="trigger">Trigger: FOLLOW_UP + follow_up_date</div>
-      <ul>
-        <li>Everything from nurture email</li>
-        <li>References the scheduled follow-up date</li>
-        <li>"Looking forward to our chat on [date]"</li>
-        <li>Suggests reviewing brochure before next call</li>
-        <li>Webinar as pre-follow-up activity</li>
-      </ul>
+    <div class="node-row">
+      <div class="node n-entry">CSV Import
+        <div class="tip"><strong>CSV Import</strong>Bulk import leads from spreadsheet. Columns: name, phone, email, location.<div class="trans">Creates lead with status: new</div></div>
+      </div>
+      <div class="node n-entry">Manual Add
+        <div class="tip"><strong>Manual Add</strong>Single lead added via CRM dashboard.<div class="trans">Creates lead with status: new</div></div>
+      </div>
+      <div class="node n-entry">Webinar Signup
+        <div class="tip"><strong>Webinar Signup</strong>Lead registers for a Cloudboosta webinar.<div class="trans">Creates lead with status: new</div></div>
+      </div>
     </div>
-    <div class="email-card door">
-      <h4>Door-Open Email</h4>
-      <div class="trigger">Trigger: DECLINED</div>
-      <ul>
-        <li>Genuine thanks for their time</li>
-        <li>Respects the decision — zero pressure</li>
-        <li>One career fact positioned casually</li>
-        <li>Brochure "for reference if you revisit"</li>
-        <li>No webinar push</li>
-        <li>"If things change, we're here"</li>
-      </ul>
-    </div>
-    <div class="email-card thank">
-      <h4>Thank-You Email</h4>
-      <div class="trigger">Trigger: NOT_QUALIFIED</div>
-      <ul>
-        <li>Polite, brief (under 100 words)</li>
-        <li>Thanks for taking the time</li>
-        <li>Wishes them well on their journey</li>
-        <li>No brochure, no webinar, no programme push</li>
-        <li>No career facts or urgency</li>
-      </ul>
-    </div>
-    <div class="email-card missed">
-      <h4>Missed-Call Email</h4>
-      <div class="trigger">Trigger: NO_ANSWER / VOICEMAIL / BUSY</div>
-      <ul>
-        <li>"Tried to reach you today" — light, friendly</li>
-        <li>Brief Cloudboosta intro + why we called</li>
-        <li>Relevant career fact for curiosity</li>
-        <li>Upcoming webinar as no-commitment option</li>
-        <li>Brochure link + Cal.com booking link</li>
-        <li>Under 200 words</li>
-      </ul>
-    </div>
-    <div class="email-card payment">
-      <h4>Payment Email</h4>
-      <div class="trigger">Trigger: COMMITTED</div>
-      <ul>
-        <li>Programme-specific bank details</li>
-        <li>Currency-aware (GBP/USD/EUR/NGN)</li>
-        <li>Payment reference generated</li>
-        <li>Instalment options if applicable</li>
-        <li>Next steps: proof of payment instructions</li>
-        <li>Navy blue branded HTML template</li>
-      </ul>
+    <div class="connector solid"><div class="arrow"></div></div>
+    <div class="node-row">
+      <div class="node n-entry" style="font-size:.85rem;padding:10px 24px">new
+        <div class="tip"><strong>new</strong>Just imported. No enrichment, no outreach yet.<div class="trans">Can go to: enriched, queued, call_scheduled, failed</div></div>
+      </div>
     </div>
   </div>
-</section>
 
-<!-- TOOLS -->
-<section id="tools">
-  <div class="section-label">05 — Retell Tools</div>
-  <h2>6 Custom Tools John Uses</h2>
-  <p>Each tool is called during live conversations via Retell webhooks. John never handles objections from memory — always uses tools.</p>
+  <div class="connector solid"><div class="arrow"></div></div>
 
-  <table class="tool-table">
-    <thead>
-      <tr><th>Tool</th><th>When</th><th>What It Does</th><th>Key Args</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><code>lookup_programme</code></td><td>After Gate 1 qualification</td><td>Returns programme details, pricing in lead's currency, and a matching testimonial</td><td>profile (A/B/C/X), country</td></tr>
-      <tr><td><code>get_objection_response</code></td><td>Every time lead raises an objection</td><td>Multi-layer response scripts with cultural nuances</td><td>objection_type (35+ types)</td></tr>
-      <tr><td><code>log_call_outcome</code></td><td>End of every call</td><td>Logs outcome, strategy, persona, summary, preferred_call_time to Supabase</td><td>outcome, summary, preferred_call_time, 10+ optional</td></tr>
-      <tr><td><code>save_email</code></td><td>When collecting email on call</td><td>Validates and saves email to lead record</td><td>email</td></tr>
-      <tr><td><code>get_lead_context</code></td><td>Start of every returning lead call</td><td>Retrieves previous call summaries, objections, strategies</td><td>(auto from metadata)</td></tr>
-      <tr><td><code>check_advisor_availability</code></td><td>Lead wants to speak with Akinwunmi</td><td>Queries Cal.com for open slots, returns times + booking link</td><td>date (YYYY-MM-DD)</td></tr>
-    </tbody>
-  </table>
-
-  <div class="section-label" style="margin-top:2rem">06 — n8n Workflows</div>
-  <h2>9 Active Workflows</h2>
-
-  <table class="tool-table">
-    <thead>
-      <tr><th>#</th><th>Workflow</th><th>Trigger</th><th>Function</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>1</td><td>Lead Enrichment Pipeline</td><td>Cron every 5min</td><td>WhatsApp check via Evolution API, timezone derivation, status &#8594; enriched</td></tr>
-      <tr><td>2</td><td>Lead Outreach Orchestrator</td><td>After enrichment</td><td>Routes by has_email / has_whatsapp to appropriate outreach</td></tr>
-      <tr><td>3</td><td>WhatsApp Outreach</td><td>Orchestrator</td><td>Sends intro message via Evolution API (instance: cloudboosta)</td></tr>
-      <tr><td>4</td><td>Email Outreach</td><td>Orchestrator</td><td>Sends outreach email via Resend (from: academy@cloudboosta.co.uk)</td></tr>
-      <tr><td>5</td><td>WhatsApp Reply Handler</td><td>Evolution webhook</td><td>Parses replies, schedules calls for interested leads</td></tr>
-      <tr><td>6</td><td>Outreach Timeout 48h</td><td>Cron</td><td>Escalates no-response leads to cold call queue</td></tr>
-      <tr><td>7</td><td>Cal.com Booking Handler</td><td>Cal.com webhook</td><td>Matches lead, double-booking prevention (atomic), updates status</td></tr>
-      <tr><td>8</td><td>Sarah Auto-Dialer</td><td>Cron (business hours)</td><td>Picks queued leads, initiates Retell calls (max 18 concurrent)</td></tr>
-      <tr><td>9</td><td>Post-Call Handler</td><td>Backend webhook</td><td>Routes by outcome: payment email OR AI-generated post-call email</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- CAL.COM BOOKING DETAIL -->
-<section>
-  <div class="section-label">07 — Cal.com Booking</div>
-  <h2>Booking Flow with Double-Booking Prevention</h2>
-  <p>Two layers of protection: an IF-node check for the obvious case, and an atomic PATCH guard for race conditions.</p>
-
-  <div class="diagram-wrap" data-title="Booking Handler (n8n)">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d'}}}%%
-flowchart LR
-    WH["Cal.com Webhook<br/>/webhook/cb-calcom-booking"] --> EXT["Extract Attendee<br/>phone, email, name,<br/>booking time"]
-    EXT --> MATCH["Match Lead<br/>PostgREST: phone OR email"]
-    MATCH --> FOUND{"Lead<br/>found?"}
-    FOUND -->|"no"| LOG_NM["Log No Match<br/>pipeline_logs"]
-    FOUND -->|"yes"| SCHED{"Already<br/>scheduled?"}
-    SCHED -->|"yes"| LOG_DP["Log Double Booking<br/>Prevented"]
-    SCHED -->|"no"| UPDATE["Atomic PATCH<br/>status=neq.call_scheduled"]
-    UPDATE --> CHECK{"Rows<br/>affected?"}
-    CHECK -->|"0 rows (race)"| LOG_RACE["Log: race_condition_guard"]
-    CHECK -->|"1 row"| LOG_OK["Log: booking_created"]
-
-    style LOG_NM fill:#f59e0b,stroke:#d97706,color:#fff
-    style LOG_DP fill:#ef4444,stroke:#dc2626,color:#fff
-    style LOG_RACE fill:#ef4444,stroke:#dc2626,color:#fff
-    style LOG_OK fill:#22c55e,stroke:#16a34a,color:#fff
-    </pre>
+  <!-- STAGE 2: ENRICHMENT -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(56,189,248,.15);color:var(--cyan)">02</div>
+      <div class="stage-title">Enrichment</div>
+      <div class="stage-sub">n8n cron 5min</div>
+    </div>
+    <div class="branch-label">WhatsApp number check + timezone derivation</div>
+    <div class="node-row">
+      <div class="node n-enrich" style="font-size:.85rem;padding:10px 24px">enriched
+        <div class="tip"><strong>enriched</strong>WhatsApp status checked via Evolution API. Timezone derived from phone prefix.<div class="trans">Can go to: outreach_sent, queued, call_scheduled</div></div>
+      </div>
+    </div>
   </div>
-</section>
 
-<!-- RETRY MECHANISM -->
-<section>
-  <div class="section-label">08 — Retry Mechanism</div>
-  <h2>No-Answer / Voicemail / Busy Retry</h2>
+  <div class="connector solid"><div class="arrow"></div></div>
 
-  <div class="diagram-wrap" data-title="Retry Flow">
-    <pre class="mermaid">
-%%{init:{'theme':'dark','themeVariables':{'primaryColor':'#1a3352','primaryTextColor':'#f0f2f5','primaryBorderColor':'#38bdf8','lineColor':'#38bdf8','secondaryColor':'#12253d','tertiaryColor':'#0a1628','edgeLabelBackground':'#12253d'}}}%%
-flowchart TD
-    DISC["Call disconnected:<br/>no_answer / voicemail / busy"] --> CHECK{"retry_count<br/>< max_retries?"}
-    CHECK -->|"yes"| REQUEUE["Requeue with 60min backoff<br/>retry_count += 1<br/>next_retry_at = now + 1h"]
-    CHECK -->|"no"| EXHAUST["Set status: declined<br/>(retries exhausted)"]
-    REQUEUE --> QUEUED["queued<br/>(auto-dialer picks up)"]
+  <!-- STAGE 3: OUTREACH (or skip to queue) -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(45,212,191,.15);color:var(--teal)">03</div>
+      <div class="stage-title">Multi-Channel Outreach</div>
+      <div class="stage-sub">WhatsApp + Email</div>
+    </div>
 
-    DISC --> EMAIL{"Has email +<br/>first attempt?"}
-    EMAIL -->|"yes"| MISSED["Send missed-call email<br/>Booking link + brochure"]
-    EMAIL -->|"no"| SKIP["Skip email"]
-
-    style REQUEUE fill:#f59e0b,stroke:#d97706,color:#fff
-    style EXHAUST fill:#ef4444,stroke:#dc2626,color:#fff
-    style MISSED fill:#38bdf8,stroke:#0ea5e9,color:#fff
-    </pre>
+    <div class="split split-2">
+      <div class="split-col">
+        <h4 style="color:var(--teal)">Has Contact Method</h4>
+        <div class="branch-label">WhatsApp intro + email sent</div>
+        <div class="node n-outreach" style="margin:6px auto">outreach_sent
+          <div class="tip"><strong>outreach_sent</strong>WhatsApp message + outreach email delivered with Cal.com booking link.<div class="trans">Can go to: outreach_no_response, call_scheduled, queued</div></div>
+        </div>
+        <div class="connector dashed" style="height:20px"><div class="arrow"></div></div>
+        <div class="branch-label">48h no response</div>
+        <div class="node n-outreach" style="margin:6px auto;opacity:.7">outreach_no_response
+          <div class="tip"><strong>outreach_no_response</strong>48 hours passed, lead didn't reply or book.<div class="trans">Can go to: queued, call_scheduled</div></div>
+        </div>
+      </div>
+      <div class="split-col">
+        <h4 style="color:var(--ghost)">Cold Call Only</h4>
+        <div class="branch-label">No WhatsApp or email available</div>
+        <div style="padding:1.5rem 0">
+          <div class="branch-label" style="font-size:.8rem;color:var(--white)">Skip to queue</div>
+        </div>
+      </div>
+    </div>
   </div>
-</section>
+
+  <div class="connector solid"><div class="arrow"></div></div>
+
+  <!-- STAGE 3.5: CAL.COM BOOKING (side entry) -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(56,189,248,.15);color:var(--cyan)">&#9742;</div>
+      <div class="stage-title">Cal.com Booking</div>
+      <div class="stage-sub">side entry</div>
+    </div>
+    <div class="branch-label">Lead books via outreach link or direct URL. Double-booking prevented.</div>
+    <div class="node-row">
+      <div class="node n-schedule" style="font-size:.85rem;padding:10px 24px">call_scheduled
+        <div class="tip"><strong>call_scheduled</strong>Lead booked a call via Cal.com. Booking time stored. Appears on CRM Bookings page.<div class="trans">Can go to: queued (when booking time arrives)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector solid"><div class="arrow"></div></div>
+
+  <!-- STAGE 4: QUEUE -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(255,255,255,.08);color:var(--white)">04</div>
+      <div class="stage-title">Dialer Queue</div>
+      <div class="stage-sub">auto-dialer</div>
+    </div>
+    <div class="node-row">
+      <div class="node n-queue" style="font-size:.85rem;padding:10px 24px">queued
+        <div class="tip"><strong>queued</strong>Ready for the auto-dialer. Picked up during business hours (8am-8pm Mon-Sat). Max 18 concurrent calls.<div class="trans">Can go to: calling, call_scheduled</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector solid"><div class="arrow"></div></div>
+
+  <!-- STAGE 5: CALLING -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(251,191,36,.15);color:var(--amber)">05</div>
+      <div class="stage-title">Calling</div>
+      <div class="stage-sub">Retell AI dialling</div>
+    </div>
+    <div class="node-row">
+      <div class="node n-call" style="font-size:.85rem;padding:10px 24px">calling
+        <div class="tip"><strong>calling</strong>Retell is dialling the lead's phone number right now.<div class="trans">Can go to: in_call, no_answer, voicemail, busy, failed, invalid_number</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector solid"><div class="arrow"></div></div>
+
+  <!-- STAGE 6: BRANCH — Connected vs Not Connected -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(255,255,255,.08);color:var(--white)">06</div>
+      <div class="stage-title">Call Result</div>
+      <div class="stage-sub">2 paths</div>
+    </div>
+
+    <div class="split split-2">
+      <!-- LEFT: Connected -->
+      <div class="split-col" style="border-color:rgba(52,211,153,.2)">
+        <h4 style="color:var(--green)">Connected</h4>
+        <div class="node n-connected" style="margin:8px auto;font-size:.85rem;padding:10px 24px">in_call
+          <div class="tip"><strong>in_call</strong>John is speaking with the lead. Discovery, qualification, and closing happen here.<div class="trans">Can go to: committed, follow_up, follow_up_scheduled, declined, not_qualified</div></div>
+        </div>
+        <div class="connector solid" style="height:20px"><div class="arrow"></div></div>
+        <div class="branch-label">4 possible outcomes</div>
+
+        <!-- Outcome nodes -->
+        <div class="split split-2" style="margin:.4rem 0;gap:.4rem">
+          <div style="text-align:center">
+            <div class="node n-good" style="margin:4px auto;font-size:.75rem">committed
+              <div class="tip"><strong>committed</strong>Lead agreed to enrol! Payment email sent. <div class="trans">Goes to: payment_pending or payment_sent</div></div>
+            </div>
+            <div class="connector solid" style="height:12px"><div class="arrow"></div></div>
+            <div class="node n-good" style="margin:4px auto;font-size:.68rem;opacity:.8">payment_sent
+              <div class="tip"><strong>payment_sent</strong>Bank details emailed (currency-specific).<div class="trans">Awaiting payment proof</div></div>
+            </div>
+            <div class="connector dashed" style="height:12px"><div class="arrow"></div></div>
+            <div class="node n-good" style="margin:4px auto;font-size:.68rem;opacity:.7">enrolled
+              <div class="tip"><strong>enrolled</strong>Payment confirmed. Welcome to Cloudboosta!<div class="trans">Terminal state (success)</div></div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div class="node n-warm" style="margin:4px auto;font-size:.75rem">follow_up
+              <div class="tip"><strong>follow_up</strong>Interested but needs time. Nurture email sent. Follow-up date logged.<div class="trans">Goes to: queued, follow_up_scheduled, call_scheduled</div></div>
+            </div>
+            <div class="connector dashed" style="height:12px"><div class="arrow"></div></div>
+            <div class="node n-warm" style="margin:4px auto;font-size:.68rem;opacity:.8">follow_up_scheduled
+              <div class="tip"><strong>follow_up_scheduled</strong>Specific follow-up date set. Will re-queue when date arrives.<div class="trans">Goes to: queued, call_scheduled</div></div>
+            </div>
+            <div class="connector dashed" style="height:12px"><div class="arrow"></div></div>
+            <div class="branch-label" style="font-size:.6rem">re-enters queue</div>
+          </div>
+        </div>
+
+        <div class="split split-2" style="margin:.4rem 0;gap:.4rem">
+          <div style="text-align:center">
+            <div class="node n-bad" style="margin:4px auto;font-size:.75rem">declined
+              <div class="tip"><strong>declined</strong>Lead said no. Door-open email sent. Respectful, no pressure.<div class="trans">Terminal state</div></div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div class="node n-neutral" style="margin:4px auto;font-size:.75rem">not_qualified
+              <div class="tip"><strong>not_qualified</strong>Not a fit for current programmes. Thank-you email sent (no push).<div class="trans">Terminal state</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Not Connected -->
+      <div class="split-col" style="border-color:rgba(248,113,113,.2)">
+        <h4 style="color:var(--red)">Not Connected</h4>
+        <div class="group" style="margin:.6rem 0">
+          <div class="group-label">GROUPED: Same retry logic</div>
+          <div class="node-row" style="justify-content:center;gap:.4rem">
+            <div class="node n-bad" style="font-size:.72rem;padding:6px 12px">no_answer
+              <div class="tip"><strong>no_answer</strong>Call rang but nobody picked up.<div class="trans">Goes to: queued (retry), declined (exhausted), call_scheduled</div></div>
+            </div>
+            <div class="node n-bad" style="font-size:.72rem;padding:6px 12px">voicemail
+              <div class="tip"><strong>voicemail</strong>Call went to voicemail.<div class="trans">Goes to: queued (retry), declined (exhausted), call_scheduled</div></div>
+            </div>
+            <div class="node n-bad" style="font-size:.72rem;padding:6px 12px">busy
+              <div class="tip"><strong>busy</strong>Line was busy.<div class="trans">Goes to: queued (retry), declined (exhausted), call_scheduled</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="connector dashed" style="height:16px"><div class="arrow"></div></div>
+        <div class="branch-label">retries &lt; max (2)?</div>
+        <div class="split split-2" style="gap:.3rem;margin:.3rem 0">
+          <div style="text-align:center">
+            <div class="branch-label" style="color:var(--green)">Yes: retry</div>
+            <div class="branch-label" style="font-size:.6rem">+60min backoff</div>
+            <div class="branch-label" style="font-size:.6rem">re-enters queue</div>
+          </div>
+          <div style="text-align:center">
+            <div class="branch-label" style="color:var(--red)">No: exhausted</div>
+            <div class="node n-bad" style="font-size:.68rem;padding:4px 10px;margin:4px auto">exhausted
+              <div class="tip"><strong>exhausted</strong>All retries used. Lead set to declined.<div class="trans">Terminal state</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="group" style="margin:.8rem 0">
+          <div class="group-label">ERRORS</div>
+          <div class="node-row" style="gap:.3rem">
+            <div class="node n-bad" style="font-size:.65rem;padding:4px 8px;opacity:.6">failed
+              <div class="tip"><strong>failed</strong>Technical failure during call setup.<div class="trans">Terminal state</div></div>
+            </div>
+            <div class="node n-bad" style="font-size:.65rem;padding:4px 8px;opacity:.6">invalid_number
+              <div class="tip"><strong>invalid_number</strong>Phone number is not valid/reachable.<div class="trans">Terminal state</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connector solid"><div class="arrow"></div></div>
+
+  <!-- STAGE 7: POST-CALL EMAILS -->
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-num" style="background:rgba(244,114,182,.15);color:var(--pink)">07</div>
+      <div class="stage-title">Post-Call Emails</div>
+      <div class="stage-sub">AI-generated via Claude</div>
+    </div>
+    <div class="branch-label">Automatically triggered by outcome. Each email is personalised from the call transcript.</div>
+
+    <div class="split split-3" style="gap:.5rem">
+      <div class="split-col" style="border-color:rgba(52,211,153,.2)">
+        <div class="node n-email" style="font-size:.7rem;padding:5px 10px;margin:4px auto;border-color:rgba(52,211,153,.3);color:var(--green);background:rgba(52,211,153,.06)">nurture</div>
+        <div class="branch-label">FOLLOW_UP</div>
+        <p style="font-size:.65rem;color:var(--ghost);margin-top:.3rem">Career fact, brochure, webinar, encouragement</p>
+      </div>
+      <div class="split-col" style="border-color:rgba(251,191,36,.2)">
+        <div class="node n-email" style="font-size:.7rem;padding:5px 10px;margin:4px auto;border-color:rgba(251,191,36,.3);color:var(--amber);background:rgba(251,191,36,.06)">door_open</div>
+        <div class="branch-label">DECLINED</div>
+        <p style="font-size:.65rem;color:var(--ghost);margin-top:.3rem">Respectful, brochure only, no webinar push</p>
+      </div>
+      <div class="split-col" style="border-color:rgba(167,139,250,.2)">
+        <div class="node n-email" style="font-size:.7rem;padding:5px 10px;margin:4px auto;border-color:rgba(167,139,250,.3);color:var(--purple);background:rgba(167,139,250,.06)">thank_you</div>
+        <div class="branch-label">NOT_QUALIFIED</div>
+        <p style="font-size:.65rem;color:var(--ghost);margin-top:.3rem">Brief, no programme push at all</p>
+      </div>
+    </div>
+    <div class="split split-2" style="gap:.5rem;margin-top:.5rem">
+      <div class="split-col" style="border-color:rgba(56,189,248,.2)">
+        <div class="node n-email" style="font-size:.7rem;padding:5px 10px;margin:4px auto;border-color:rgba(56,189,248,.3);color:var(--cyan);background:rgba(56,189,248,.06)">missed_call</div>
+        <div class="branch-label">NO_ANSWER / VOICEMAIL / BUSY</div>
+        <p style="font-size:.65rem;color:var(--ghost);margin-top:.3rem">Booking link, brochure, webinar</p>
+      </div>
+      <div class="split-col" style="border-color:rgba(244,114,182,.2)">
+        <div class="node n-email" style="font-size:.7rem;padding:5px 10px;margin:4px auto;border-color:rgba(244,114,182,.3);color:var(--pink);background:rgba(244,114,182,.06)">payment</div>
+        <div class="branch-label">COMMITTED</div>
+        <p style="font-size:.65rem;color:var(--ghost);margin-top:.3rem">Bank details by currency, reference code</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regulatory override note -->
+  <div class="stage" style="padding:.8rem 0">
+    <div class="group" style="border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.03)">
+      <div class="group-label" style="color:var(--red)">REGULATORY OVERRIDE</div>
+      <div class="node-row">
+        <div class="node n-bad" style="font-size:.72rem;padding:6px 12px">do_not_contact
+          <div class="tip"><strong>do_not_contact</strong>Regulatory override. Any lead can be set to this from any state. All contact stops immediately.<div class="trans">Terminal state. No transitions out.</div></div>
+        </div>
+      </div>
+      <div class="branch-label">Any status can transition here. All contact stops immediately.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FOCUSED DETAIL SECTIONS -->
+<!-- ============================================================ -->
+
+<!-- DETAIL: Entry -->
+<div class="detail" id="d-entry">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(96,165,250,.15);color:var(--blue);width:28px;height:28px;font-size:.65rem">01</div>
+    <h3>Lead Entry — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Lead enters via <strong>CSV import</strong> (bulk), <strong>manual add</strong> (CRM form), or <strong>webinar signup</strong> (MailerLite webhook)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Lead created with status <code>new</code>, priority 1, source recorded</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">n8n <strong>Lead Enrichment Pipeline</strong> picks it up within 5 minutes</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Evolution API checks if phone has WhatsApp. Timezone derived from phone prefix.</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text">Status moves to <code>enriched</code>. Lead is routed to outreach or direct queue.</div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- DETAIL: Outreach -->
+<div class="detail" id="d-outreach">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(45,212,191,.15);color:var(--teal);width:28px;height:28px;font-size:.65rem">03</div>
+    <h3>Multi-Channel Outreach — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Lead Outreach Orchestrator</strong> checks: has_email? has_whatsapp? Routes accordingly.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>WhatsApp</strong>: Intro message via Evolution API (instance: cloudboosta, number: +447564461354)</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Email</strong>: Outreach email via Resend (from: academy@cloudboosta.co.uk) with Cal.com booking link</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Status set to <code>outreach_sent</code>. Wait for response.</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text"><strong>If lead replies</strong>: WhatsApp Reply Handler parses intent, schedules call</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text"><strong>If lead books</strong>: Cal.com webhook fires, status goes to <code>call_scheduled</code></div></div>
+      <div class="step"><div class="step-num">7</div><div class="step-text"><strong>If 48h passes</strong>: Outreach Timeout workflow sets <code>outreach_no_response</code>, escalates to cold call queue</div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- DETAIL: Booking -->
+<div class="detail" id="d-booking">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(56,189,248,.15);color:var(--cyan);width:28px;height:28px;font-size:.65rem">&#9742;</div>
+    <h3>Cal.com Booking Handler — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Lead visits <code>cal.srv1297445.hstgr.cloud/cloudboosta/cloudboosta-advisory-call</code></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Fills in name, email, phone number (required — phone location type). Picks a 15-min slot.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Cal.com fires <code>BOOKING_CREATED</code> webhook to n8n at <code>/webhook/cb-calcom-booking</code></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Extract Attendee</strong>: Pulls phone from <code>payload.location</code> or <code>attendees[0].phoneNumber</code></div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Match Lead</strong>: PostgREST query — <code>or=(phone.eq.X,email.eq.Y)</code>. No match? Logs <code>booking_no_lead_match</code>.</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text"><strong>Already Scheduled?</strong>: IF check — if status is already <code>call_scheduled</code>, logs <code>double_booking_prevented</code></div></div>
+      <div class="step"><div class="step-num">7</div><div class="step-text"><strong>Atomic PATCH</strong>: <code>PATCH /leads?id=eq.X&status=neq.call_scheduled</code> — race condition guard. If 0 rows affected, another request won. Logs prevention.</div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-text">Success: status set to <code>call_scheduled</code>, <code>call_scheduled_at</code> stored, <code>booking_created</code> logged</div></div>
+    </div>
+    <p style="font-size:.78rem;color:var(--ghost);margin-top:.8rem"><strong style="color:var(--amber)">Race condition tested:</strong> 5 concurrent webhooks for the same lead results in exactly 1 booking_created and 4 prevented.</p>
+  </div></div>
+</div>
+
+<!-- DETAIL: Calling -->
+<div class="detail" id="d-calling">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(251,191,36,.15);color:var(--amber);width:28px;height:28px;font-size:.65rem">05</div>
+    <h3>Call Flow — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Greeting</strong>: "Hi [name], this is John calling from Cloudboosta." If returning lead, <code>get_lead_context</code> loads previous call history.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Discovery</strong>: Background, current role, goals, motivation. Natural conversation, not interrogation.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Gate 1 — Qualification</strong>: Profile A (no tech) / B (some tech) / C (junior cloud) / X (unclear). Determines programme recommendation.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Programme Lookup</strong>: <code>lookup_programme</code> returns pricing in lead's currency + matching testimonial.</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text"><strong>Present Solution</strong>: Programme details, pricing, early-bird savings, success stories.</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text"><strong>Objection Handling</strong>: Every objection triggers <code>get_objection_response</code> — 35+ types, multi-layer scripts, cultural nuances.</div></div>
+      <div class="step"><div class="step-num">7</div><div class="step-text"><strong>Closing</strong>: 6 strategies — doctor_frame, pain_close, inverse_close, nepq_sequence, diffusion, direct_close.</div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-text"><strong>Email Collection</strong>: If no email on file, <code>save_email</code> captures it. WhatsApp fallback after 1 failed spelling attempt.</div></div>
+      <div class="step"><div class="step-num">9</div><div class="step-text"><strong>Advisory Call</strong>: If lead wants human advisor, <code>check_advisor_availability</code> queries Cal.com, confirms time, logs <code>preferred_call_time</code>.</div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-text"><strong>Log Outcome</strong>: <code>log_call_outcome</code> records everything — outcome, persona, strategy, objections, summary, preferred time.</div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- DETAIL: Post-Call -->
+<div class="detail" id="d-postcall">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(244,114,182,.15);color:var(--pink);width:28px;height:28px;font-size:.65rem">07</div>
+    <h3>Post-Call Emails — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="info-grid">
+      <div class="info-card" style="border-top:3px solid var(--green)">
+        <h5><div class="dot" style="background:var(--green)"></div>Nurture</h5>
+        <p>Personalised opening from call summary. Relevant career fact with urgency context (AI picks from 10). Upcoming webinar details. Brochure link. "Looking forward to having you onboard." Encourages cloud career pursuit.</p>
+        <div class="mono">Trigger: FOLLOW_UP (no date) or FOLLOW_UP + date (nurture_scheduled)</div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--amber)">
+        <h5><div class="dot" style="background:var(--amber)"></div>Door-Open</h5>
+        <p>Genuine thanks. Respects decision. One career fact positioned casually. Brochure "for reference." No webinar push. "If things change, we're here." Zero pressure.</p>
+        <div class="mono">Trigger: DECLINED</div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--purple)">
+        <h5><div class="dot" style="background:var(--purple)"></div>Thank-You</h5>
+        <p>Polite, brief (under 100 words). Thanks for their time. Wishes well. No brochure, no webinar, no programme push, no career facts. Just warmth.</p>
+        <div class="mono">Trigger: NOT_QUALIFIED</div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--cyan)">
+        <h5><div class="dot" style="background:var(--cyan)"></div>Missed-Call</h5>
+        <p>"Tried to reach you." Brief Cloudboosta intro. Career fact for curiosity. Webinar as no-commitment option. Brochure + Cal.com booking link. Under 200 words.</p>
+        <div class="mono">Trigger: NO_ANSWER / VOICEMAIL / BUSY (first attempt only)</div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--pink)">
+        <h5><div class="dot" style="background:var(--pink)"></div>Payment</h5>
+        <p>Programme-specific bank details (Revolut GBP/EUR/USD, GTBank NGN). Payment reference code. Instalment options. Next steps. Navy blue branded HTML template.</p>
+        <div class="mono">Trigger: COMMITTED (separate flow, not AI-generated)</div>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:var(--ghost);margin-top:.5rem"><strong style="color:var(--cyan)">AI engine:</strong> Claude generates each email from the call transcript. Picks 1 of 10 career facts matched to topics discussed. All sent via Resend from academy@cloudboosta.co.uk.</p>
+  </div></div>
+</div>
+
+<!-- DETAIL: Retry -->
+<div class="detail" id="d-retry">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(248,113,113,.15);color:var(--red);width:28px;height:28px;font-size:.65rem">&#8634;</div>
+    <h3>Retry Mechanism — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Call disconnects with reason: <code>no_answer</code>, <code>voicemail</code>, or <code>busy</code></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Backend checks <code>retry_count</code> vs <code>max_retries</code> (default: 2)</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>If retries remain</strong>: <code>retry_count += 1</code>, <code>next_retry_at = now + 60min</code>, status back to <code>queued</code></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text"><strong>If retries exhausted</strong>: status set to <code>declined</code> (exhausted)</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text"><strong>First no-answer only</strong>: If lead has email, missed-call email is sent (booking link + brochure + webinar)</div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- DETAIL: Advisory -->
+<div class="detail" id="d-advisory">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(56,189,248,.15);color:var(--cyan);width:28px;height:28px;font-size:.65rem">&#9742;</div>
+    <h3>Advisory Call Scheduling — Deep Dive</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">During a call, lead asks to speak with a human advisor (or John offers for VIP / scam concerns)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">John asks: "What day works best for you this week?"</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">John calls <code>check_advisor_availability</code> with the date — queries Cal.com for Akinwunmi's open slots</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">John reads back: "Akinwunmi has 10 AM and 2 PM open — which works better?"</div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-text">Lead confirms. John says: "You'll get a calendar invite shortly. I'll also send you a link in case you want to adjust."</div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-text"><code>log_call_outcome</code> records <code>preferred_call_time</code> in call_logs</div></div>
+      <div class="step"><div class="step-num">7</div><div class="step-text">Post-call handler detects <code>preferred_call_time</code> and books via Cal.com API</div></div>
+    </div>
+    <p style="font-size:.78rem;color:var(--ghost);margin-top:.5rem"><strong style="color:var(--cyan)">Advisor:</strong> Akinwunmi (senior technical advisor). UK number: +447564461354. Cal.com event type: Cloudboosta Advisory Call (15min, Mon-Sat 8am-8pm).</p>
+  </div></div>
+</div>
+
+<!-- DETAIL: Tools -->
+<div class="detail" id="d-tools">
+  <div class="detail-header" onclick="toggleDetail(this)">
+    <div class="stage-num" style="background:rgba(255,255,255,.08);color:var(--white);width:28px;height:28px;font-size:.65rem">&#9881;</div>
+    <h3>Retell Tools &amp; n8n Workflows</h3>
+    <div class="toggle">&#9660;</div>
+  </div>
+  <div class="detail-body"><div class="detail-body-inner">
+    <h4 style="font-size:.85rem;margin-bottom:.6rem;color:var(--cyan)">6 Retell Custom Tools</h4>
+    <table class="tbl">
+      <thead><tr><th>Tool</th><th>When</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td><code>lookup_programme</code></td><td>After Gate 1 qualification</td><td>Programme, pricing (currency-specific), testimonial, selling points</td></tr>
+        <tr><td><code>get_objection_response</code></td><td>Every objection raised</td><td>Multi-layer scripts, cultural nuances, recovery script</td></tr>
+        <tr><td><code>log_call_outcome</code></td><td>End of every call</td><td>Stores outcome, persona, strategy, summary, preferred_call_time</td></tr>
+        <tr><td><code>save_email</code></td><td>Collecting email on call</td><td>Validates format, saves to lead record</td></tr>
+        <tr><td><code>get_lead_context</code></td><td>Start of returning lead call</td><td>Previous call summaries, objections, strategies</td></tr>
+        <tr><td><code>check_advisor_availability</code></td><td>Lead wants human advisor</td><td>Available time slots + booking link</td></tr>
+      </tbody>
+    </table>
+
+    <h4 style="font-size:.85rem;margin:1.2rem 0 .6rem;color:var(--teal)">9 Active n8n Workflows</h4>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Workflow</th><th>Trigger</th><th>Function</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Lead Enrichment Pipeline</td><td>Cron 5min</td><td>WhatsApp check, timezone, status to enriched</td></tr>
+        <tr><td>2</td><td>Lead Outreach Orchestrator</td><td>After enrichment</td><td>Routes by has_email / has_whatsapp</td></tr>
+        <tr><td>3</td><td>WhatsApp Outreach</td><td>Orchestrator</td><td>Sends intro via Evolution API</td></tr>
+        <tr><td>4</td><td>Email Outreach</td><td>Orchestrator</td><td>Sends via Resend</td></tr>
+        <tr><td>5</td><td>WhatsApp Reply Handler</td><td>Evolution webhook</td><td>Parses replies, schedules calls</td></tr>
+        <tr><td>6</td><td>Outreach Timeout 48h</td><td>Cron</td><td>Escalates to cold call queue</td></tr>
+        <tr><td>7</td><td>Cal.com Booking Handler</td><td>Cal.com webhook</td><td>Match lead, prevent double-booking, update status</td></tr>
+        <tr><td>8</td><td>Sarah Auto-Dialer</td><td>Cron (biz hours)</td><td>Picks queued leads, initiates Retell calls</td></tr>
+        <tr><td>9</td><td>Post-Call Handler</td><td>Backend webhook</td><td>Payment email (committed) or AI email (all others)</td></tr>
+      </tbody>
+    </table>
+  </div></div>
+</div>
 
 <footer>
-  <p>Cloudboosta Academy &middot; John Sales Agent v2 &middot; Last updated April 2026</p>
+  <p>Cloudboosta Academy &middot; John Sales Agent v2 &middot; April 2026</p>
 </footer>
 
 <script>
-mermaid.initialize({
-  startOnLoad:true,
-  theme:'dark',
-  securityLevel:'loose',
-  flowchart:{curve:'basis',padding:16,htmlLabels:true},
-  themeVariables:{
-    darkMode:true,
-    background:'#12253d',
-    primaryColor:'#1a3352',
-    primaryTextColor:'#f0f2f5',
-    primaryBorderColor:'#38bdf8',
-    lineColor:'#38bdf8',
-    secondaryColor:'#12253d',
-    tertiaryColor:'#0a1628',
-    edgeLabelBackground:'#12253d',
-    fontFamily:'"DM Sans",system-ui,sans-serif',
-    fontSize:'13px',
-    clusterBkg:'rgba(26,51,82,.5)',
-    clusterBorder:'#1a3352'
+function toggleDetail(header) {
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+// Auto-open section if navigated via hash
+if (location.hash) {
+  const target = document.querySelector(location.hash);
+  if (target) {
+    const header = target.querySelector('.detail-header');
+    if (header) { header.classList.add('open'); header.nextElementSibling.classList.add('open'); }
   }
-});
+}
 </script>
 </body>
 </html>
