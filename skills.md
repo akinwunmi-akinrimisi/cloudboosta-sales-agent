@@ -287,7 +287,7 @@ resend.api_key = os.environ["RESEND_API_KEY"]
 
 def send_payment_email(lead_name: str, lead_email: str, programme: str):
     resend.Emails.send({
-        "from": "John <john@cloudboosta.co.uk>",
+        "from": "John <academy@cloudboosta.co.uk>",
         "to": lead_email,
         "subject": f"Cloudboosta — Payment Details for {programme}",
         "html": f"<p>Hi {lead_name},</p><p>Thank you for your interest in {programme}...</p>",
